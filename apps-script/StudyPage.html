@@ -196,53 +196,12 @@
   function maleVoice(voice){return !/female|woman/.test(voiceText(voice))&&maleRank(voice)>=0;}
   function orderedMaleVoices(voices){const score=v=>maleRank(v)-(/natural|neural|enhanced|premium/.test(voiceText(v))?100:0);return voices.filter(maleVoice).sort((a,b)=>score(a)-score(b));}
   function selectedVoice(){return speechVoices.find(v=>(v.voiceURI||v.name)===voiceChoice.id)||speechVoices.find(v=>voiceChoice.name&&v.name===voiceChoice.name&&v.lang===voiceChoice.lang);}
-  // Google Cloud TTS (Voice.gs) gives the same American/British male voice on every device.
-  let cloudTts=false,audioContext=null,cloudSource=null;const cloudBuffers=new Map();
-  function audioReady(){
-    try{
-      if(navigator.audioSession)navigator.audioSession.type='playback';// iOS: play even when the silent switch is on
-      audioContext=audioContext||new (window.AudioContext||window.webkitAudioContext)();
-      if(audioContext.state==='suspended')audioContext.resume();return true;
-    }catch(error){return false;}
-  }
-  function stopCloudAudio(){const source=cloudSource;cloudSource=null;if(source)try{source.stop();}catch(error){}}
-  function cloudBuffer(text,accent,rate){
-    const id=accent+'|'+rate+'|'+text;if(cloudBuffers.has(id))return cloudBuffers.get(id);
-    const pending=call('mobileStudyTts',[text,accent,rate]).then(audio=>{
-      const binary=atob(audio),bytes=new Uint8Array(binary.length);for(let i=0;i<binary.length;i++)bytes[i]=binary.charCodeAt(i);
-      return new Promise((resolve,reject)=>audioContext.decodeAudioData(bytes.buffer,resolve,reject));
-    });
-    cloudBuffers.set(id,pending);pending.catch(()=>cloudBuffers.delete(id));
-    if(cloudBuffers.size>80)cloudBuffers.delete(cloudBuffers.keys().next().value);
-    return pending;
-  }
-  function cloudSpeak(card,text,repeats,accent,rate){
-    const token=speechToken,label=(accent==='en-US'?'미국식':'영국식')+' 남성 (Google)';let round=1;
-    spokenKey=key(card);spokenRepeats=repeats;speechMessage('음성 준비 중');
-    cloudBuffer(text,accent,rate).then(buffer=>{
-      function play(){
-        if(token!==speechToken)return;
-        const source=audioContext.createBufferSource();source.buffer=buffer;source.connect(audioContext.destination);cloudSource=source;
-        source.onended=()=>{
-          if(token!==speechToken||cloudSource!==source)return;cloudSource=null;
-          if(round<repeats){round++;speechMessage('반복 대기 · 0.5초');speechPause=setTimeout(()=>{speechPause=null;play();},500);return;}
-          spokenKey='';spokenRepeats=0;speechMessage(repeats>1?'5회 반복 완료':'읽기 완료');
-        };
-        speechMessage((repeats>1?'반복 '+round+'/'+repeats+' · ':'읽는 중 · ')+label);source.start(0);
-      }
-      play();
-    }).catch(error=>{
-      if(token!==speechToken)return;
-      cloudTts=false;spokenKey='';spokenRepeats=0;voiceOptions();
-      speechMessage('Google 음성을 불러오지 못했습니다. 다시 누르면 기기 음성으로 읽습니다. ('+(error&&error.message||error)+')',true);
-    });
-  }
   function voiceOptions(){
     const select=$('speechVoice'),accent=$('speechAccent').value,region=accent==='en-US'?'미국식':'영국식';
-    select.replaceChildren(new Option(cloudTts?region+' 남성 · Google 고품질 (자동)':region+' 남성 음성 자동',''));
-    if(!speechSupported)return;
+    if(!speechSupported){select.replaceChildren(new Option('음성 읽기 미지원 브라우저',''));return;}
     speechVoices=window.speechSynthesis.getVoices();
     const candidates=orderedMaleVoices(speechVoices.filter(v=>langOf(v)===accent.toLowerCase()));
+    select.replaceChildren(new Option(candidates.length?region+' 남성 음성 자동':'사용 가능한 '+region+' 남성 음성이 없습니다',''));
     candidates.slice(0,3).forEach(v=>select.add(new Option(v.name+' · '+v.lang,v.voiceURI||v.name)));
     const saved=selectedVoice(),available=saved&&candidates.some(v=>(v.voiceURI||v.name)===(saved.voiceURI||saved.name));
     if(voiceChoice.id){
@@ -251,24 +210,20 @@
     }else select.value='';
   }
   function speechMessage(text,error=false){$('speechStatus').textContent=text;$('speechStatus').classList.toggle('error',error);}
-  function stopSpeech(){speechToken++;clearTimeout(speechPause);speechPause=null;activeSpeech=null;spokenKey='';spokenRepeats=0;stopCloudAudio();if(speechSupported)window.speechSynthesis.cancel();speechMessage('');}
+  function stopSpeech(){speechToken++;clearTimeout(speechPause);speechPause=null;activeSpeech=null;spokenKey='';spokenRepeats=0;if(speechSupported)window.speechSynthesis.cancel();speechMessage('');}
   function speechChunks(text){const chunks=[];let rest=text.trim();while(rest.length>220){let end=rest.slice(0,220).search(/[.!?;,:]\s+[^.!?;,:]*$/);if(end<40)end=rest.lastIndexOf(' ',220);if(end<1)end=220;else end++;chunks.push(rest.slice(0,end).trim());rest=rest.slice(end).trim();}if(rest)chunks.push(rest);return chunks;}
   function speak(card,repeats=1){
     if(spokenKey===key(card)&&spokenRepeats===repeats){stopSpeech();return;}
     stopSpeech();const text=String(card.english||'').trim();if(!text){speechMessage('읽을 영어가 없습니다.',true);return;}
-    const accent=$('speechAccent').value,rate=Number($('speechRate').value)||1;
-    if(speechSupported)speechVoices=window.speechSynthesis.getVoices();
-    // A voice picked on another device (preferences sync) is missing here, so Google voice is used instead.
-    const saved=voiceChoice.id?selectedVoice():null;
-    if(cloudTts&&!saved&&text.length<=1500&&audioReady()){cloudSpeak(card,text,repeats,accent,rate);return;}
     if(!speechSupported){speechMessage('이 브라우저는 음성 읽기를 지원하지 않습니다. Safari 또는 Chrome에서 열어 주세요.',true);return;}
-    const token=speechToken,parts=speechChunks(text);
-    const exact=speechVoices.filter(v=>langOf(v)===accent.toLowerCase());
-    const chosen=saved&&langOf(saved)===accent.toLowerCase()?saved:null;
-    const male=chosen||orderedMaleVoices(exact)[0]||null;
-    // No male voice on this device: use the default accent voice at a lower pitch instead of failing.
-    const voice=male||exact[0]||null,pitch=male?0.85:0.6;
-    const voiceLabel=male?male.name:(voice?voice.name:'기기 기본 영어 음성')+' · 남성 음성 없음, 낮은 톤';
+    const token=speechToken,parts=speechChunks(text),accent=$('speechAccent').value,rate=Number($('speechRate').value)||1,region=accent==='en-US'?'미국식':'영국식';
+    speechVoices=window.speechSynthesis.getVoices();
+    const candidates=orderedMaleVoices(speechVoices.filter(v=>langOf(v)===accent.toLowerCase()));
+    const saved=voiceChoice.id?selectedVoice():null,chosen=saved&&candidates.includes(saved)?saved:null;
+    // Never fall back to a female or other-accent voice; a choice saved on another device falls back to this device's male voice.
+    const voice=chosen||candidates[0];
+    if(!voice){speechMessage('사용 가능한 '+region+' 남성 음성이 없습니다. 기기 설정에서 영어('+(accent==='en-US'?'미국':'영국')+') 남성 음성을 내려받아 주세요.',true);return;}
+    const voiceLabel=voice.name+(voiceChoice.id&&!chosen?' (저장한 목소리가 이 기기에 없음)':'');
     spokenKey=key(card);spokenRepeats=repeats;let index=0,round=1;
     function next(){
       if(token!==speechToken)return;
@@ -277,7 +232,7 @@
         if(round<repeats){round++;index=0;speechMessage('반복 대기 · 0.5초');speechPause=setTimeout(()=>{speechPause=null;next();},500);return;}
         spokenKey='';spokenRepeats=0;speechMessage(repeats>1?'5회 반복 완료':'읽기 완료');return;
       }
-      const utter=new window.SpeechSynthesisUtterance(parts[index++]);activeSpeech=utter;utter.lang=voice?voice.lang:accent;utter.rate=rate;utter.pitch=pitch;if(voice)utter.voice=voice;
+      const utter=new window.SpeechSynthesisUtterance(parts[index++]);activeSpeech=utter;utter.lang=voice?voice.lang:accent;utter.rate=rate;utter.pitch=0.85;if(voice)utter.voice=voice;
       utter.onstart=()=>{if(token===speechToken)speechMessage((repeats>1?'반복 '+round+'/'+repeats+' · ':'읽는 중 · ')+voiceLabel);};
       utter.onend=next;utter.onerror=event=>{if(token!==speechToken)return;activeSpeech=null;spokenKey='';speechMessage('소리를 재생하지 못했습니다. 발음 듣기를 다시 눌러 주세요. ('+event.error+')',true);};
       try{window.speechSynthesis.speak(utter);}catch(error){activeSpeech=null;spokenKey='';speechMessage('음성 재생을 시작하지 못했습니다.',true);}
@@ -535,10 +490,7 @@
   if(preferences.book==='paper')$('bookSelect').value='paper';
   if(preferences.audio){$('speechAccent').value=preferences.audio.accent||'en-US';$('speechRate').value=preferences.audio.rate||'1';}
   voiceOptions();if(speechSupported&&window.speechSynthesis.addEventListener)window.speechSynthesis.addEventListener('voiceschanged',voiceOptions);
-  if(typeof google!=='undefined'&&google.script&&google.script.run){
-    call('mobileStudyTtsEnabled',[]).then(enabled=>{cloudTts=!!enabled;voiceOptions();}).catch(()=>{});
-    if(boot&&boot.listen)reader();else load();
-  }else notice('학습장 연결을 확인할 수 없습니다.',true);
+  if(typeof google!=='undefined'&&google.script&&google.script.run){if(boot&&boot.listen)reader();else load();}else notice('학습장 연결을 확인할 수 없습니다.',true);
 </script>
 </body>
 </html>
