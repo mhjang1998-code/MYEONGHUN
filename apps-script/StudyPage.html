@@ -257,12 +257,14 @@
     if(spokenKey===key(card)&&spokenRepeats===repeats){stopSpeech();return;}
     stopSpeech();const text=String(card.english||'').trim();if(!text){speechMessage('읽을 영어가 없습니다.',true);return;}
     const accent=$('speechAccent').value,rate=Number($('speechRate').value)||1;
-    if(cloudTts&&!voiceChoice.id&&text.length<=1500&&audioReady()){cloudSpeak(card,text,repeats,accent,rate);return;}
+    if(speechSupported)speechVoices=window.speechSynthesis.getVoices();
+    // A voice picked on another device (preferences sync) is missing here, so Google voice is used instead.
+    const saved=voiceChoice.id?selectedVoice():null;
+    if(cloudTts&&!saved&&text.length<=1500&&audioReady()){cloudSpeak(card,text,repeats,accent,rate);return;}
     if(!speechSupported){speechMessage('이 브라우저는 음성 읽기를 지원하지 않습니다. Safari 또는 Chrome에서 열어 주세요.',true);return;}
     const token=speechToken,parts=speechChunks(text);
-    speechVoices=window.speechSynthesis.getVoices();
     const exact=speechVoices.filter(v=>langOf(v)===accent.toLowerCase());
-    const saved=selectedVoice(),chosen=saved&&langOf(saved)===accent.toLowerCase()?saved:null;
+    const chosen=saved&&langOf(saved)===accent.toLowerCase()?saved:null;
     const male=chosen||orderedMaleVoices(exact)[0]||null;
     // No male voice on this device: use the default accent voice at a lower pitch instead of failing.
     const voice=male||exact[0]||null,pitch=male?0.85:0.6;
