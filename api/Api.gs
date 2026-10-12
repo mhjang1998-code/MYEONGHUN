@@ -39,6 +39,34 @@ function studyAudioTexts() {
   return Array.from(texts);
 }
 
+// GitHub's own 10-minute schedule can stall, so this time trigger starts the audio workflow instead:
+// right away when words change, otherwise at most once an hour (to finish voices still being made).
+const STUDY_WORKFLOW = 'https://api.github.com/repos/mhjang1998-code/MYEONGHUN/actions/workflows/study-site.yml/dispatches';
+const STUDY_BRANCH = 'claude/gracious-albattani-xpf88a';
+
+function studyKickAudio() {
+  const props = PropertiesService.getScriptProperties(), token = (props.getProperty('GITHUB_TOKEN') || '').trim();
+  if (!token) return 'GITHUB_TOKEN 스크립트 속성이 없습니다.';
+  const digest = Utilities.base64Encode(Utilities.computeDigest(Utilities.DigestAlgorithm.SHA_256, JSON.stringify(studyAudioTexts()), Utilities.Charset.UTF_8));
+  const last = Number(props.getProperty('AUDIO_KICKED_AT') || 0);
+  if (digest === props.getProperty('AUDIO_TEXTS_DIGEST') && Date.now() - last < 3600000) return '변경 없음';
+  const response = UrlFetchApp.fetch(STUDY_WORKFLOW, {
+    method: 'post', contentType: 'application/json', muteHttpExceptions: true,
+    headers: { Authorization: 'Bearer ' + token, Accept: 'application/vnd.github+json' },
+    payload: JSON.stringify({ ref: STUDY_BRANCH })
+  });
+  if (response.getResponseCode() !== 204) throw new Error('GitHub 실행 요청 실패 (' + response.getResponseCode() + '): ' + response.getContentText().slice(0, 200));
+  props.setProperties({ AUDIO_TEXTS_DIGEST: digest, AUDIO_KICKED_AT: String(Date.now()) });
+  return 'GitHub 음성 만들기 실행 요청 완료';
+}
+
+// Run once from the editor after adding the GITHUB_TOKEN script property.
+function setupAudioTrigger() {
+  ScriptApp.getProjectTriggers().filter(t => t.getHandlerFunction() === 'studyKickAudio').forEach(t => ScriptApp.deleteTrigger(t));
+  ScriptApp.newTrigger('studyKickAudio').timeBased().everyMinutes(10).create();
+  console.log(studyKickAudio());
+}
+
 // Run once from the editor: creates the connection key and prints it to the execution log.
 function setupApiKey() {
   const key = Utilities.getUuid().replace(/-/g, '') + Utilities.getUuid().replace(/-/g, '');
