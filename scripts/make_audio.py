@@ -65,12 +65,29 @@ def write_output(**values):
                 handle.write(f'{name}={value}\n')
 
 
+def self_test():
+    """Make one sample per voice in a temp folder to prove the model runs on this machine."""
+    import soundfile
+    from kokoro_onnx import Kokoro
+    kokoro = Kokoro(os.path.join(MODEL_DIR, 'kokoro-v1.0.int8.onnx'), os.path.join(MODEL_DIR, 'voices-v1.0.bin'))
+    for voice, lang in VOICES.values():
+        samples, rate = kokoro.create('Compost maturity was evaluated.', voice=voice, speed=1.0, lang=lang)
+        print(f'self-test {voice}: {len(samples) / rate:.2f}s of audio')
+    write_output(changed='false')
+    return 0
+
+
 def main():
     texts = fetch_texts()
     if texts is None:
-        print('Study API not configured (STUDY_API_URL / STUDY_API_KEY secrets); nothing to do.')
-        write_output(missing='0', changed='false')
-        return 0
+        print('Study API not configured (STUDY_API_URL / STUDY_API_KEY secrets).')
+        if os.environ.get('SELF_TEST') != '1':
+            write_output(missing='0', changed='false')
+            return 0
+        if '--check' in sys.argv:
+            write_output(missing='self-test')
+            return 0
+        return self_test()
     existing, todo = missing_files(texts)
     print(f'{len(texts)} texts, {len(existing)} files, {len(todo)} missing')
     if '--check' in sys.argv:
