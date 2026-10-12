@@ -235,11 +235,11 @@ function startApp(boot){
   function selectedVoice(){return speechVoices.find(v=>(v.voiceURI||v.name)===voiceChoice.id)||speechVoices.find(v=>voiceChoice.name&&v.name===voiceChoice.name&&v.lang===voiceChoice.lang);}
   function voiceOptions(){
     const select=$('speechVoice'),accent=$('speechAccent').value,region=accent==='en-US'?'미국식':'영국식';
-    if(!speechSupported){select.replaceChildren(new Option(accent==='en-US'&&audioFiles.size?'Microsoft Andrew · 모든 기기 같은 목소리 (자동)':'음성 읽기 미지원 브라우저',''));return;}
+    if(!speechSupported){select.replaceChildren(new Option(hasFiles(accent)?fileVoice(accent).name+' · 모든 기기 같은 목소리 (자동)':'음성 읽기 미지원 브라우저',''));return;}
     speechVoices=window.speechSynthesis.getVoices();
     const all=deviceMaleVoices(accent),candidates=all.filter(v=>!hiddenVoices.has(v.name));
     voiceManager(all,speechVoices.filter(v=>langOf(v)===accent.toLowerCase()&&!maleVoice(v)),speechVoices.length);
-    select.replaceChildren(new Option(accent==='en-US'&&audioFiles.size?'Microsoft Andrew · 모든 기기 같은 목소리 (자동)':candidates.length?region+' 남성 음성 자동':all.length?'선택한 목소리가 없습니다 · 발음 설정에서 체크':'사용 가능한 '+region+' 남성 음성이 없습니다',''));
+    select.replaceChildren(new Option(hasFiles(accent)?fileVoice(accent).name+' · 모든 기기 같은 목소리 (자동)':candidates.length?region+' 남성 음성 자동':all.length?'선택한 목소리가 없습니다 · 발음 설정에서 체크':'사용 가능한 '+region+' 남성 음성이 없습니다',''));
     candidates.slice(0,3).forEach(v=>select.add(new Option(v.name+' · '+v.lang,v.voiceURI||v.name)));
     const saved=selectedVoice(),available=saved&&candidates.some(v=>(v.voiceURI||v.name)===(saved.voiceURI||saved.name));
     if(voiceChoice.id){
@@ -248,25 +248,32 @@ function startApp(boot){
     }else select.value='';
   }
   function speechMessage(text,error=false){$('speechStatus').textContent=text;$('speechStatus').classList.toggle('error',error);}
-  // Microsoft Andrew MP3s from docs/audio (scripts/make_audio.py); same file name rule: sha1(voice|text)[:20].
-  const fileVoice='en-US-AndrewNeural',fileIds=new Map();let audioFiles=new Set(),audioPlayer=null;
+  // Kokoro MP3s from docs/audio, made by scripts/make_audio.py; file name = sha1(voice|text)[:20], same rule as there.
+  const FILE_VOICES={'en-US':{id:'kokoro-am_michael',name:'Michael'},'en-GB':{id:'kokoro-bm_george',name:'George'}};
+  const fileIds=new Map();let audioFiles={},audioPlayer=null;
   const fileText=text=>String(text||'').replace(/\s+/g,' ').trim();
+  const fileVoice=accent=>FILE_VOICES[accent];
+  const hasFiles=accent=>!!(audioFiles[accent]&&audioFiles[accent].size);
   async function prepareAudio(cards){
     if(!window.crypto||!crypto.subtle)return;
-    for(const card of cards){const text=fileText(card.english);if(!text||fileIds.has(text))continue;
-      const digest=await crypto.subtle.digest('SHA-1',new TextEncoder().encode(fileVoice+'|'+text));
-      fileIds.set(text,[...new Uint8Array(digest)].map(b=>b.toString(16).padStart(2,'0')).join('').slice(0,20));}
+    for(const card of cards)for(const accent of Object.keys(FILE_VOICES)){
+      const text=fileText(card.english),id=accent+'|'+text;if(!text||fileIds.has(id))continue;
+      const digest=await crypto.subtle.digest('SHA-1',new TextEncoder().encode(FILE_VOICES[accent].id+'|'+text));
+      fileIds.set(id,[...new Uint8Array(digest)].map(b=>b.toString(16).padStart(2,'0')).join('').slice(0,20));
+    }
   }
   function loadAudioFiles(){
-    fetch('audio/manifest.json?'+Date.now()).then(r=>r.ok?r.json():{files:[]}).then(m=>{audioFiles=new Set(m.voice===fileVoice&&m.files||[]);voiceOptions();}).catch(()=>{});
+    fetch('audio/manifest.json?'+Date.now()).then(r=>r.ok?r.json():{}).then(m=>{
+      audioFiles={};Object.keys(FILE_VOICES).forEach(a=>{if(m.voices&&m.voices[a]===FILE_VOICES[a].id)audioFiles[a]=new Set(m.files&&m.files[a]||[]);});voiceOptions();
+    }).catch(()=>{});
   }
-  function audioFileId(text){const id=fileIds.get(fileText(text));return id&&audioFiles.has(id)?id:'';}
-  function fileSpeak(card,id,repeats,rate){
+  function audioFileId(text,accent){const id=fileIds.get(accent+'|'+fileText(text));return id&&audioFiles[accent]&&audioFiles[accent].has(id)?id:'';}
+  function fileSpeak(card,id,repeats,rate,voiceName){
     const token=speechToken,player=audioPlayer||(audioPlayer=new Audio());let round=1;
     spokenKey=key(card);spokenRepeats=repeats;player.src='audio/'+id+'.mp3';player.defaultPlaybackRate=rate;player.preservesPitch=true;
     function play(){
       if(token!==speechToken)return;player.playbackRate=rate;player.currentTime=0;
-      speechMessage((repeats>1?'반복 '+round+'/'+repeats+' · ':'읽는 중 · ')+'Microsoft Andrew');
+      speechMessage((repeats>1?'반복 '+round+'/'+repeats+' · ':'읽는 중 · ')+voiceName);
       const started=player.play();if(started&&started.catch)started.catch(()=>{if(token!==speechToken)return;spokenKey='';spokenRepeats=0;speechMessage('소리를 재생하지 못했습니다. 발음 듣기를 다시 눌러 주세요.',true);});
     }
     player.onended=()=>{
@@ -274,7 +281,7 @@ function startApp(boot){
       if(round<repeats){round++;speechMessage('반복 대기 · 0.5초');speechPause=setTimeout(()=>{speechPause=null;play();},500);return;}
       spokenKey='';spokenRepeats=0;speechMessage(repeats>1?'5회 반복 완료':'읽기 완료');
     };
-    player.onerror=()=>{if(token!==speechToken)return;audioFiles.delete(id);spokenKey='';spokenRepeats=0;speechMessage('음성 파일을 불러오지 못했습니다. 다시 누르면 기기 음성으로 읽습니다.',true);};
+    player.onerror=()=>{if(token!==speechToken)return;Object.values(audioFiles).forEach(set=>set.delete(id));spokenKey='';spokenRepeats=0;speechMessage('음성 파일을 불러오지 못했습니다. 다시 누르면 기기 음성으로 읽습니다.',true);};
     play();
   }
   function stopSpeech(){speechToken++;clearTimeout(speechPause);speechPause=null;activeSpeech=null;spokenKey='';spokenRepeats=0;if(audioPlayer)audioPlayer.pause();if(speechSupported)window.speechSynthesis.cancel();speechMessage('');}
@@ -282,8 +289,8 @@ function startApp(boot){
   function speak(card,repeats=1){
     if(spokenKey===key(card)&&spokenRepeats===repeats){stopSpeech();return;}
     stopSpeech();const text=String(card.english||'').trim();if(!text){speechMessage('읽을 영어가 없습니다.',true);return;}
-    const fileId=$('speechAccent').value==='en-US'&&!voiceChoice.id?audioFileId(text):'';
-    if(fileId){fileSpeak(card,fileId,repeats,Number($('speechRate').value)||1);return;}
+    const fileAccent=$('speechAccent').value,fileId=!voiceChoice.id?audioFileId(text,fileAccent):'';
+    if(fileId){fileSpeak(card,fileId,repeats,Number($('speechRate').value)||1,fileVoice(fileAccent).name);return;}
     if(!speechSupported){speechMessage('이 브라우저는 음성 읽기를 지원하지 않습니다. Safari 또는 Chrome에서 열어 주세요.',true);return;}
     const token=speechToken,parts=speechChunks(text),accent=$('speechAccent').value,rate=Number($('speechRate').value)||1,region=accent==='en-US'?'미국식':'영국식';
     speechVoices=window.speechSynthesis.getVoices();
