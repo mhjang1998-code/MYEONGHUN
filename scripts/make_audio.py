@@ -32,8 +32,23 @@ def audio_id(voice, text):
     return hashlib.sha1(('kokoro-' + voice + '|' + normalize(text)).encode('utf-8')).hexdigest()[:20]
 
 
+API_URL = re.compile(r'https://script\.google\.com/macros/s/[\w-]+/exec')
+
+
+def api_url():
+    """The STUDY_API_URL secret, or the app's own URL (docs/config.js) when the secret is not a web app URL."""
+    url = (os.environ.get('STUDY_API_URL') or '').strip()
+    if API_URL.fullmatch(url):
+        return url
+    shape = re.sub(r'[A-Za-z0-9_-]{20,}', '<id>', url)[:80]
+    with open(os.path.join('docs', 'config.js')) as handle:
+        found = API_URL.search(handle.read())
+    print(f'STUDY_API_URL is not a web app URL (looks like: {shape!r}); using docs/config.js instead.')
+    return found.group(0) if found else ''
+
+
 def fetch_texts():
-    url, key = os.environ.get('STUDY_API_URL'), os.environ.get('STUDY_API_KEY')
+    url, key = api_url(), (os.environ.get('STUDY_API_KEY') or '').strip()
     if not url or not key:
         return None
     body = json.dumps({'key': key, 'fn': 'studyAudioTexts', 'args': []}).encode('utf-8')
