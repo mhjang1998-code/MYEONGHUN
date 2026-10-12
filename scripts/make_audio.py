@@ -40,7 +40,14 @@ def fetch_texts():
     request = urllib.request.Request(url, data=body, headers={'Content-Type': 'text/plain;charset=utf-8'})
     # Apps Script answers POST with a redirect; urllib follows it as a GET, which is what it expects.
     with urllib.request.urlopen(request, timeout=180) as response:
-        data = json.load(response)
+        raw = response.read().decode('utf-8', 'replace')
+        final_url = response.geturl()
+    try:
+        data = json.loads(raw)
+    except ValueError:
+        # Not JSON: usually a Google error or sign-in page. Show where it came from and how it starts.
+        text = re.sub(r'\s+', ' ', re.sub(r'<[^>]+>', ' ', raw)).strip()
+        sys.exit(f'API did not return JSON (from {final_url.split("?")[0]}): {text[:300]}')
     if not data.get('ok'):
         sys.exit('API error: ' + str(data.get('error')))
     return [normalize(t) for t in data['result'] if normalize(t)]
