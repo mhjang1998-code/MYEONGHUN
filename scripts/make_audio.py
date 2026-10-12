@@ -11,9 +11,7 @@ import hashlib
 import json
 import os
 import re
-import subprocess
 import sys
-import tempfile
 import urllib.request
 
 # Must match FILE_VOICES in docs/index.html. Files are made in this order, so the first voice is ready first.
@@ -121,19 +119,17 @@ def main():
     kokoro = Kokoro(os.path.join(MODEL_DIR, 'kokoro-v1.0.int8.onnx'), os.path.join(MODEL_DIR, 'voices-v1.0.bin'))
     os.makedirs(OUT, exist_ok=True)
     made = failed = 0
-    with tempfile.TemporaryDirectory() as folder:
-        for file_id, (voice, lang, text) in list(todo.items())[:MAX_PER_RUN]:
-            try:
-                samples, rate = kokoro.create(text, voice=voice, speed=1.0, lang=lang)
-                wav = os.path.join(folder, file_id + '.wav')
-                soundfile.write(wav, samples, rate)
-                subprocess.run(['ffmpeg', '-loglevel', 'error', '-y', '-i', wav, '-ac', '1', '-b:a', '48k',
-                                os.path.join(OUT, file_id + '.mp3')], check=True)
-                existing.add(file_id)
-                made += 1
-            except Exception as error:  # one bad text must not stop the rest
-                print(f'  failed ({voice}): {error}')
-                failed += 1
+    for file_id, (voice, lang, text) in list(todo.items())[:MAX_PER_RUN]:
+        try:
+            samples, rate = kokoro.create(text, voice=voice, speed=1.0, lang=lang)
+            path = os.path.join(OUT, file_id + '.mp3')
+            soundfile.write(path + '.part', samples, rate, format='MP3', subtype='MPEG_LAYER_III')
+            os.replace(path + '.part', path)
+            existing.add(file_id)
+            made += 1
+        except Exception as error:  # one bad text must not stop the rest
+            print(f'  failed ({voice}): {error}')
+            failed += 1
     print(f'made {made}, failed {failed}, left for next run {max(0, len(todo) - made - failed)}')
 
     # Keep only files for the current voices and texts (e.g. after a word is edited or deleted).
