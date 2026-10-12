@@ -17,7 +17,8 @@ const VOICES = {
     { name: 'Microsoft Ryan Online (Natural) - English (United Kingdom)', lang: 'en-GB' },
     { name: 'Google US English', lang: 'en-US' }
   ],
-  iphoneNoMale: [{ name: 'Samantha', lang: 'en-US' }, { name: 'Daniel', lang: 'en-GB' }]
+  iphoneNoMale: [{ name: 'Samantha', lang: 'en-US' }, { name: 'Daniel', lang: 'en-GB' }],
+  iphone: [{ name: 'Samantha', lang: 'en-US' }, { name: 'Fred', lang: 'en-US' }, { name: 'Ralph', lang: 'en-US' }, { name: 'Aaron', lang: 'en-US' }, { name: 'Evan (Enhanced)', lang: 'en-US' }, { name: 'Nathan', lang: 'en-US' }]
 };
 
 let browser;
@@ -149,5 +150,41 @@ test('a voice saved on another device falls back to this device male voice', asy
   await page.waitForTimeout(150);
   const { spoken } = await log(page);
   assert.match(spoken[0].voice, /Guy|Christopher/);
+  await page.close();
+});
+
+test('iPhone novelty voices (Fred, Ralph) are never offered', async () => {
+  const page = await open(VOICES.iphone);
+  const list = await options(page);
+  assert.ok(list.every(o => !/Fred|Ralph|Samantha/.test(o)), list.join(' | '));
+  assert.match(list[1], /Evan/);
+  const managed = await page.$$eval('#voiceManager label', l => l.map(x => x.textContent));
+  assert.deepStrictEqual(managed, ['Evan (Enhanced)', 'Nathan', 'Aaron']);
+  await page.close();
+});
+
+test('unchecked voices disappear from the list and stay hidden next time', async () => {
+  let page = await open(VOICES.iphone);
+  await page.uncheck('#voiceManager label:has-text("Aaron") input');
+  await page.uncheck('#voiceManager label:has-text("Nathan") input');
+  assert.deepStrictEqual((await options(page)).slice(1), ['Evan (Enhanced) · en-US']);
+  await page.waitForTimeout(100);
+  const saved = (await log(page)).saved.at(-1);
+  assert.deepStrictEqual(saved.audio.hidden.sort(), ['Aaron', 'Nathan']);
+  await page.close();
+  page = await open(VOICES.iphone, saved);
+  assert.deepStrictEqual((await options(page)).slice(1), ['Evan (Enhanced) · en-US']);
+  await page.click('text=발음 듣기');
+  await page.waitForTimeout(150);
+  assert.strictEqual((await log(page)).spoken[0].voice, 'Evan (Enhanced)');
+  await page.close();
+});
+
+test('preview button plays a sample with that voice', async () => {
+  const page = await open(VOICES.iphone);
+  await page.click('.voice-row:has-text("Nathan") button');
+  await page.waitForTimeout(50);
+  const { spoken } = await log(page);
+  assert.strictEqual(spoken.at(-1).voice, 'Nathan');
   await page.close();
 });
