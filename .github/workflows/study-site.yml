@@ -29,7 +29,7 @@ jobs:
         env:
           STUDY_API_URL: ${{ secrets.STUDY_API_URL }}
           STUDY_API_KEY: ${{ secrets.STUDY_API_KEY }}
-          SELF_TEST: ${{ github.event_name == 'workflow_dispatch' && '1' || '0' }}
+          SELF_TEST: ${{ github.event_name != 'schedule' && '1' || '0' }}
         run: python scripts/make_audio.py --check
       # The voice model (Kokoro, ~120 MB) is only fetched when some words still need audio.
       - if: steps.check.outputs.missing != '0'
@@ -49,7 +49,7 @@ jobs:
         env:
           STUDY_API_URL: ${{ secrets.STUDY_API_URL }}
           STUDY_API_KEY: ${{ secrets.STUDY_API_KEY }}
-          SELF_TEST: ${{ github.event_name == 'workflow_dispatch' && '1' || '0' }}
+          SELF_TEST: ${{ github.event_name != 'schedule' && '1' || '0' }}
         run: python scripts/make_audio.py
       - if: steps.make.outputs.changed == 'true'
         run: |
