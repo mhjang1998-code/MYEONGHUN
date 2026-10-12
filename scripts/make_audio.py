@@ -17,7 +17,7 @@ import tempfile
 import urllib.request
 
 # Must match FILE_VOICES in docs/index.html. Files are made in this order, so the first voice is ready first.
-VOICES = [('am_fenrir', 'en-us'), ('am_puck', 'en-us'), ('am_liam', 'en-us'), ('am_adam', 'en-us'), ('bm_daniel', 'en-gb')]
+VOICES = [('am_adam', 'en-us'), ('am_fenrir', 'en-us'), ('am_puck', 'en-us'), ('am_liam', 'en-us'), ('bm_daniel', 'en-gb')]
 OUT = os.path.join('docs', 'audio')
 MANIFEST = os.path.join(OUT, 'manifest.json')
 MODEL_DIR = os.environ.get('KOKORO_DIR', 'kokoro-model')

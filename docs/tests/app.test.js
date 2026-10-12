@@ -9,7 +9,7 @@ const { chromium } = require('playwright');
 
 const ROOT = path.join(__dirname, '..');
 const API = 'https://api.test/exec';
-const fileId = (text, voice = 'am_fenrir') => crypto.createHash('sha1').update('kokoro-' + voice + '|' + text).digest('hex').slice(0, 20);
+const fileId = (text, voice = 'am_adam') => crypto.createHash('sha1').update('kokoro-' + voice + '|' + text).digest('hex').slice(0, 20);
 const CARDS = [
   { id: 'a1', book: 'general', type: 'word', row: 5, date: '2026-10-01', month: '2026-10', week: '1주차', english: 'compost', meaning: '퇴비', count: 2, status: '모름', reviewed: '', memo: '', unknownStreak: 0, unknownSince: '', unknownTotal: 0 },
   { id: 'a2', book: 'general', type: 'word', row: 6, date: '2026-10-01', month: '2026-10', week: '1주차', english: 'manure', meaning: '분뇨', count: 0, status: '미평가', reviewed: '', memo: '', unknownStreak: 0, unknownSince: '', unknownTotal: 0 }
@@ -20,7 +20,7 @@ before(async () => {
   // Serve docs/ over http so fetch('audio/manifest.json') works; the manifest only lists "compost".
   server = http.createServer((req, res) => {
     const url = new URL(req.url, 'http://x');
-    if (url.pathname === '/audio/manifest.json') { res.setHeader('Content-Type', 'application/json'); return res.end(JSON.stringify({ files: { 'kokoro-am_fenrir': [fileId('compost')], 'kokoro-am_puck': [fileId('compost', 'am_puck')], 'kokoro-am_liam': [], 'kokoro-am_adam': [], 'kokoro-bm_daniel': [] } })); }
+    if (url.pathname === '/audio/manifest.json') { res.setHeader('Content-Type', 'application/json'); return res.end(JSON.stringify({ files: { 'kokoro-am_adam': [fileId('compost')], 'kokoro-am_puck': [fileId('compost', 'am_puck')], 'kokoro-am_liam': [], 'kokoro-am_fenrir': [], 'kokoro-bm_daniel': [] } })); }
     const file = path.join(ROOT, url.pathname === '/' ? 'index.html' : url.pathname);
     if (!file.startsWith(ROOT) || !fs.existsSync(file)) { res.statusCode = 404; return res.end(); }
     res.setHeader('Content-Type', file.endsWith('.js') ? 'text/javascript' : 'text/html; charset=utf-8');
@@ -86,10 +86,10 @@ test('wrong key shows the setup form again', async () => {
   await page.close();
 });
 
-test('plays the Fenrir voice file by default when one exists', async () => {
+test('plays the Adam voice file by default when one exists', async () => {
   const { page } = await open();
   await ready(page);
-  assert.match(await page.textContent('#speechVoice option'), /Fenrir · 모든 기기/);
+  assert.match(await page.textContent('#speechVoice option'), /Adam · 모든 기기/);
   await page.click('text=발음 듣기');
   await page.waitForTimeout(50);
   const { files, spoken } = await log(page);
@@ -154,7 +154,7 @@ test('the voice menu offers the chosen file voices and plays the picked one', as
   const { page, calls } = await open();
   await ready(page);
   const labels = await page.$$eval('#speechVoice option', l => l.map(o => o.textContent));
-  assert.deepStrictEqual(labels.slice(0, 5), ['Fenrir · 모든 기기 같은 목소리 (자동)', 'Fenrir · 모든 기기 같은 목소리', 'Puck · 모든 기기 같은 목소리', 'Liam · 모든 기기 같은 목소리 (만드는 중)', 'Adam · 모든 기기 같은 목소리 (만드는 중)']);
+  assert.deepStrictEqual(labels.slice(0, 5), ['Adam · 모든 기기 같은 목소리 (자동)', 'Adam · 모든 기기 같은 목소리', 'Fenrir · 모든 기기 같은 목소리 (만드는 중)', 'Puck · 모든 기기 같은 목소리', 'Liam · 모든 기기 같은 목소리 (만드는 중)']);
   await page.selectOption('#speechVoice', 'file:kokoro-am_puck');
   await page.click('text=발음 듣기');
   await page.waitForTimeout(50);
@@ -173,6 +173,6 @@ test('British accent offers Daniel', async () => {
   await page.selectOption('#speechAccent', 'en-GB');
   const labels = await page.$$eval('#speechVoice option', l => l.map(o => o.textContent));
   assert.ok(labels.includes('Daniel · 모든 기기 같은 목소리 (만드는 중)'), labels.join(' | '));
-  assert.ok(!labels.some(l => /Fenrir|Puck/.test(l)));
+  assert.ok(!labels.some(l => /Adam|Fenrir|Puck/.test(l)));
   await page.close();
 });

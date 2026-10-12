@@ -14,7 +14,7 @@
 구글 시트 ── api/ (Apps Script, 연결 키 필요) ── docs/ 앱 (PC·아이폰·아이패드)
                  └── GitHub 자동화: 새 단어 → Kokoro 음성 → docs/audio
 ```
-- 목소리: 미국 Fenrir·Puck·Liam·Adam, 영국 Daniel (Kokoro, 오픈 소스, GitHub 서버 안에서 생성). 앱의 목소리 칸에서 선택
+- 목소리: 미국 Adam(기본)·Fenrir·Puck·Liam, 영국 Daniel (Kokoro, 오픈 소스, GitHub 서버 안에서 생성). 앱의 목소리 칸에서 선택
 - 파일이 아직 없는 단어는 기기 남성 음성으로 임시 재생
 
 ## GitHub 설정 (처음 1회)

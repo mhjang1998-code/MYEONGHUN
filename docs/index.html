@@ -256,8 +256,8 @@ function startApp(boot){
   // Kokoro MP3s from docs/audio, made by scripts/make_audio.py; file name = sha1(voice|text)[:20], same rule as there.
   // Listed in the order files are made; the first voice per accent is the automatic choice. Must match VOICES in scripts/make_audio.py.
   const FILE_VOICES=[
-    {id:'kokoro-am_fenrir',name:'Fenrir',accent:'en-US'},{id:'kokoro-am_puck',name:'Puck',accent:'en-US'},
-    {id:'kokoro-am_liam',name:'Liam',accent:'en-US'},{id:'kokoro-am_adam',name:'Adam',accent:'en-US'},
+    {id:'kokoro-am_adam',name:'Adam',accent:'en-US'},{id:'kokoro-am_fenrir',name:'Fenrir',accent:'en-US'},
+    {id:'kokoro-am_puck',name:'Puck',accent:'en-US'},{id:'kokoro-am_liam',name:'Liam',accent:'en-US'},
     {id:'kokoro-bm_daniel',name:'Daniel',accent:'en-GB'}
   ];
   const fileIds=new Map();let audioFiles={},audioPlayer=null;
