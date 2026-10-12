@@ -56,7 +56,7 @@ async function open(voices, preferences = {}) {
     window.google = { script: { run: runner() } };
   }, voices);
   await page.goto('file://' + file);
-  await page.waitForSelector('.speech-control');
+  await page.waitForSelector('.reader .speech-control');
   return page;
 }
 const log = page => page.evaluate(() => window.speechLog);
@@ -186,5 +186,25 @@ test('preview button plays a sample with that voice', async () => {
   await page.waitForTimeout(50);
   const { spoken } = await log(page);
   assert.strictEqual(spoken.at(-1).voice, 'Nathan');
+  await page.close();
+});
+
+test('a voice not recognised as male can be previewed and added by the user', async () => {
+  const voices = [{ name: 'Samantha', lang: 'en-US' }, { name: 'Siri Voice 4', lang: 'en-US' }];
+  let page = await open(voices);
+  assert.deepStrictEqual(await options(page), ['사용 가능한 미국식 남성 음성이 없습니다']);
+  await page.click('.voice-row:has-text("Siri Voice 4") >> text=들어보기');
+  await page.waitForTimeout(50);
+  assert.strictEqual((await log(page)).spoken.at(-1).voice, 'Siri Voice 4');
+  await page.click('.voice-row:has-text("Siri Voice 4") >> text=추가');
+  assert.deepStrictEqual((await options(page)).slice(1), ['Siri Voice 4 · en-US']);
+  await page.waitForTimeout(100);
+  const saved = (await log(page)).saved.at(-1);
+  assert.deepStrictEqual(saved.audio.extra, ['Siri Voice 4']);
+  await page.close();
+  page = await open(voices, saved);
+  await page.click('text=발음 듣기');
+  await page.waitForTimeout(150);
+  assert.strictEqual((await log(page)).spoken[0].voice, 'Siri Voice 4');
   await page.close();
 });

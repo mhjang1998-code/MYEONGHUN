@@ -69,7 +69,7 @@
     .speak-button svg { width:18px; height:18px; } .reader { max-width:600px; margin:24px auto; } .reader .term { margin:24px 0; }
     .speech-controls { display:flex; flex-wrap:wrap; gap:8px; }
     .voice-manager { display:grid; gap:4px; margin-top:12px; } .voice-row { display:flex; align-items:center; justify-content:space-between; gap:8px; border-top:1px solid #e2e9e6; padding-top:4px; }
-    .voice-row label { display:flex; align-items:center; gap:8px; font-weight:400; font-size:14px; color:#19262b; min-width:0; overflow-wrap:anywhere; } .voice-row input { width:20px; min-height:20px; margin:0; accent-color:#176f65; flex:none; } .voice-row button { flex:none; font-size:13px; color:#176f65; }
+    .voice-row label { display:flex; align-items:center; gap:8px; font-weight:400; font-size:14px; color:#19262b; min-width:0; overflow-wrap:anywhere; } .voice-row input { width:20px; min-height:20px; margin:0; accent-color:#176f65; flex:none; } .voice-more summary { font-size:13px; color:#176f65; } .voice-row .speech-controls { flex:none; } .voice-row button { flex:none; font-size:13px; color:#176f65; }
     .list-footer { display:flex; justify-content:center; padding:20px 0 4px; }
     .back-to-top { display:inline-flex; align-items:center; justify-content:center; gap:8px; min-width:140px; color:#176f65; }
     .back-to-top svg { width:18px; height:18px; }
@@ -134,7 +134,9 @@
   preferences.books=preferences.books||{};
   const voiceChoice={id:preferences.audio&&preferences.audio.voice||'',name:preferences.audio&&preferences.audio.voiceName||'',lang:preferences.audio&&preferences.audio.voiceLang||''};
   const hiddenVoices=new Set(preferences.audio&&Array.isArray(preferences.audio.hidden)?preferences.audio.hidden:[]);
-  function audioPreferences(){return {accent:$('speechAccent').value,rate:$('speechRate').value,voice:voiceChoice.id,voiceName:voiceChoice.name,voiceLang:voiceChoice.lang,hidden:[...hiddenVoices]};}
+  // Voices the user added as male because the name was not recognised (iOS names vary by version).
+  const extraVoices=new Set(preferences.audio&&Array.isArray(preferences.audio.extra)?preferences.audio.extra:[]);
+  function audioPreferences(){return {accent:$('speechAccent').value,rate:$('speechRate').value,voice:voiceChoice.id,voiceName:voiceChoice.name,voiceLang:voiceChoice.lang,hidden:[...hiddenVoices],extra:[...extraVoices]};}
   function persistPreferences(){
     preferences.updated=Date.now();
     try{window.localStorage.setItem(preferenceKey,JSON.stringify(preferences));}catch(error){}
@@ -198,7 +200,7 @@
   const langOf=voice=>voice.lang.replace('_','-').toLowerCase();
   // Apple novelty voices (Fred, Ralph, Zarvox...) sound robotic, so they are never offered.
   const noveltyVoices=/^(fred|ralph|albert|junior|zarvox|trinoids|whisper|wobble|bahh|bells|boing|bubbles|cellos|jester|organ|superstar|grandpa|bad news|good news)\b/;
-  function maleVoice(voice){return !/female|woman/.test(voiceText(voice))&&!noveltyVoices.test(voice.name.toLowerCase())&&maleRank(voice)>=0;}
+  function maleVoice(voice){if(extraVoices.has(voice.name))return true;return !/female|woman/.test(voiceText(voice))&&!noveltyVoices.test(voice.name.toLowerCase())&&maleRank(voice)>=0;}
   // Male voices for the accent the user has not hidden in 발음 설정.
   function deviceMaleVoices(accent){return orderedMaleVoices(speechVoices.filter(v=>langOf(v)===accent.toLowerCase()));}
   function shownMaleVoices(accent){return deviceMaleVoices(accent).filter(v=>!hiddenVoices.has(v.name));}
@@ -207,8 +209,20 @@
     utter.voice=voice;utter.lang=voice.lang;utter.rate=Number($('speechRate').value)||1;utter.pitch=0.85;spokenKey='preview';
     utter.onend=()=>{if(spokenKey==='preview'){spokenKey='';speechMessage('');}};speechMessage('미리 듣기 · '+voice.name);window.speechSynthesis.speak(utter);
   }
-  function voiceManager(all){
-    const box=$('voiceManager');box.replaceChildren();if(!all.length)return;
+  function voiceManager(all,others,total){
+    const box=$('voiceManager');box.replaceChildren();
+    box.append(el('div','meta','이 브라우저가 찾은 음성 '+total+'개 · 남성 '+all.length+'개'));
+    if(others.length){
+      const more=el('details','voice-more');more.open=!all.length;
+      more.append(el('summary','','남성으로 인식되지 않은 영어 음성 '+others.length+'개 · 들어보고 추가'));
+      others.forEach(v=>{
+        const row=el('div','voice-row'),actions=el('div','speech-controls');
+        actions.append(button('들어보기',()=>previewVoice(v),'speech-control'),button('추가',()=>{extraVoices.add(v.name);hiddenVoices.delete(v.name);voiceOptions();rememberAudio();}));
+        row.append(el('span','',v.name),actions);more.append(row);
+      });
+      box.append(more);
+    }
+    if(!all.length)return;
     box.append(el('div','meta','목록에 보일 목소리 · 체크한 것 중 최대 3개'));
     all.forEach(v=>{
       const row=el('div','voice-row'),label=el('label'),input=el('input');input.type='checkbox';input.checked=!hiddenVoices.has(v.name);
@@ -222,7 +236,8 @@
     const select=$('speechVoice'),accent=$('speechAccent').value,region=accent==='en-US'?'미국식':'영국식';
     if(!speechSupported){select.replaceChildren(new Option('음성 읽기 미지원 브라우저',''));return;}
     speechVoices=window.speechSynthesis.getVoices();
-    const all=deviceMaleVoices(accent),candidates=all.filter(v=>!hiddenVoices.has(v.name));voiceManager(all);
+    const all=deviceMaleVoices(accent),candidates=all.filter(v=>!hiddenVoices.has(v.name));
+    voiceManager(all,speechVoices.filter(v=>langOf(v)===accent.toLowerCase()&&!maleVoice(v)),speechVoices.length);
     select.replaceChildren(new Option(candidates.length?region+' 남성 음성 자동':all.length?'선택한 목소리가 없습니다 · 발음 설정에서 체크':'사용 가능한 '+region+' 남성 음성이 없습니다',''));
     candidates.slice(0,3).forEach(v=>select.add(new Option(v.name+' · '+v.lang,v.voiceURI||v.name)));
     const saved=selectedVoice(),available=saved&&candidates.some(v=>(v.voiceURI||v.name)===(saved.voiceURI||saved.name));
@@ -245,7 +260,7 @@
     // Never fall back to a female or other-accent voice; a choice saved on another device falls back to this device's male voice.
     const voice=chosen||candidates[0];
     if(!voice&&deviceMaleVoices(accent).length){speechMessage('목록에 보일 목소리를 발음 설정에서 하나 이상 체크해 주세요.',true);$('audioSettings').open=true;return;}
-    if(!voice){speechMessage('사용 가능한 '+region+' 남성 음성이 없습니다. 기기 설정에서 영어('+(accent==='en-US'?'미국':'영국')+') 남성 음성을 내려받아 주세요.',true);return;}
+    if(!voice){voiceOptions();$('audioSettings').open=true;speechMessage('사용 가능한 '+region+' 남성 음성이 없습니다. 발음 설정 아래 목록에서 들어보고 원하는 목소리를 추가하거나, 기기 설정에서 영어('+(accent==='en-US'?'미국':'영국')+') 남성 음성을 내려받아 주세요.',true);return;}
     const voiceLabel=voice.name+(voiceChoice.id&&!chosen?' (저장한 목소리가 이 기기에 없음)':'');
     spokenKey=key(card);spokenRepeats=repeats;let index=0,round=1;
     function next(){
@@ -513,6 +528,8 @@
   if(preferences.book==='paper')$('bookSelect').value='paper';
   if(preferences.audio){$('speechAccent').value=preferences.audio.accent||'en-US';$('speechRate').value=preferences.audio.rate||'1';}
   voiceOptions();if(speechSupported&&window.speechSynthesis.addEventListener)window.speechSynthesis.addEventListener('voiceschanged',voiceOptions);
+  // iOS Safari can report no voices at first and skip voiceschanged, so re-check for a few seconds.
+  if(speechSupported){let tries=0;const poll=setInterval(()=>{const count=window.speechSynthesis.getVoices().length;if(count!==speechVoices.length)voiceOptions();if(count||++tries>20)clearInterval(poll);},300);}
   if(typeof google!=='undefined'&&google.script&&google.script.run){if(boot&&boot.listen)reader();else load();}else notice('학습장 연결을 확인할 수 없습니다.',true);
 </script>
 </body>
