@@ -16,8 +16,8 @@ import sys
 import tempfile
 import urllib.request
 
-# Must match FILE_VOICES in docs/index.html.
-VOICES = {'en-US': ('am_michael', 'en-us'), 'en-GB': ('bm_george', 'en-gb')}
+# Must match FILE_VOICES in docs/index.html. Files are made in this order, so the first voice is ready first.
+VOICES = [('am_fenrir', 'en-us'), ('am_puck', 'en-us'), ('am_liam', 'en-us'), ('am_adam', 'en-us'), ('bm_daniel', 'en-gb')]
 OUT = os.path.join('docs', 'audio')
 MANIFEST = os.path.join(OUT, 'manifest.json')
 MODEL_DIR = os.environ.get('KOKORO_DIR', 'kokoro-model')
@@ -49,8 +49,8 @@ def fetch_texts():
 def missing_files(texts):
     existing = {name[:-4] for name in os.listdir(OUT) if name.endswith('.mp3')} if os.path.isdir(OUT) else set()
     todo = {}
-    for text in texts:
-        for voice, lang in VOICES.values():
+    for voice, lang in VOICES:
+        for text in texts:
             file_id = audio_id(voice, text)
             if file_id not in existing:
                 todo.setdefault(file_id, (voice, lang, text))
@@ -70,7 +70,7 @@ def self_test():
     import soundfile
     from kokoro_onnx import Kokoro
     kokoro = Kokoro(os.path.join(MODEL_DIR, 'kokoro-v1.0.int8.onnx'), os.path.join(MODEL_DIR, 'voices-v1.0.bin'))
-    for voice, lang in VOICES.values():
+    for voice, lang in VOICES[:1] + VOICES[-1:]:
         samples, rate = kokoro.create('Compost maturity was evaluated.', voice=voice, speed=1.0, lang=lang)
         print(f'self-test {voice}: {len(samples) / rate:.2f}s of audio')
     write_output(changed='false')
@@ -115,12 +115,12 @@ def main():
     print(f'made {made}, failed {failed}, left for next run {max(0, len(todo) - made - failed)}')
 
     # Keep only files for the current voices and texts (e.g. after a word is edited or deleted).
-    wanted = {audio_id(voice, text) for text in texts for voice, _ in VOICES.values()}
+    wanted = {audio_id(voice, text) for text in texts for voice, _ in VOICES}
     for file_id in existing - wanted:
         os.remove(os.path.join(OUT, file_id + '.mp3'))
-    files = {name: sorted(audio_id(voice, t) for t in set(texts) if audio_id(voice, t) in existing)
-             for name, (voice, _) in VOICES.items()}
-    manifest = {'voices': {name: 'kokoro-' + VOICES[name][0] for name in VOICES}, 'files': files}
+    files = {'kokoro-' + voice: sorted(audio_id(voice, t) for t in set(texts) if audio_id(voice, t) in existing)
+             for voice, _ in VOICES}
+    manifest = {'files': files}
     with open(MANIFEST, 'w') as handle:
         json.dump(manifest, handle, separators=(',', ':'))
     write_output(changed='true')

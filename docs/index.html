@@ -235,39 +235,55 @@ function startApp(boot){
   function selectedVoice(){return speechVoices.find(v=>(v.voiceURI||v.name)===voiceChoice.id)||speechVoices.find(v=>voiceChoice.name&&v.name===voiceChoice.name&&v.lang===voiceChoice.lang);}
   function voiceOptions(){
     const select=$('speechVoice'),accent=$('speechAccent').value,region=accent==='en-US'?'미국식':'영국식';
-    if(!speechSupported){select.replaceChildren(new Option(hasFiles(accent)?fileVoice(accent).name+' · 모든 기기 같은 목소리 (자동)':'음성 읽기 미지원 브라우저',''));return;}
+    const files=accentFileVoices(accent),ready=files.filter(fileCount);
+    const addFileOptions=()=>files.forEach(v=>select.add(new Option(v.name+' · 모든 기기 같은 목소리'+(fileCount(v)?'':' (만드는 중)'),'file:'+v.id)));
+    if(!speechSupported){select.replaceChildren(new Option(ready.length?ready[0].name+' · 모든 기기 같은 목소리 (자동)':'음성 읽기 미지원 브라우저',''));addFileOptions();select.value=chosenFileVoice()?voiceChoice.id:'';return;}
     speechVoices=window.speechSynthesis.getVoices();
     const all=deviceMaleVoices(accent),candidates=all.filter(v=>!hiddenVoices.has(v.name));
     voiceManager(all,speechVoices.filter(v=>langOf(v)===accent.toLowerCase()&&!maleVoice(v)),speechVoices.length);
-    select.replaceChildren(new Option(hasFiles(accent)?fileVoice(accent).name+' · 모든 기기 같은 목소리 (자동)':candidates.length?region+' 남성 음성 자동':all.length?'선택한 목소리가 없습니다 · 발음 설정에서 체크':'사용 가능한 '+region+' 남성 음성이 없습니다',''));
-    candidates.slice(0,3).forEach(v=>select.add(new Option(v.name+' · '+v.lang,v.voiceURI||v.name)));
+    select.replaceChildren(new Option(ready.length?ready[0].name+' · 모든 기기 같은 목소리 (자동)':candidates.length?region+' 남성 음성 자동':all.length?'선택한 목소리가 없습니다 · 발음 설정에서 체크':'사용 가능한 '+region+' 남성 음성이 없습니다',''));
+    addFileOptions();
+    candidates.slice(0,3).forEach(v=>select.add(new Option(v.name+' · '+v.lang+' · 이 기기 음성',v.voiceURI||v.name)));
     const saved=selectedVoice(),available=saved&&candidates.some(v=>(v.voiceURI||v.name)===(saved.voiceURI||saved.name));
-    if(voiceChoice.id){
+    const picked=chosenFileVoice();
+    if(picked){if(picked.accent===accent)select.value=voiceChoice.id;else{select.add(new Option(picked.name+' · '+(picked.accent==='en-US'?'미국식':'영국식')+' 목소리',voiceChoice.id));select.value=voiceChoice.id;}}
+    else if(voiceChoice.id){
       if(available)select.value=saved.voiceURI||saved.name;
       else {select.add(new Option((voiceChoice.name||voiceChoice.id)+' · 이 기기에서 사용할 수 없음',voiceChoice.id));select.value=voiceChoice.id;}
     }else select.value='';
   }
   function speechMessage(text,error=false){$('speechStatus').textContent=text;$('speechStatus').classList.toggle('error',error);}
   // Kokoro MP3s from docs/audio, made by scripts/make_audio.py; file name = sha1(voice|text)[:20], same rule as there.
-  const FILE_VOICES={'en-US':{id:'kokoro-am_michael',name:'Michael'},'en-GB':{id:'kokoro-bm_george',name:'George'}};
+  // Listed in the order files are made; the first voice per accent is the automatic choice. Must match VOICES in scripts/make_audio.py.
+  const FILE_VOICES=[
+    {id:'kokoro-am_fenrir',name:'Fenrir',accent:'en-US'},{id:'kokoro-am_puck',name:'Puck',accent:'en-US'},
+    {id:'kokoro-am_liam',name:'Liam',accent:'en-US'},{id:'kokoro-am_adam',name:'Adam',accent:'en-US'},
+    {id:'kokoro-bm_daniel',name:'Daniel',accent:'en-GB'}
+  ];
   const fileIds=new Map();let audioFiles={},audioPlayer=null;
   const fileText=text=>String(text||'').replace(/\s+/g,' ').trim();
-  const fileVoice=accent=>FILE_VOICES[accent];
-  const hasFiles=accent=>!!(audioFiles[accent]&&audioFiles[accent].size);
+  const fileCount=voice=>audioFiles[voice.id]?audioFiles[voice.id].size:0;
+  const accentFileVoices=accent=>FILE_VOICES.filter(v=>v.accent===accent);
+  const chosenFileVoice=()=>FILE_VOICES.find(v=>'file:'+v.id===voiceChoice.id);
   async function prepareAudio(cards){
     if(!window.crypto||!crypto.subtle)return;
-    for(const card of cards)for(const accent of Object.keys(FILE_VOICES)){
-      const text=fileText(card.english),id=accent+'|'+text;if(!text||fileIds.has(id))continue;
-      const digest=await crypto.subtle.digest('SHA-1',new TextEncoder().encode(FILE_VOICES[accent].id+'|'+text));
+    for(const card of cards)for(const voice of FILE_VOICES){
+      const text=fileText(card.english),id=voice.id+'|'+text;if(!text||fileIds.has(id))continue;
+      const digest=await crypto.subtle.digest('SHA-1',new TextEncoder().encode(id));
       fileIds.set(id,[...new Uint8Array(digest)].map(b=>b.toString(16).padStart(2,'0')).join('').slice(0,20));
     }
   }
   function loadAudioFiles(){
     fetch('audio/manifest.json?'+Date.now()).then(r=>r.ok?r.json():{}).then(m=>{
-      audioFiles={};Object.keys(FILE_VOICES).forEach(a=>{if(m.voices&&m.voices[a]===FILE_VOICES[a].id)audioFiles[a]=new Set(m.files&&m.files[a]||[]);});voiceOptions();
+      audioFiles={};FILE_VOICES.forEach(v=>{audioFiles[v.id]=new Set(m.files&&m.files[v.id]||[]);});voiceOptions();
     }).catch(()=>{});
   }
-  function audioFileId(text,accent){const id=fileIds.get(accent+'|'+fileText(text));return id&&audioFiles[accent]&&audioFiles[accent].has(id)?id:'';}
+  // File voice to use for this text: the one picked in 목소리, or the first available for the accent when 자동.
+  function fileFor(text,accent){
+    const picked=chosenFileVoice(),pool=picked?[picked]:voiceChoice.id?[]:accentFileVoices(accent);
+    for(const voice of pool){const id=fileIds.get(voice.id+'|'+fileText(text));if(id&&audioFiles[voice.id]&&audioFiles[voice.id].has(id))return {id,voice};}
+    return null;
+  }
   function fileSpeak(card,id,repeats,rate,voiceName){
     const token=speechToken,player=audioPlayer||(audioPlayer=new Audio());let round=1;
     spokenKey=key(card);spokenRepeats=repeats;player.src='audio/'+id+'.mp3';player.defaultPlaybackRate=rate;player.preservesPitch=true;
@@ -289,8 +305,8 @@ function startApp(boot){
   function speak(card,repeats=1){
     if(spokenKey===key(card)&&spokenRepeats===repeats){stopSpeech();return;}
     stopSpeech();const text=String(card.english||'').trim();if(!text){speechMessage('읽을 영어가 없습니다.',true);return;}
-    const fileAccent=$('speechAccent').value,fileId=!voiceChoice.id?audioFileId(text,fileAccent):'';
-    if(fileId){fileSpeak(card,fileId,repeats,Number($('speechRate').value)||1,fileVoice(fileAccent).name);return;}
+    const file=fileFor(text,$('speechAccent').value);
+    if(file){fileSpeak(card,file.id,repeats,Number($('speechRate').value)||1,file.voice.name);return;}
     if(!speechSupported){speechMessage('이 브라우저는 음성 읽기를 지원하지 않습니다. Safari 또는 Chrome에서 열어 주세요.',true);return;}
     const token=speechToken,parts=speechChunks(text),accent=$('speechAccent').value,rate=Number($('speechRate').value)||1,region=accent==='en-US'?'미국식':'영국식';
     speechVoices=window.speechSynthesis.getVoices();
@@ -300,7 +316,7 @@ function startApp(boot){
     const voice=chosen||candidates[0];
     if(!voice&&deviceMaleVoices(accent).length){speechMessage('목록에 보일 목소리를 발음 설정에서 하나 이상 체크해 주세요.',true);$('audioSettings').open=true;return;}
     if(!voice){voiceOptions();$('audioSettings').open=true;speechMessage('사용 가능한 '+region+' 남성 음성이 없습니다. 발음 설정 아래 목록에서 들어보고 원하는 목소리를 추가하거나, 기기 설정에서 영어('+(accent==='en-US'?'미국':'영국')+') 남성 음성을 내려받아 주세요.',true);return;}
-    const voiceLabel=voice.name+(voiceChoice.id&&!chosen?' (저장한 목소리가 이 기기에 없음)':'');
+    const voiceLabel=voice.name+(chosenFileVoice()?' (선택한 목소리 파일을 만드는 중)':voiceChoice.id&&!chosen?' (저장한 목소리가 이 기기에 없음)':'');
     spokenKey=key(card);spokenRepeats=repeats;let index=0,round=1;
     function next(){
       if(token!==speechToken)return;
