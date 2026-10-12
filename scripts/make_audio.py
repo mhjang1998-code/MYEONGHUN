@@ -61,8 +61,8 @@ def fetch_texts():
         # Not JSON: usually a Google error or sign-in page. Show where it came from and how it starts.
         text = re.sub(r'\s+', ' ', re.sub(r'<[^>]+>', ' ', raw)).strip()
         sys.exit(f'API did not return JSON (from {final_url.split("?")[0]}): {text[:300]}')
-    if not data.get('ok'):
-        sys.exit('API error: ' + str(data.get('error')))
+    if not data.get('ok') or not isinstance(data.get('result'), list):
+        sys.exit('API error: ' + str(data.get('error') or 'no word list in the response (is Api.gs up to date?)'))
     return [normalize(t) for t in data['result'] if normalize(t)]
 
 
