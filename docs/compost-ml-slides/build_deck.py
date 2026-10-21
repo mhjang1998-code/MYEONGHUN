@@ -1,115 +1,97 @@
-"""Merge the numbered slide files (NN-*.html) into one presentation, deck.html.
+"""Build deck.html: one self-contained presentation from slides/NN-*.html.
 
-Each slide file is self-contained so it can be studied alone. This script keeps the
-shared <style> once, keeps each slide's own <style>/<section>/<aside>/<script>, scopes
-document.querySelectorAll to the slide, and renames the per-slide notes ids.
+Each slide fragment holds its own <style>, one <section class="page">, and a
+<script> that calls DECK.register(). The build wraps them in the shared engine
+(engine/engine.css, engine/engine.js) and embeds a Pretendard subset that holds
+only the glyphs the deck uses, so the file works offline.
 
-Usage: python3 build_deck.py
+Usage: python3 build_deck.py        (needs: pip install fonttools brotli)
 """
+import base64
 import glob
+import io
 import os
 import re
 
+from fontTools import subset
+from fontTools.ttLib import TTFont
+
 HERE = os.path.dirname(os.path.abspath(__file__))
-SHARED_IDS = ("notesBtn", "notes")
+FONTS = [("Regular", 400), ("Medium", 500), ("Bold", 700)]
 
 
-def split_slide(path):
-    text = open(path, encoding="utf-8").read()
-    styles = re.findall(r"<style>(.*?)</style>", text, flags=re.S)
-    shared, own = styles[0], styles[1:]
-    body = re.sub(r"<style>.*?</style>", "", text, flags=re.S)
-    body = re.sub(r"<(title|meta|link)[^>]*>(?:[^<]*</title>)?\s*", "", body)
-    return shared, own, body.strip()
+def read(*parts):
+    return open(os.path.join(HERE, *parts), encoding="utf-8").read()
 
 
-def scope(body, n):
-    for i in SHARED_IDS:
-        body = body.replace(f'id="{i}"', f'id="{i}-{n}"').replace(f"getElementById('{i}')", f"getElementById('{i}-{n}')")
-    body = body.replace("document.querySelectorAll(", "ROOT.querySelectorAll(")
-    body = body.replace("<script>\n(() => {", f"<script>\n(() => {{ const ROOT = document.getElementById('slide-{n}');", 1)
-    # notes toggle: only the visible slide reacts to N
-    body = body.replace("if ((e.key==='n'||e.key==='N')", "if (ROOT.hidden) return; if ((e.key==='n'||e.key==='N')")
-    return body
+def split_fragment(text):
+    styles = "\n".join(re.findall(r"<style>(.*?)</style>", text, flags=re.S))
+    scripts = "\n".join(re.findall(r"<script>(.*?)</script>", text, flags=re.S))
+    markup = re.sub(r"<(style|script)>.*?</\1>", "", text, flags=re.S).strip()
+    return styles, markup, scripts
+
+
+def font_faces(text):
+    chars = set(text) | set(chr(c) for c in range(0x20, 0x7F)) | set("−±×÷·…“”‘’℃℉²³₀₁₂₃₄⁺⁻→←↔›‹")
+    unicodes = sorted(ord(c) for c in chars if ord(c) > 0x1F)
+    faces = []
+    for name, weight in FONTS:
+        font = TTFont(os.path.join(HERE, "assets", "fonts", f"Pretendard-{name}.woff2"))
+        opts = subset.Options()
+        opts.flavor = "woff2"
+        opts.layout_features = ["*"]
+        sub = subset.Subsetter(opts)
+        sub.populate(unicodes=unicodes)
+        sub.subset(font)
+        buf = io.BytesIO()
+        font.flavor = "woff2"
+        font.save(buf)
+        b64 = base64.b64encode(buf.getvalue()).decode()
+        faces.append(f'@font-face{{font-family:"Pretendard";font-weight:{weight};font-display:block;'
+                     f'src:url(data:font/woff2;base64,{b64}) format("woff2")}}')
+    return "\n".join(faces)
+
+
+CHROME = """
+<nav id="nav" aria-label="쪽 이동">
+  <button class="btn" id="prev">‹ 이전</button><button class="btn" id="ovbtn">쪽 목록</button><button class="btn" id="next">다음 ›</button>
+</nav>
+<div id="scrim"></div>
+<aside id="drawer" tabindex="-1" aria-label="상세 내용">
+  <header>
+    <div class="dt" id="dtitle"></div>
+    <button class="btn x" id="dclose" aria-label="닫기">닫기 ✕</button>
+    <div id="tabs" role="tablist">
+      <button role="tab" data-tab="detail">내역</button><button role="tab" data-tab="source">출처와 전제</button><button role="tab" data-tab="notes">발표 메모</button>
+    </div>
+  </header>
+  <div id="dbody"></div>
+</aside>
+<div id="ov"><div class="ovh">쪽 목록 · 클릭하면 이동 (O / Esc 닫기)</div><div id="ovgrid"></div></div>
+"""
 
 
 def main():
-    files = sorted(f for f in glob.glob(os.path.join(HERE, "[0-9][0-9]-*.html")))
-    shared, own_styles, slides = None, [], []
+    files = sorted(glob.glob(os.path.join(HERE, "slides", "[0-9][0-9]-*.html")))
+    styles, markup, scripts = [], [], []
     for f in files:
-        n = os.path.basename(f)[:2]
-        s, own, body = split_slide(f)
-        shared = shared or s
-        own_styles += own
-        slides.append(f'<div class="deck-slide" id="slide-{n}" hidden>\n{scope(body, n)}\n</div>')
+        s, m, j = split_fragment(open(f, encoding="utf-8").read())
+        styles.append(s), markup.append(m), scripts.append(j)
 
-    head = open(files[0], encoding="utf-8").read()
-    fonts = re.findall(r"<(?:meta|link)[^>]*>", head)
+    body_text = "\n".join(markup + scripts)
     out = "\n".join([
         "<title>퇴비화 머신러닝 발표</title>",
-        *fonts,
-        f"<style>{shared}</style>",
-        *(f"<style>{s}</style>" for s in own_styles),
-        DECK_CSS,
-        *slides,
-        DECK_UI.replace("__TOTAL__", str(len(slides))),
+        '<meta name="description" content="Shi 2025 · Wang 2024 퇴비화 머신러닝 논문 용어 발표">',
+        f"<style>\n{font_faces(body_text + CHROME)}\n{read('engine', 'engine.css')}\n" + "\n".join(styles) + "\n</style>",
+        '<div id="stage">',
+        *markup,
+        CHROME,
+        "</div>",
+        f"<script>\n{read('engine', 'engine.js')}\n" + "\n".join(scripts) + "\nDECK.start();\n</script>",
     ])
     open(os.path.join(HERE, "deck.html"), "w", encoding="utf-8").write(out)
-    print(f"deck.html: {len(slides)} slides")
+    print(f"deck.html: {len(files)} pages, {len(out) / 1024:.0f} KB")
 
-
-DECK_CSS = """<style>
-body{padding-bottom:64px}
-.deck-bar{position:fixed;left:0;right:0;bottom:0;z-index:20;display:flex;justify-content:center;align-items:center;gap:10px;
-  padding:8px max(16px,env(safe-area-inset-right,0px)) calc(8px + env(safe-area-inset-bottom,0px)) max(16px,env(safe-area-inset-left,0px));
-  background:color-mix(in srgb,var(--bg) 88%,transparent);backdrop-filter:blur(6px);border-top:1px solid var(--line)}
-.deck-bar button{font:inherit;font-size:.85rem;border:1px solid var(--line);background:var(--paper);color:var(--ink);border-radius:8px;padding:6px 14px;cursor:pointer}
-.deck-bar button:hover{border-color:var(--accent)}
-.deck-bar button:disabled{opacity:.4;cursor:default}
-.deck-count{font-family:var(--mono);font-variant-numeric:tabular-nums;color:var(--muted);min-width:5ch;text-align:center}
-.deck-hint{font-size:.75rem;color:var(--muted)}
-@media (max-width:560px){.deck-hint{display:none}}
-:fullscreen body,body:fullscreen{overflow:auto}
-</style>"""
-
-DECK_UI = """<nav class="deck-bar" aria-label="슬라이드 넘기기">
-  <button id="deckPrev" aria-label="이전 슬라이드">← 이전</button>
-  <span class="deck-count" id="deckCount">1 / __TOTAL__</span>
-  <button id="deckNext" aria-label="다음 슬라이드">다음 →</button>
-  <button id="deckFull">전체화면 (F)</button>
-  <span class="deck-hint">←/→ 넘기기 · N 발표 메모</span>
-</nav>
-<script>
-(() => {
-  const slides = [...document.querySelectorAll('.deck-slide')];
-  const prev = document.getElementById('deckPrev'), next = document.getElementById('deckNext'), count = document.getElementById('deckCount');
-  let i = 0;
-  const fromHash = () => { const m = /^#s(\\d+)$/.exec(location.hash); return m ? Math.min(slides.length, Math.max(1, +m[1])) - 1 : 0; };
-  function show(k) {
-    i = Math.max(0, Math.min(slides.length - 1, k));
-    slides.forEach((s, j) => s.hidden = j !== i);
-    count.textContent = (i + 1) + ' / ' + slides.length;
-    prev.disabled = i === 0; next.disabled = i === slides.length - 1;
-    try { history.replaceState(null, '', '#s' + (i + 1)); } catch (e) {}
-    window.scrollTo(0, 0);
-  }
-  prev.addEventListener('click', () => show(i - 1));
-  next.addEventListener('click', () => show(i + 1));
-  const full = () => {
-    const d = document.documentElement;
-    if (document.fullscreenElement) document.exitFullscreen?.().catch(() => {});
-    else d.requestFullscreen?.().catch(() => {});
-  };
-  document.getElementById('deckFull').addEventListener('click', full);
-  document.addEventListener('keydown', e => {
-    if (e.target.closest('input, textarea, select')) return;
-    if (['ArrowRight', 'PageDown', ' '].includes(e.key)) { e.preventDefault(); show(i + 1); }
-    else if (['ArrowLeft', 'PageUp'].includes(e.key)) { e.preventDefault(); show(i - 1); }
-    else if (e.key === 'f' || e.key === 'F') full();
-  });
-  show(fromHash());
-})();
-</script>"""
 
 if __name__ == "__main__":
     main()

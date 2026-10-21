@@ -1,0 +1,118 @@
+<style>
+#p-tree .ph{display:flex;justify-content:space-between;align-items:center;gap:12px}
+#p-tree svg{width:100%;height:220px;display:block}
+#p-tree .mat{fill:var(--main)}
+#p-tree .imm{fill:var(--white);stroke:var(--main);stroke-width:3}
+#p-tree .c{transition:cx .45s var(--ease)}
+#p-tree .thr{stroke:var(--deep);stroke-width:3;stroke-dasharray:10 6;transition:x1 .45s var(--ease),x2 .45s var(--ease)}
+#p-tree .tl{fill:var(--deep);font-size:19px;font-weight:700}
+#p-tree .um{font-size:20px;font-weight:700;color:var(--deep)}
+#p-tree .cards{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
+#p-tree .card{border:1.5px solid var(--rule);padding:16px 18px;display:flex;flex-direction:column;gap:8px}
+#p-tree .card.ok{border-top:5px solid var(--main)}
+#p-tree .card.no{border-top:5px solid var(--gray)}
+#p-tree .card .n{font-size:22px;font-weight:700;color:var(--deep)}
+#p-tree .card .h{font-size:18px;color:var(--note)}
+#p-tree .card .v{font-size:20px;font-weight:700}
+#p-tree .card.ok .v{color:var(--main)}
+#p-tree .bars{display:grid;grid-template-columns:76px 1fr 64px;gap:10px 12px;align-items:center;font-size:19px}
+#p-tree .bars .b{height:24px}
+#p-tree .bars .b.t{background:var(--main)}
+#p-tree .bars .b.n{background:var(--t2)}
+#p-tree .bars .val{text-align:right;font-weight:700}
+#p-tree .lg{display:flex;gap:18px;font-size:16px;color:var(--note)}
+#p-tree .lg i{display:inline-block;width:14px;height:14px;margin-right:6px;vertical-align:-2px}
+</style>
+
+<section class="page" id="p-tree" data-sec="머신러닝 모델">
+  <div class="sec rv">머신러닝 모델 · Shi 2025 · Wang 2024</div>
+  <h1 class="hl rv" style="--d:80ms">트리는 값의 순서만 보므로 표준화가 거의 필요 없다</h1>
+  <p class="sub rv" style="--d:150ms">표준화가 꼭 필요한 건 거리를 재는 KNN과 S자 곡선을 쓰는 신경망. 단위를 바꿔도 트리의 나눔은 그대로다</p>
+
+  <div class="body">
+    <div class="left">
+      <div class="panel rv" style="--d:250ms">
+        <div class="ph"><h3>결정 트리의 질문 하나: “온도가 기준보다 높은가?”</h3>
+          <div class="row" id="tr-units"><button class="btn" data-u="C" aria-pressed="true">℃</button><button class="btn" data-u="F" aria-pressed="false">℉</button><button class="btn" data-u="Z" aria-pressed="false">표준화 Z</button></div></div>
+        <svg id="tr-svg" viewBox="0 0 1010 220" role="img" aria-label="온도 축 위의 퇴비 시료와 트리 기준선"></svg>
+        <div class="um" id="tr-msg"></div>
+      </div>
+      <div class="cards rv" style="--d:380ms">
+        <div class="card ok"><span class="n">트리 (RF·ET·XGB)</span><span class="h">기준선으로 나누기만 한다</span><span class="v">단위 바꿔도 결과 같음</span></div>
+        <div class="card no"><span class="n">KNN</span><span class="h">변수 차이로 거리를 잰다</span><span class="v">숫자 큰 변수가 독차지</span></div>
+        <div class="card no"><span class="n">신경망 (BPNN·MLP)</span><span class="h">입력 × 가중치 → S자 곡선</span><span class="v">큰 값이면 포화</span></div>
+      </div>
+    </div>
+
+    <aside class="side rv" style="--d:300ms">
+      <span class="lab">Shi 논문 · 데이터 184개 · 시험 R²</span>
+      <div class="big">0.937<small>RF</small></div>
+      <p>데이터가 적을 때는 트리 모델이 유리하다는 가설대로, 트리 계열이 신경망을 앞섰다.</p>
+      <div class="bars" id="tr-bars"></div>
+      <div class="lg"><span><i style="background:var(--main)"></i>트리 모델</span><span><i style="background:var(--t2)"></i>신경망</span></div>
+      <button class="btn more" data-drawer="detail">내역 보기 ›</button>
+    </aside>
+  </div>
+
+  <div class="note">수직선의 퇴비 8개는 예시 데이터(채운 원 = 부숙, 빈 원 = 미부숙) · 오른쪽 막대는 Shi 2025 3.2절 실제 값</div>
+  <div class="foot"><span>Shi et al. (2025) 2.2, 3.2 · Wang et al. (2024) 2.3</span><span class="pn"></span></div>
+
+  <template data-tab="detail">
+    <h4>두 모델 가족</h4>
+    <table class="tb"><thead><tr><th></th><th>트리 모델</th><th>신경망</th></tr></thead><tbody>
+      <tr><td>계산</td><td>“온도 &gt; 55℃?” 같은 질문으로 계속 둘로 나눔</td><td>입력 × 가중치를 더해 S자 곡선(활성화 함수) 통과, 여러 층 반복</td></tr>
+      <tr><td>보는 것</td><td>값의 순서</td><td>값의 크기</td></tr>
+      <tr class="k"><td>표준화</td><td>거의 필요 없음</td><td>꼭 필요</td></tr>
+      <tr><td>예</td><td>RF, ET, GBDT, XGB</td><td>BPNN, MLP</td></tr></tbody></table>
+    <h4>“거리를 잰다”는 말 (KNN)</h4>
+    <p>KNN은 새 퇴비와 가장 닮은 퇴비 k개를 찾아 다수결로 판정한다. 닮음은 변수 차이를 제곱해 더한 뒤 루트를 씌운 <b>거리</b>로 잰다. 그래서 숫자가 큰 변수가 거리를 독차지한다. Wang 논문은 부숙 판정에 KNN을 썼다(정확도 92%).</p>
+    <h4>과적합 신호</h4>
+    <p>Shi 논문 XGB는 학습 R² 0.999 → 시험 0.900. 학습 데이터를 외운 만큼 새 데이터에서 떨어졌다.</p>
+  </template>
+  <template data-tab="source">
+    <p><b>Shi 2025 시험 R²:</b> RF 0.937, ET 0.904, XGB 0.900, GBDT 0.777, BPNN 0.616, MLP 0.664 (3.2절). 학습 R²: RF 0.934, ET 0.961, XGB 0.999, GBDT 0.877, BPNN 0.735, MLP 0.661.</p>
+    <p><b>가설 (Shi 1장):</b> 결정 트리 계열은 작은 표본에 적합해 더 높은 정확도를 낼 것이다.</p>
+    <p><b>예시 데이터:</b> 수직선의 8개 시료 온도와 기준선 51℃, 표준화의 μ 50℃·σ 13℃는 설명용 값이다.</p>
+  </template>
+  <template data-tab="notes">
+    <ol><li>Q. 신경망·트리 모델이 뭐고, 왜 트리는 변수 크기 변환에 영향을 안 받나?</li>
+    <li>시연: ℃ → ℉ → Z를 눌러도 기준선이 같이 움직여 같은 퇴비들이 같은 쪽에 남는다.</li>
+    <li>“조기 포화”는 신경망에만 해당. Wang 논문의 표준화가 의미 있는 건 KNN 때문.</li></ol>
+  </template>
+</section>
+
+<script>
+DECK.register('p-tree', root => {
+  const temps = [28, 34, 41, 47, 55, 61, 66, 70], mature = [1, 1, 1, 1, 0, 0, 0, 0];
+  const THR = 51, MU = 50, SD = 13;
+  const conv = {C: t => t, F: t => t * 9 / 5 + 32, Z: t => (t - MU) / SD};
+  const lab = {C: v => v.toFixed(0) + '℃', F: v => v.toFixed(0) + '℉', Z: v => (v >= 0 ? '+' : '−') + Math.abs(v).toFixed(2)};
+  const svg = root.querySelector('#tr-svg'), NS = 'http://www.w3.org/2000/svg';
+  const el = (t, a) => { const e = document.createElementNS(NS, t); for (const k in a) e.setAttribute(k, a[k]); return e; };
+  const L = 40, R = 970, Y = 110;
+  svg.append(el('line', {x1: L, y1: Y, x2: R, y2: Y, class: 'ax'}));
+  const thr = el('line', {y1: 40, y2: 170, class: 'thr'}), tl = el('text', {y: 28, class: 'tl', 'text-anchor': 'middle'});
+  const lo = el('text', {x: L, y: 205, class: 'axl'}), hi = el('text', {x: R, y: 205, class: 'axl', 'text-anchor': 'end'});
+  const sl = el('text', {x: L, y: 160, class: 'axl'}), sr = el('text', {x: R, y: 160, class: 'axl', 'text-anchor': 'end'});
+  sl.textContent = '← 부숙 쪽'; sr.textContent = '미부숙 쪽 →';
+  svg.append(thr, tl, lo, hi, sl, sr);
+  const dots = temps.map((t, i) => { const c = el('circle', {cy: Y, r: 16, class: 'c ' + (mature[i] ? 'mat' : 'imm')}); svg.append(c); return c; });
+  const btns = [...root.querySelectorAll('#tr-units .btn')];
+  function draw(u) {
+    const a = conv[u](20), b = conv[u](75), sx = v => L + (v - a) / (b - a) * (R - L);
+    dots.forEach((d, i) => d.setAttribute('cx', sx(conv[u](temps[i]))));
+    const tv = conv[u](THR), x = sx(tv);
+    thr.setAttribute('x1', x); thr.setAttribute('x2', x); tl.setAttribute('x', x); tl.textContent = '기준선 ' + lab[u](tv);
+    lo.textContent = lab[u](a); hi.textContent = lab[u](b);
+    root.querySelector('#tr-msg').textContent = u === 'C' ? '단위를 바꿔 보자. 점들의 순서는 그대로다.'
+      : `기준선 숫자는 ${lab[u](tv)}로 바뀌었지만, 왼쪽 4개(부숙)와 오른쪽 4개(미부숙)는 그대로 나뉜다.`;
+    btns.forEach(o => o.setAttribute('aria-pressed', String(o.dataset.u === u)));
+  }
+  btns.forEach(o => o.addEventListener('click', () => draw(o.dataset.u)));
+  draw('C');
+
+  const R2 = [['RF', .937, 't'], ['ET', .904, 't'], ['XGB', .900, 't'], ['GBDT', .777, 't'], ['MLP', .664, 'n'], ['BPNN', .616, 'n']];
+  root.querySelector('#tr-bars').innerHTML = R2.map(([k, v, c], i) =>
+    `<span>${k}</span><div><div class="b ${c} grow" style="width:${v * 100}%;--d:${400 + i * 60}ms"></div></div><span class="val">${v.toFixed(3)}</span>`).join('');
+});
+</script>

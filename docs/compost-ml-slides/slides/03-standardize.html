@@ -1,0 +1,158 @@
+<style>
+#p-std .ph{display:flex;justify-content:space-between;align-items:center;gap:12px}
+#p-std .mini{width:auto;font-size:18px}
+#p-std .mini td,#p-std .mini th{padding:5px 14px}
+#p-std .two{display:grid;grid-template-columns:400px 1fr;gap:24px;align-items:start}
+#p-std .dist{display:grid;grid-template-columns:70px 1fr 80px;gap:10px 12px;align-items:center;font-size:18px}
+#p-std .bar{height:20px;display:flex;background:var(--g0)}
+#p-std .bph{background:var(--deep);transition:width .4s var(--ease)}
+#p-std .bnh{background:var(--t2);transition:width .4s var(--ease)}
+#p-std .dv{text-align:right;font-weight:700}
+#p-std .lg{display:flex;gap:18px;font-size:16px;color:var(--note)}
+#p-std .lg i{display:inline-block;width:14px;height:14px;margin-right:6px;vertical-align:-2px}
+#p-std .ans{font-size:20px;font-weight:700;color:var(--deep)}
+#p-std .ans b{color:var(--main)}
+#p-std svg{width:100%;height:170px;display:block}
+#p-std .curve{fill:none;stroke:var(--deep);stroke-width:3}
+#p-std .flat{fill:var(--g0)}
+#p-std .probe{fill:var(--main)}
+#p-std .tan{stroke:var(--main);stroke-width:3}
+#p-std .sat .probe{fill:var(--note)}
+#p-std .sat .tan{stroke:var(--note)}
+#p-std .sr{display:flex;gap:26px;font-size:19px;flex-wrap:wrap}
+#p-std .sr b{color:var(--deep)}
+#p-std .eqbig{font-size:40px;font-weight:700;color:var(--deep);letter-spacing:-.01em}
+</style>
+
+<section class="page" id="p-std" data-sec="데이터 전처리">
+  <div class="sec rv">데이터 전처리 · Wang 2024</div>
+  <h1 class="hl rv" style="--d:80ms">단위가 다른 변수는 표준화로 같은 잣대에 올린다</h1>
+  <p class="sub rv" style="--d:150ms">숫자가 큰 변수(NO₃⁻ 수천 mg/kg)가 작은 변수(통기량 0.1~1)를 덮지 않게 “평균에서 몇 칸”으로 바꾼다</p>
+
+  <div class="body">
+    <div class="left">
+      <div class="panel rv" style="--d:250ms">
+        <div class="ph"><h3>① 퇴비 A와 더 닮은 건 B일까, C일까? (거리로 비교)</h3>
+          <div class="row" id="std-mode"><button class="btn" data-m="raw" aria-pressed="true">원래 값</button><button class="btn" data-m="z" aria-pressed="false">표준화 후</button></div></div>
+        <div class="two">
+          <table class="tb mini"><thead><tr><th>퇴비</th><th>pH</th><th>NH₄⁺-N</th></tr></thead><tbody id="std-rows"></tbody></table>
+          <div style="display:flex;flex-direction:column;gap:12px">
+            <div class="dist">
+              <span>A↔B</span><div class="bar"><div class="bph" id="std-abp"></div><div class="bnh" id="std-abn"></div></div><span class="dv" id="std-abv"></span>
+              <span>A↔C</span><div class="bar"><div class="bph" id="std-acp"></div><div class="bnh" id="std-acn"></div></div><span class="dv" id="std-acv"></span>
+            </div>
+            <div class="lg"><span><i style="background:var(--deep)"></i>pH가 만든 거리</span><span><i style="background:var(--t2)"></i>NH₄⁺가 만든 거리</span></div>
+            <div class="ans" id="std-ans"></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="panel rv" style="--d:350ms">
+        <h3>② 신경망의 S자 곡선(활성화 함수)에 그대로 넣으면?</h3>
+        <svg id="std-sig" viewBox="0 0 1010 170" role="img" aria-label="시그모이드 활성화 함수와 입력값"></svg>
+        <div class="row" id="std-chips">
+          <button class="btn" data-x="-0.27" aria-pressed="true">표준화한 NH₄⁺ −0.27</button>
+          <button class="btn" data-x="7">pH 7 그대로</button>
+          <button class="btn" data-x="1200">NH₄⁺ 1200 그대로</button>
+        </div>
+        <div class="sr"><span>넣은 값 <b id="std-x"></b></span><span>출력 <b id="std-y"></b></span><span>기울기(학습 신호) <b id="std-g"></b></span><b id="std-msg"></b></div>
+      </div>
+    </div>
+
+    <aside class="side rv" style="--d:300ms">
+      <span class="lab">표준화 식 (Wang 식 1)</span>
+      <div class="eqbig">Z = (X − μ) ÷ σ</div>
+      <p>μ 평균, σ 표준편차. “평균에서 표준편차 몇 칸 떨어졌나”. <b>수능 표준점수와 같은 원리</b>다.</p>
+      <span class="lab">예: 평균 50℃, 표준편차 10℃일 때 65℃는</span>
+      <div class="big">1.5<small>Z</small></div>
+      <div class="callout"><b>μ, σ는 학습 데이터로만 구한다.</b> 시험 데이터의 평균까지 쓰면 시험지를 엿본 셈이 된다(데이터 누수).</div>
+      <button class="btn more" data-drawer="detail">내역 보기 ›</button>
+    </aside>
+  </div>
+
+  <div class="note">퇴비 A·B·C와 μ·σ는 예시 데이터 · pH 범위 4.09–9.59, NH₄⁺-N 0–16,358 mg/kg은 Shi 2025 데이터 범위</div>
+  <div class="foot"><span>Wang et al. (2024) 2.2 데이터 전처리, 식 (1) · Shi et al. (2025) 3.1</span><span class="pn"></span></div>
+
+  <template data-tab="detail">
+    <h4>문단 속 용어</h4>
+    <table class="tb"><tbody>
+      <tr><td><b>척도(scale)</b></td><td>숫자의 단위와 크기. 온도 20~70℃, 통기량 0.1~1 L/min/kg, NO₃⁻ 수십~수천 mg/kg</td></tr>
+      <tr><td><b>활성화 함수</b></td><td>신경망이 숫자를 0~1로 눌러 주는 S자 곡선</td></tr>
+      <tr class="k"><td>조기 포화</td><td>값이 너무 커서 곡선의 평평한 끝에 붙음 → 기울기 0 → 학습 신호 사라짐</td></tr>
+      <tr><td><b>수렴</b></td><td>학습을 반복해 정답 근처로 안정되는 것. 기울기가 0이면 멈춘다</td></tr>
+      <tr><td><b>StandardScaler</b></td><td>평균 0, 분산 1로 바꿔 주는 scikit-learn 도구</td></tr></tbody></table>
+    <h4>코드 순서 (데이터 누수 방지)</h4>
+    <div class="eq">scaler.fit(X_train) → transform(X_train), transform(X_test)</div>
+    <h4>⚠ 확인 필요</h4>
+    <p>“활성화 함수의 조기 포화”는 신경망에 해당하는 이유다. Wang 논문이 실제로 쓴 XGB·RF는 트리 모델이라 활성화 함수가 없고, 크기 변환에 결과가 거의 영향받지 않는다. 표준화가 실제로 의미 있는 모델은 거리를 재는 KNN이다(5장).</p>
+  </template>
+  <template data-tab="source">
+    <p><b>원문 (Wang 2024, 2.2):</b> 퇴비화 데이터 안의 값 차이가 매우 커서 활성화 함수의 조기 포화를 막기 위해 평균-분산 표준화(StandardScaler)를 수행했다. Z = (X − μ)/σ, μ와 σ는 학습 데이터의 평균과 표준편차.</p>
+    <p><b>예시 데이터:</b> 퇴비 A(pH 6.0, 1,200), B(9.0, 1,300), C(6.1, 2,500), μ(pH 7.5, NH₄⁺ 2,000), σ(1.2, 3,000)는 설명용 값이다.</p>
+  </template>
+  <template data-tab="notes">
+    <ol><li>Q. 표준화 문단이 용어부터 이해가 안 된다 → 핵심은 “단위가 다른 변수를 같은 잣대로 맞춘다”.</li>
+    <li>① 시연: 원래 값에서는 B가 가까워 보이지만, 표준화하면 pH 6 vs 9 차이가 드러나 C가 더 닮은 것으로 뒤집힌다.</li>
+    <li>② 시연: “NH₄⁺ 1200 그대로”를 누르면 출력이 1에 붙고 기울기가 0 → 조기 포화.</li>
+    <li>비유: 수능 표준점수. 공식이 똑같다.</li></ol>
+  </template>
+</section>
+
+<script>
+DECK.register('p-std', root => {
+  const MU = {ph: 7.5, nh: 2000}, SD = {ph: 1.2, nh: 3000};
+  const S = {A: {ph: 6.0, nh: 1200}, B: {ph: 9.0, nh: 1300}, C: {ph: 6.1, nh: 2500}};
+  const z = (v, k) => (v - MU[k]) / SD[k];
+  const $ = id => root.querySelector('#' + id);
+  const modeBtns = [...root.querySelectorAll('#std-mode .btn')];
+  let mode = 'raw';
+  function renderDist() {
+    const val = (s, k) => mode === 'raw' ? S[s][k] : z(S[s][k], k);
+    const fmt = (v, k) => mode === 'raw' ? (k === 'ph' ? v.toFixed(1) : v.toLocaleString()) : (v >= 0 ? '+' : '−') + Math.abs(v).toFixed(2);
+    $('std-rows').innerHTML = ['A', 'B', 'C'].map(s => `<tr><td>${s}</td><td>${fmt(val(s, 'ph'), 'ph')}</td><td>${fmt(val(s, 'nh'), 'nh')}</td></tr>`).join('');
+    const pair = (a, b) => { const dp = (val(a, 'ph') - val(b, 'ph')) ** 2, dn = (val(a, 'nh') - val(b, 'nh')) ** 2; return {dp, dn, d: Math.sqrt(dp + dn)}; };
+    const ab = pair('A', 'B'), ac = pair('A', 'C'), max = Math.max(ab.d, ac.d);
+    const paint = (p, id) => {
+      const w = p.d / max * 100, sp = p.dp / (p.dp + p.dn);
+      $(id + 'p').style.width = w * sp + '%'; $(id + 'n').style.width = w * (1 - sp) + '%';
+      $(id + 'v').textContent = mode === 'raw' ? p.d.toFixed(0) : p.d.toFixed(2);
+    };
+    paint(ab, 'std-ab'); paint(ac, 'std-ac');
+    $('std-ans').innerHTML = mode === 'raw' ? '원래 값: <b>B가 더 가깝다.</b> pH 6 vs 9 차이가 숫자가 작아 묻혔다.'
+      : '표준화 후: <b>C가 더 가깝다.</b> pH 차이가 제대로 반영돼 결론이 뒤집혔다.';
+    modeBtns.forEach(b => b.setAttribute('aria-pressed', String(b.dataset.m === mode)));
+  }
+  modeBtns.forEach(b => b.addEventListener('click', () => { mode = b.dataset.m; renderDist(); }));
+  renderDist();
+
+  const svg = $('std-sig'), NS = 'http://www.w3.org/2000/svg';
+  const L = 20, R = 990, T = 12, B = 140, XR = 8;
+  const el = (t, a) => { const e = document.createElementNS(NS, t); for (const k in a) e.setAttribute(k, a[k]); return e; };
+  const sx = x => L + (Math.max(-XR, Math.min(XR, x)) + XR) / (2 * XR) * (R - L), sy = y => B - y * (B - T);
+  const sig = x => 1 / (1 + Math.exp(-x));
+  svg.append(el('rect', {x: L, y: T, width: sx(-4) - L, height: B - T, class: 'flat'}), el('rect', {x: sx(4), y: T, width: R - sx(4), height: B - T, class: 'flat'}));
+  let d = ''; for (let x = -XR; x <= XR + 1e-9; x += 0.1) d += (d ? 'L' : 'M') + sx(x).toFixed(1) + ' ' + sy(sig(x)).toFixed(1);
+  svg.append(el('path', {d, class: 'curve'}), el('line', {x1: L, y1: B, x2: R, y2: B, class: 'ax'}));
+  [[L, '평평 = 포화', 'start'], [sx(0), '민감한 구간', 'middle'], [R, '평평 = 포화', 'end']].forEach(([x, t, a]) => {
+    const e = el('text', {x, y: B + 22, class: 'axl', 'text-anchor': a}); e.textContent = t; svg.append(e);
+  });
+  const g = el('g', {}), tan = el('line', {class: 'tan'}), probe = el('circle', {r: 10, class: 'probe'});
+  g.append(tan, probe); svg.append(g);
+  const chips = [...root.querySelectorAll('#std-chips .btn')];
+  function renderSig(x) {
+    const y = sig(x), gr = y * (1 - y), sat = gr < 0.01;
+    const px = sx(x), py = sy(y), slope = gr * (2 * XR / (R - L)) * (B - T);
+    probe.setAttribute('cx', px); probe.setAttribute('cy', py);
+    tan.setAttribute('x1', px - 90); tan.setAttribute('y1', py + 90 * slope); tan.setAttribute('x2', px + 90); tan.setAttribute('y2', py - 90 * slope);
+    g.classList.toggle('sat', sat);
+    $('std-x').textContent = Math.abs(x) >= 100 ? x.toLocaleString() : x.toFixed(2);
+    $('std-y').textContent = y.toFixed(4);
+    $('std-g').textContent = gr < 0.0001 ? '≈ 0' : gr.toFixed(4);
+    $('std-msg').textContent = sat ? '→ 학습 신호 없음 (포화)' : '→ 학습 잘 됨';
+  }
+  chips.forEach(c => c.addEventListener('click', () => {
+    chips.forEach(o => o.setAttribute('aria-pressed', String(o === c))); renderSig(+c.dataset.x);
+  }));
+  renderSig(-0.27);
+});
+</script>

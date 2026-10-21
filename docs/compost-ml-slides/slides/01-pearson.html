@@ -1,0 +1,131 @@
+<style>
+#p-pearson .read{display:flex;align-items:baseline;gap:22px}
+#p-pearson .rnum{font-size:72px;font-weight:700;color:var(--main);line-height:1;min-width:4.2ch;letter-spacing:-.02em}
+#p-pearson .verd{font-size:26px;font-weight:700;color:var(--deep)}
+#p-pearson .verd small{display:block;font-size:19px;font-weight:500;color:var(--note)}
+#p-pearson svg{width:1060px;height:380px;display:block}
+#p-pearson .pt{fill:var(--main);opacity:.72;transition:cx .35s var(--ease),cy .35s var(--ease)}
+#p-pearson .fit{stroke:var(--deep);stroke-width:2;stroke-dasharray:8 6;transition:all .35s var(--ease)}
+#p-pearson .scale{display:flex;justify-content:space-between;font-size:16px;color:var(--note)}
+#p-pearson .rng td:first-child{font-weight:700;color:var(--main);white-space:nowrap}
+</style>
+
+<section class="page" id="p-pearson" data-sec="데이터 전처리">
+  <div class="sec rv">데이터 전처리 · Wang 2024</div>
+  <h1 class="hl rv" style="--d:80ms">변수끼리 같은 정보가 겹치는지 r로 먼저 확인한다</h1>
+  <p class="sub rv" style="--d:150ms">피어슨 상관계수 r: 두 값이 직선으로 같이 움직이는 정도를 −1 ~ +1로 나타낸 값</p>
+
+  <div class="body">
+    <div class="left">
+      <div class="read rv" style="--d:250ms"><span class="rnum" id="pr-r">+0.75</span><span class="verd" id="pr-v">강한 양의 관계<small>하나가 오르면 다른 것도 오른다</small></span></div>
+      <svg id="pr-svg" viewBox="0 0 1060 380" role="img" aria-label="상관계수에 따른 산점도" class="rv" style="--d:320ms"></svg>
+      <div class="rv" style="--d:400ms">
+        <label for="pr-sl" class="cap">r 값 직접 바꿔 보기</label>
+        <input type="range" id="pr-sl" min="-1" max="1" step="0.01" value="0.75">
+        <div class="scale"><span>−1 반대로 움직임</span><span>0 관계 없음</span><span>+1 같이 움직임</span></div>
+      </div>
+      <div class="row rv" style="--d:460ms" id="pr-chips">
+        <button class="btn" data-r="0.75" data-x="퇴비화 기간" data-y="GI" aria-pressed="true">기간↔GI 0.75</button>
+        <button class="btn" data-r="-0.66" data-x="퇴비화 기간" data-y="온도">기간↔온도 −0.66</button>
+        <button class="btn" data-r="-0.42" data-x="C/N" data-y="함수율">C/N↔함수율 −0.42</button>
+        <button class="btn" data-r="-0.25" data-x="통기량" data-y="GWP">통기량↔GWP −0.25</button>
+        <button class="btn" data-curve="1" data-x="통기량" data-y="NH₃ 배출">곡선 관계 보기</button>
+      </div>
+    </div>
+
+    <aside class="side rv" style="--d:300ms">
+      <span class="lab">Wang 논문: 입력 변수끼리의 상관</span>
+      <div class="big">0.2~0.4<small>|r|</small></div>
+      <p>입력끼리 약하게만 얽혀 있다. <b>각 변수가 서로 다른 정보</b>를 가져오므로 모두 넣어도 된다.</p>
+      <table class="tb rng">
+        <tbody>
+          <tr><td>|r| &lt; 0.4</td><td>약함 · 중복 걱정 없음</td></tr>
+          <tr><td>0.4 ~ 0.7</td><td>중간</td></tr>
+          <tr class="k"><td>|r| &gt; 0.8</td><td>거의 같은 정보 · 중복 의심</td></tr>
+        </tbody>
+      </table>
+      <div class="callout"><b>r의 한계.</b> 직선 관계만 잡는다. “곡선 관계 보기”처럼 관계가 뚜렷해도 r ≈ 0이 나올 수 있어, 최종 중요도는 SHAP으로 다시 본다.</div>
+      <button class="btn more" data-drawer="detail">내역 보기 ›</button>
+    </aside>
+  </div>
+
+  <div class="note">산점도의 점은 해당 r 값이 나오도록 만든 예시 데이터 · 버튼의 r 값은 Wang 2024 Fig. 1a 상관행렬</div>
+  <div class="foot"><span>Wang et al. (2024) 2.2 데이터 전처리 · 3.1 Fig. 1a</span><span class="pn"></span></div>
+
+  <template data-tab="detail">
+    <h4>이 분석으로 확인한 두 가지</h4>
+    <table class="tb"><thead><tr><th>비교</th><th>목적</th><th>바라는 결과</th></tr></thead><tbody>
+      <tr><td>입력 ↔ 출력 (예: 온도 ↔ NH₃)</td><td>예측에 쓸모 있는 변수인가</td><td>어느 정도 관계 있음</td></tr>
+      <tr class="k"><td>입력 ↔ 입력 (예: C/N ↔ 함수율)</td><td>같은 정보가 겹치는가 (다중공선성)</td><td>관계가 약해야 좋음</td></tr></tbody></table>
+    <h4>비유: 키와 몸무게</h4>
+    <p>키와 몸무게는 거의 같이 움직인다(r ≈ 0.9). 둘 다 넣어도 정보는 사실상 하나라서, 모델이 “진짜 원인이 뭐지?” 하고 헷갈린다.</p>
+    <h4>예외: 시간</h4>
+    <p>Wang 논문에서 시간은 다른 변수와 상관이 높지만 뺄 수 없다. 퇴비화의 진행 자체를 나타내는 핵심 변수이기 때문이다(3.1절).</p>
+  </template>
+  <template data-tab="source">
+    <p><b>원문 (Wang 2024, 2.2):</b> 피어슨 상관분석으로 입력·출력 변수의 관계를 파악해 변수 선택의 예비 근거로 썼고, PCC 절댓값은 0.2~0.4로 변수 간 뚜렷한 중복이 없었다.</p>
+    <p><b>버튼 값:</b> Fig. 1a. 기간–GI 0.75, 기간–온도 −0.66, C/N–함수율 −0.42, 통기량–GWP −0.25.</p>
+    <p><b>예시 데이터:</b> 산점도의 70개 점과 “곡선 관계”는 원리 설명용으로 만든 값이다.</p>
+  </template>
+  <template data-tab="notes">
+    <ol><li>Q. “PCC 절댓값 0.2~0.4라서 중복이 없다”가 무슨 뜻? → 입력 변수끼리 서로 닮지 않았다. 겹치는 정보가 없으니 모두 넣어도 된다.</li>
+    <li>문장은 “입력↔출력 관계 파악”으로 시작하지만 결론은 입력↔입력 중복 이야기다. 두 목적을 나눠서 말한다.</li>
+    <li>“곡선 관계 보기”로 r의 한계를 보여 주고 SHAP 장(7장)으로 연결한다.</li></ol>
+  </template>
+</section>
+
+<script>
+DECK.register('p-pearson', root => {
+  const svg = root.querySelector('#pr-svg'), NS = 'http://www.w3.org/2000/svg';
+  const W = 1060, H = 380, P = 52, N = 70;
+  let s = 7; const rnd = () => (s = (s * 16807) % 2147483647) / 2147483647;
+  const gauss = () => Math.sqrt(-2 * Math.log(rnd())) * Math.cos(2 * Math.PI * rnd());
+  const xs = Array.from({length: N}, gauss), es = Array.from({length: N}, gauss);
+  const el = (t, a) => { const e = document.createElementNS(NS, t); for (const k in a) e.setAttribute(k, a[k]); return e; };
+  svg.append(el('line', {x1: P, y1: H - P, x2: W - 10, y2: H - P, class: 'ax'}), el('line', {x1: P, y1: 10, x2: P, y2: H - P, class: 'ax'}));
+  const xl = el('text', {x: W - 10, y: H - 14, 'text-anchor': 'end', class: 'axl'});
+  const yl = el('text', {x: 20, y: 16, class: 'axl', transform: `rotate(-90 20 16)`, 'text-anchor': 'end'});
+  svg.append(xl, yl);
+  const fit = el('line', {class: 'fit'}); svg.append(fit);
+  const dots = xs.map(() => { const c = el('circle', {r: 7, class: 'pt'}); svg.append(c); return c; });
+  const rv = root.querySelector('#pr-r'), vd = root.querySelector('#pr-v'), sl = root.querySelector('#pr-sl');
+  const chips = [...root.querySelectorAll('#pr-chips .btn')];
+  const mean = a => a.reduce((p, c) => p + c, 0) / a.length;
+  function pearson(a, b) {
+    const ma = mean(a), mb = mean(b); let ab = 0, aa = 0, bb = 0;
+    for (let i = 0; i < a.length; i++) { const da = a[i] - ma, db = b[i] - mb; ab += da * db; aa += da * da; bb += db * db; }
+    return ab / Math.sqrt(aa * bb);
+  }
+  function words(r) {
+    const a = Math.abs(r), dir = r > 0 ? '양의' : '음의', how = r > 0 ? '하나가 오르면 다른 것도 오른다' : '하나가 오르면 다른 것은 내려간다';
+    if (a < 0.1) return ['거의 무관', '직선 관계가 보이지 않는다'];
+    if (a < 0.4) return [`약한 ${dir} 관계`, '논문 기준: 중복 걱정 없음'];
+    if (a < 0.7) return [`중간 ${dir} 관계`, how];
+    if (a < 0.9) return [`강한 ${dir} 관계`, how];
+    return ['거의 같은 정보', '둘 중 하나는 중복일 수 있다'];
+  }
+  function draw(target, curve, xn, yn) {
+    const ys = curve ? xs.map((x, i) => -(x * x) + 0.35 * es[i])
+      : xs.map((x, i) => target * x + Math.sqrt(Math.max(0, 1 - target * target)) * es[i]);
+    const r = pearson(xs, ys);
+    const mx = v => P + (Math.max(-3, Math.min(3, v)) + 3) / 6 * (W - 10 - P);
+    const lo = Math.min(...ys), hi = Math.max(...ys), my = v => (H - P) - (v - lo) / (hi - lo || 1) * (H - P - 20);
+    dots.forEach((d, i) => { d.setAttribute('cx', mx(xs[i])); d.setAttribute('cy', my(ys[i])); });
+    const m1 = mean(xs), m2 = mean(ys); let sxy = 0, sxx = 0;
+    for (let i = 0; i < N; i++) { sxy += (xs[i] - m1) * (ys[i] - m2); sxx += (xs[i] - m1) ** 2; }
+    const b = sxy / sxx, a = m2 - b * m1;
+    fit.setAttribute('x1', mx(-3)); fit.setAttribute('y1', my(a - 3 * b)); fit.setAttribute('x2', mx(3)); fit.setAttribute('y2', my(a + 3 * b));
+    rv.textContent = (r >= 0 ? '+' : '−') + Math.abs(r).toFixed(2);
+    const [t, sub] = curve ? ['r ≈ 0인데 관계는 있다', '곡선이라 피어슨이 못 잡는다'] : words(r);
+    vd.innerHTML = `${t}<small>${sub}</small>`;
+    xl.textContent = xn || '변수 X'; yl.textContent = yn || '변수 Y';
+  }
+  sl.addEventListener('input', () => { chips.forEach(c => c.setAttribute('aria-pressed', 'false')); draw(+sl.value, false); });
+  chips.forEach(c => c.addEventListener('click', () => {
+    chips.forEach(o => o.setAttribute('aria-pressed', String(o === c)));
+    if (c.dataset.curve) draw(0, true, c.dataset.x, c.dataset.y);
+    else { sl.value = c.dataset.r; draw(+c.dataset.r, false, c.dataset.x, c.dataset.y); }
+  }));
+  draw(0.75, false, '퇴비화 기간', 'GI(발아지수)');
+});
+</script>
