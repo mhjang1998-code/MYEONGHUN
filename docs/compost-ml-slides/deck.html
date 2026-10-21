@@ -1,0 +1,1062 @@
+<title>퇴비화 머신러닝 발표</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Black+Han+Sans&family=IBM+Plex+Sans+KR:wght@400;500;700&family=JetBrains+Mono:wght@500;700&display=swap">
+<style>
+/* Layout: one 16:9 slide — left = live scatter you can drag, right = the idea in three blocks. Shared template for every slide in the deck. */
+:root{
+  --bg:#e9ece4;        /* slide ground: pale moss-grey */
+  --paper:#f7f8f3;     /* panels */
+  --ink:#1d2a22;       /* text */
+  --muted:#5d6b61;
+  --line:#c9d0c3;
+  --accent:#2f6b45;    /* compost green */
+  --warm:#b5651d;      /* negative r / caution: humus amber */
+  --cool:#2f6b45;
+  --dot:#2f6b45;
+  --display:"Black Han Sans","IBM Plex Sans KR",system-ui,sans-serif;
+  --body:"IBM Plex Sans KR","Apple SD Gothic Neo","Malgun Gothic",system-ui,sans-serif;
+  --mono:"JetBrains Mono",ui-monospace,Menlo,monospace;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#141a16;--paper:#1c241f;--ink:#e6ebe3;--muted:#9aa89e;--line:#33403a;
+  --accent:#7cc495;--warm:#e39a55;--cool:#7cc495;--dot:#7cc495;color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#141a16;--paper:#1c241f;--ink:#e6ebe3;--muted:#9aa89e;--line:#33403a;
+  --accent:#7cc495;--warm:#e39a55;--cool:#7cc495;--dot:#7cc495;color-scheme:dark}
+
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font-family:var(--body);font-size:16px;line-height:1.55;
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:20px}
+.slide{max-width:1280px;margin:0 auto;display:flex;flex-direction:column;gap:18px}
+@media (min-width:960px){.slide{min-height:min(calc(100vh - 40px),720px)}}
+
+.top{display:flex;justify-content:space-between;align-items:baseline;gap:12px;flex-wrap:wrap}
+.eyebrow{font-size:.8rem;letter-spacing:.08em;color:var(--muted);font-weight:500}
+.eyebrow b{color:var(--accent)}
+h1{font-family:var(--display);font-weight:400;font-size:clamp(1.8rem,3.4vw,2.8rem);line-height:1.15;margin:4px 0 0;text-wrap:balance}
+h1 em{font-style:normal;color:var(--accent)}
+.lede{margin:6px 0 0;color:var(--muted);max-width:62ch}
+
+.grid{flex:1;display:grid;grid-template-columns:1.05fr 1fr;gap:22px;min-height:0}
+@media (max-width:860px){.grid{grid-template-columns:1fr}}
+.panel{background:var(--paper);border:1px solid var(--line);border-radius:10px;padding:18px;min-width:0;display:flex;flex-direction:column;gap:12px}
+
+/* scatter */
+.plotwrap{position:relative;flex:1;min-height:240px}
+svg{width:100%;height:100%;display:block}
+.axis{stroke:var(--line);stroke-width:1}
+.axlab{fill:var(--muted);font-size:12px;font-family:var(--body)}
+.pt{fill:var(--dot);opacity:.78;transition:cx .35s ease, cy .35s ease}
+.pt.neg{fill:var(--warm)}
+.fit{stroke:var(--ink);stroke-width:1.5;stroke-dasharray:5 5;opacity:.5;transition:all .35s ease}
+@media (prefers-reduced-motion:reduce){.pt,.fit{transition:none}}
+
+.readout{display:flex;align-items:center;gap:16px;flex-wrap:wrap}
+.rval{font-family:var(--mono);font-weight:700;font-size:2.2rem;font-variant-numeric:tabular-nums;color:var(--accent);min-width:5.2ch}
+.rval.neg{color:var(--warm)}
+.verdict{font-weight:700}
+.verdict small{display:block;font-weight:400;color:var(--muted)}
+input[type=range]{width:100%;accent-color:var(--accent)}
+.scale{display:flex;justify-content:space-between;font-family:var(--mono);font-size:.75rem;color:var(--muted)}
+
+.chips{display:flex;flex-wrap:wrap;gap:6px}
+.chip{font:inherit;font-size:.82rem;border:1px solid var(--line);background:transparent;color:var(--ink);border-radius:999px;padding:4px 10px;cursor:pointer}
+.chip:hover{border-color:var(--accent)}
+.chip[aria-pressed="true"]{background:var(--accent);color:var(--paper);border-color:var(--accent)}
+.chip.curve[aria-pressed="true"]{background:var(--warm);border-color:var(--warm)}
+.chip:focus-visible,input:focus-visible,button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.src{font-size:.75rem;color:var(--muted)}
+
+/* right column */
+.right{display:flex;flex-direction:column;gap:14px;min-width:0}
+.block h2{font-size:.78rem;letter-spacing:.08em;color:var(--muted);margin:0 0 6px;font-weight:700}
+table{width:100%;border-collapse:collapse;font-size:.9rem}
+th,td{text-align:left;padding:7px 8px;border-bottom:1px solid var(--line);vertical-align:top}
+th{font-size:.75rem;color:var(--muted);font-weight:500}
+tr.key td{background:color-mix(in srgb,var(--accent) 12%,transparent)}
+tr.key td:first-child{font-weight:700}
+.analogy{display:flex;gap:12px;align-items:flex-start}
+.analogy .big{font-family:var(--display);font-size:1.6rem;color:var(--accent);line-height:1}
+.caution{border-left:3px solid var(--warm);padding:8px 12px;background:color-mix(in srgb,var(--warm) 10%,transparent);border-radius:0 8px 8px 0;font-size:.9rem}
+.caution b{color:var(--warm)}
+.conclusion{font-size:1.02rem}
+.conclusion strong{background:color-mix(in srgb,var(--accent) 22%,transparent);padding:0 4px;border-radius:3px}
+
+.foot{display:flex;justify-content:space-between;font-size:.75rem;color:var(--muted);gap:12px;flex-wrap:wrap}
+.notes-btn{font:inherit;font-size:.75rem;background:none;border:1px solid var(--line);color:var(--muted);border-radius:6px;padding:2px 8px;cursor:pointer}
+.notes{background:var(--paper);border:1px dashed var(--line);border-radius:10px;padding:14px 18px;font-size:.92rem;max-width:1280px;margin:12px auto 0}
+.notes h3{margin:0 0 6px;font-size:.85rem;color:var(--muted)}
+.notes ol{margin:0;padding-left:1.2em}
+</style>
+<style>
+.duo{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.stat{border:1px solid var(--line);border-radius:8px;padding:8px 12px}
+.stat .lab{font-size:.75rem;color:var(--muted)}
+.stat .num{font-family:var(--mono);font-weight:700;font-size:1.9rem;font-variant-numeric:tabular-nums;line-height:1.1}
+.stat.r .num{color:var(--ink)}
+.stat.r2 .num{color:var(--accent)}
+.stat.r2.bad .num{color:var(--warm)}
+.ideal{stroke:var(--muted);stroke-width:1.2;stroke-dasharray:4 4}
+.varbar{display:flex;height:16px;border-radius:4px;overflow:hidden;border:1px solid var(--line)}
+.varbar .ex{background:var(--accent);transition:width .3s ease}
+.varbar .un{background:color-mix(in srgb,var(--warm) 55%,transparent);flex:1}
+.varleg{display:flex;justify-content:space-between;font-size:.75rem;color:var(--muted)}
+.ctrl{display:grid;grid-template-columns:auto 1fr auto;gap:4px 10px;align-items:center;font-size:.85rem}
+.ctrl output{font-family:var(--mono);font-size:.8rem;color:var(--muted);min-width:4ch;text-align:right}
+.formula{font-family:var(--mono);font-size:.85rem;background:color-mix(in srgb,var(--accent) 8%,transparent);border-radius:6px;padding:6px 10px}
+</style>
+<style>
+.sub{display:flex;flex-direction:column;gap:8px}
+.sub + .sub{border-top:1px solid var(--line);padding-top:12px}
+.subhead{display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap}
+.subhead h2{font-size:.9rem;margin:0;font-weight:700}
+.seg{display:inline-flex;border:1px solid var(--line);border-radius:999px;overflow:hidden}
+.seg button{font:inherit;font-size:.8rem;border:0;background:transparent;color:var(--ink);padding:4px 12px;cursor:pointer}
+.seg button[aria-pressed="true"]{background:var(--accent);color:var(--paper)}
+.mini{font-size:.82rem}
+.mini td,.mini th{padding:4px 6px;font-family:var(--mono);font-variant-numeric:tabular-nums}
+.mini td:first-child,.mini th:first-child{font-family:var(--body)}
+.dist{display:grid;grid-template-columns:4.5em 1fr 4.5em;gap:4px 8px;align-items:center;font-size:.82rem}
+.dist .bar{height:12px;border-radius:3px;display:flex;overflow:hidden;background:color-mix(in srgb,var(--line) 50%,transparent)}
+.dist .ph{background:var(--warm);transition:width .35s ease}
+.dist .nh{background:var(--accent);transition:width .35s ease}
+.dist .v{font-family:var(--mono);text-align:right}
+.legend{display:flex;gap:12px;font-size:.75rem;color:var(--muted)}
+.legend i{display:inline-block;width:10px;height:10px;border-radius:2px;margin-right:4px;vertical-align:-1px}
+.answer{font-size:.88rem;font-weight:700}
+.answer span{color:var(--accent)}
+.sig{height:120px}
+.curve{fill:none;stroke:var(--ink);stroke-width:2}
+.flat{fill:color-mix(in srgb,var(--warm) 18%,transparent)}
+.probe{fill:var(--accent)}
+.probe.sat{fill:var(--warm)}
+.tan{stroke:var(--accent);stroke-width:2}
+.tan.sat{stroke:var(--warm)}
+.sigread{display:flex;gap:14px;flex-wrap:wrap;font-size:.85rem}
+.sigread b{font-family:var(--mono);font-variant-numeric:tabular-nums}
+.sigread .msg{font-weight:700}
+.formula{font-family:var(--mono);font-size:1rem;background:color-mix(in srgb,var(--accent) 8%,transparent);border-radius:6px;padding:8px 12px;text-align:center}
+.terms td:first-child{white-space:nowrap;font-weight:700}
+</style>
+<style>
+.seg{display:inline-flex;border:1px solid var(--line);border-radius:999px;overflow:hidden}
+.seg button{font:inherit;font-size:.8rem;border:0;background:transparent;color:var(--ink);padding:4px 12px;cursor:pointer}
+.seg button[aria-pressed="true"]{background:var(--accent);color:var(--paper)}
+.subhead{display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap}
+.subhead h2{font-size:.9rem;margin:0;font-weight:700}
+.line-svg{height:150px}
+.mat{fill:var(--accent)}
+.imm{fill:var(--warm)}
+.thr{stroke:var(--ink);stroke-width:2;stroke-dasharray:6 4;transition:x1 .4s ease,x2 .4s ease}
+.ticklab{fill:var(--muted);font-size:11px;font-family:var(--mono)}
+.tlab{fill:var(--ink);font-size:12px;font-family:var(--body);font-weight:700}
+.c{transition:cx .4s ease}
+@media (prefers-reduced-motion:reduce){.c,.thr{transition:none}}
+.verdicts{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+@media (max-width:520px){.verdicts{grid-template-columns:1fr}}
+.vcard{border:1px solid var(--line);border-radius:8px;padding:10px;display:flex;flex-direction:column;gap:4px}
+.vcard .name{font-weight:700}
+.vcard .how{font-size:.8rem;color:var(--muted)}
+.pill{align-self:flex-start;font-size:.78rem;font-weight:700;border-radius:999px;padding:2px 10px}
+.pill.ok{background:color-mix(in srgb,var(--accent) 20%,transparent);color:var(--accent)}
+.pill.no{background:color-mix(in srgb,var(--warm) 20%,transparent);color:var(--warm)}
+.flow{display:flex;align-items:center;gap:6px;flex-wrap:wrap;font-size:.85rem}
+.flow span{border:1px solid var(--line);border-radius:6px;padding:4px 8px}
+.flow b{color:var(--muted);font-weight:400}
+code{font-family:var(--mono);font-size:.85em;background:color-mix(in srgb,var(--accent) 10%,transparent);padding:1px 5px;border-radius:4px}
+</style>
+<style>
+.seg{display:inline-flex;border:1px solid var(--line);border-radius:999px;overflow:hidden}
+.seg button{font:inherit;font-size:.8rem;border:0;background:transparent;color:var(--ink);padding:4px 12px;cursor:pointer}
+.seg button[aria-pressed="true"]{background:var(--accent);color:var(--paper)}
+.subhead{display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap}
+.subhead h2{font-size:.9rem;margin:0;font-weight:700}
+.matwrap{overflow-x:auto}
+.cm{border-collapse:separate;border-spacing:3px;font-family:var(--mono);font-size:.78rem;font-variant-numeric:tabular-nums;margin:0 auto}
+.cm th{font-family:var(--body);font-size:.75rem;color:var(--muted);font-weight:500;padding:2px 4px;border:0;text-align:center;white-space:nowrap}
+.cm th.row{text-align:right}
+.cm td{width:52px;height:34px;text-align:center;border:0;border-radius:4px;padding:0;cursor:pointer;color:var(--ink);transition:opacity .25s ease,outline-color .2s}
+.cm td.diag{cursor:default;color:var(--muted)}
+.cm td.dim{opacity:.18}
+.cm td.sel{outline:2px solid var(--ink);outline-offset:1px}
+.cm td:focus-visible{outline:2px solid var(--accent)}
+.cellinfo{border:1px solid var(--line);border-radius:8px;padding:10px 12px;font-size:.9rem;min-height:4.4em}
+.cellinfo b.v{font-family:var(--mono)}
+.legendbar{display:flex;align-items:center;gap:8px;font-size:.75rem;color:var(--muted);justify-content:center}
+.legendbar .g{width:160px;height:10px;border-radius:3px;background:linear-gradient(90deg,var(--warm),var(--paper),var(--accent));border:1px solid var(--line)}
+</style>
+<style>
+.subhead{display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap}
+.subhead h2{font-size:.9rem;margin:0;font-weight:700}
+.force{height:150px}
+.up{fill:var(--accent)}
+.down{fill:var(--warm)}
+.basemk{stroke:var(--muted);stroke-width:1.5;stroke-dasharray:3 3}
+.fxmk{stroke:var(--ink);stroke-width:2.5}
+.flab{fill:var(--ink);font-size:12px;font-family:var(--body)}
+.flab.m{fill:var(--muted)}
+.seglab{fill:var(--paper);font-size:11px;font-family:var(--body);font-weight:700}
+.ctrl{display:grid;grid-template-columns:5.5em 1fr 4.5em;gap:4px 10px;align-items:center;font-size:.85rem}
+.ctrl output{font-family:var(--mono);font-size:.8rem;color:var(--muted);text-align:right}
+.sum{font-family:var(--mono);font-size:.85rem;background:color-mix(in srgb,var(--accent) 8%,transparent);border-radius:6px;padding:6px 10px;font-variant-numeric:tabular-nums}
+.bars{display:grid;grid-template-columns:5.5em 1fr 3.6em;gap:4px 8px;align-items:center;font-size:.82rem}
+.bars .b{height:10px;border-radius:3px;background:var(--accent)}
+.bars .n{font-family:var(--mono);text-align:right;font-variant-numeric:tabular-nums}
+.days{display:flex;gap:6px;flex-wrap:wrap;font-size:.8rem}
+.days span{border:1px solid var(--line);border-radius:6px;padding:3px 8px;font-family:var(--mono)}
+.days span.lo{border-color:var(--warm);color:var(--warm)}
+.days span.hi{border-color:var(--accent);color:var(--accent)}
+</style>
+<style>
+body{padding-bottom:64px}
+.deck-bar{position:fixed;left:0;right:0;bottom:0;z-index:20;display:flex;justify-content:center;align-items:center;gap:10px;
+  padding:8px max(16px,env(safe-area-inset-right,0px)) calc(8px + env(safe-area-inset-bottom,0px)) max(16px,env(safe-area-inset-left,0px));
+  background:color-mix(in srgb,var(--bg) 88%,transparent);backdrop-filter:blur(6px);border-top:1px solid var(--line)}
+.deck-bar button{font:inherit;font-size:.85rem;border:1px solid var(--line);background:var(--paper);color:var(--ink);border-radius:8px;padding:6px 14px;cursor:pointer}
+.deck-bar button:hover{border-color:var(--accent)}
+.deck-bar button:disabled{opacity:.4;cursor:default}
+.deck-count{font-family:var(--mono);font-variant-numeric:tabular-nums;color:var(--muted);min-width:5ch;text-align:center}
+.deck-hint{font-size:.75rem;color:var(--muted)}
+@media (max-width:560px){.deck-hint{display:none}}
+:fullscreen body,body:fullscreen{overflow:auto}
+</style>
+<div class="deck-slide" id="slide-01" hidden>
+<section class="slide" id="pearson" data-slide="01">
+  <div class="top">
+    <div>
+      <div class="eyebrow"><b>Wang 2024</b> · 2.2 데이터 전처리 · Pearson correlation coefficient [피어슨 코릴레이션 코에피션트]</div>
+      <h1>입력 변수끼리 <em>같은 정보를 두 번</em> 넣고 있진 않은가?</h1>
+      <p class="lede">피어슨 상관계수 r은 두 값이 <b>직선 모양으로 같이 움직이는 정도</b>를 −1 ~ +1로 나타낸다. 슬라이더를 움직이거나 논문 속 실제 값을 눌러 보자.</p>
+    </div>
+  </div>
+
+  <div class="grid">
+    <div class="panel">
+      <div class="readout">
+        <div class="rval" id="rval">+0.75</div>
+        <div class="verdict" id="verdict">강한 양의 관계<small>하나가 오르면 다른 것도 오른다</small></div>
+      </div>
+      <div class="plotwrap"><svg id="plot" viewBox="0 0 400 260" role="img" aria-label="상관계수에 따른 산점도"></svg></div>
+      <div>
+        <label for="rslider" class="src">r 값 직접 바꿔 보기</label>
+        <input type="range" id="rslider" min="-1" max="1" step="0.01" value="0.75">
+        <div class="scale"><span>−1 반대로</span><span>0 무관</span><span>+1 같이</span></div>
+      </div>
+      <div class="chips" id="chips">
+        <button class="chip" data-r="0.75" data-x="퇴비화 기간" data-y="GI(발아지수)" aria-pressed="true">기간 ↔ GI 0.75</button>
+        <button class="chip" data-r="-0.66" data-x="퇴비화 기간" data-y="온도">기간 ↔ 온도 −0.66</button>
+        <button class="chip" data-r="-0.42" data-x="C/N(탄질비)" data-y="함수율">C/N ↔ 함수율 −0.42</button>
+        <button class="chip" data-r="0.31" data-x="C/N(탄질비)" data-y="통기량">C/N ↔ 통기량 0.31</button>
+        <button class="chip" data-r="-0.25" data-x="통기량" data-y="GWP">통기량 ↔ GWP −0.25</button>
+        <button class="chip curve" data-curve="1" data-x="통기량" data-y="NH₃ 배출">곡선 관계: 통기량 ↔ NH₃</button>
+      </div>
+      <div class="src">값 출처: Wang et al. (2024) Fig. 1a 피어슨 상관행렬. 점은 해당 r을 갖도록 만든 예시 데이터.</div>
+    </div>
+
+    <div class="right">
+      <div class="panel block">
+        <h2>이 분석으로 확인한 두 가지</h2>
+        <table>
+          <thead><tr><th>비교</th><th>목적</th><th>바라는 결과</th></tr></thead>
+          <tbody>
+            <tr><td>입력 ↔ 출력<br><span class="src">예: 온도 ↔ NH₃</span></td><td>예측에 쓸모 있는 변수인가</td><td>어느 정도 관계 있음</td></tr>
+            <tr class="key"><td>입력 ↔ 입력<br><span class="src">예: C/N ↔ 함수율</span></td><td>같은 정보가 겹치는가<br><span class="src">(다중공선성)</span></td><td>관계가 약해야 좋음</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="panel block analogy">
+        <div class="big">키<br>몸무게</div>
+        <div>
+          <h2>비유</h2>
+          키와 몸무게는 거의 같이 움직인다(r ≈ 0.9). 둘 다 넣어도 정보는 사실상 하나라서, 모델이 <b>“진짜 원인이 뭐지?”</b> 하고 헷갈린다.
+        </div>
+      </div>
+
+      <div class="panel block">
+        <p class="conclusion" style="margin:0">논문 결과: 입력 변수끼리 |r| = <b>0.2~0.4</b>로 약했다 → <strong>각 변수가 서로 다른 정보를 가져온다</strong> → 8개 변수를 모두 넣어도 된다.</p>
+        <div class="caution"><b>주의.</b> 피어슨은 <b>직선</b> 관계만 잡는다. 통기량처럼 “너무 많아도, 너무 적어도 NH₃가 줄어드는” 곡선 관계는 r이 0 근처로 나온다. 그래서 r만 보고 변수를 버리지 않고, 실제 영향은 나중에 <b>SHAP</b>으로 다시 확인했다.</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="foot">
+    <span>퇴비화 × 머신러닝 · Shi 2025 / Wang 2024</span>
+    <span><button class="notes-btn" id="notesBtn-01" aria-expanded="false">발표 메모 (N)</button> · 01</span>
+  </div>
+</section>
+
+<aside class="notes" id="notes-01" hidden>
+  <h3>발표 메모 · 공부하며 나온 질문</h3>
+  <ol>
+    <li>Q. “PCC 절댓값 0.2~0.4라서 중복이 없다”는 게 무슨 뜻? → 입력 변수끼리 서로 닮지 않았다는 뜻. 겹치는 정보가 없으니 모두 넣어도 된다.</li>
+    <li>문장이 “입력↔출력 관계 파악”으로 시작하지만, 0.2~0.4 결론은 <b>입력↔입력</b> 중복 이야기다. 두 목적을 나눠서 말하기.</li>
+    <li>예외: <b>시간</b>은 다른 변수와 상관이 높지만 뺄 수 없다. 퇴비화의 진행 자체를 나타내는 핵심 변수이기 때문 (Wang 3.1).</li>
+    <li>“곡선 관계” 버튼으로 r의 한계를 보여 주고 SHAP 슬라이드로 연결.</li>
+  </ol>
+</aside>
+
+<script>
+(() => { const ROOT = document.getElementById('slide-01');
+  const svg = document.getElementById('plot');
+  const NS = 'http://www.w3.org/2000/svg';
+  const W = 400, H = 260, P = 34, N = 70;
+  // fixed pseudo-random normals so dots glide instead of jumping
+  let s = 7; const rnd = () => (s = (s * 16807) % 2147483647) / 2147483647;
+  const gauss = () => Math.sqrt(-2 * Math.log(rnd())) * Math.cos(2 * Math.PI * rnd());
+  const xs = Array.from({length:N}, gauss), es = Array.from({length:N}, gauss);
+
+  const el = (t, a) => { const e = document.createElementNS(NS, t); for (const k in a) e.setAttribute(k, a[k]); return e; };
+  svg.append(el('line',{x1:P,y1:H-P,x2:W-10,y2:H-P,class:'axis'}), el('line',{x1:P,y1:10,x2:P,y2:H-P,class:'axis'}));
+  const xl = el('text',{x:W-10,y:H-10,'text-anchor':'end',class:'axlab'}); const yl = el('text',{x:P-24,y:14,class:'axlab',transform:`rotate(-90 ${P-24} 14)`,'text-anchor':'end'});
+  svg.append(xl, yl);
+  const fit = el('line',{class:'fit'}); svg.append(fit);
+  const dots = xs.map(() => { const c = el('circle',{r:4.2,class:'pt'}); svg.append(c); return c; });
+
+  const rv = document.getElementById('rval'), vd = document.getElementById('verdict'), sl = document.getElementById('rslider');
+  const chips = [...ROOT.querySelectorAll('.chip')];
+
+  function pearson(a, b) {
+    const n = a.length, ma = a.reduce((p,c)=>p+c,0)/n, mb = b.reduce((p,c)=>p+c,0)/n;
+    let sab=0, saa=0, sbb=0; for (let i=0;i<n;i++){const da=a[i]-ma, db=b[i]-mb; sab+=da*db; saa+=da*da; sbb+=db*db;}
+    return sab/Math.sqrt(saa*sbb);
+  }
+  function words(r) {
+    const a = Math.abs(r);
+    const dir = r > 0 ? '양의' : '음의', how = r > 0 ? '하나가 오르면 다른 것도 오른다' : '하나가 오르면 다른 것은 내려간다';
+    if (a < 0.1) return ['거의 무관','직선 관계가 보이지 않는다'];
+    if (a < 0.4) return [`약한 ${dir} 관계`, '논문 기준: 중복 걱정 없음'];
+    if (a < 0.7) return [`중간 ${dir} 관계`, how];
+    if (a < 0.9) return [`강한 ${dir} 관계`, how];
+    return ['거의 같은 정보', '둘 중 하나는 중복일 수 있다'];
+  }
+  function draw(target, curve, xname, yname) {
+    let ys;
+    if (curve) ys = xs.map((x,i) => -(x*x) + 0.35*es[i]);            // inverted U: too little or too much air → less NH3
+    else ys = xs.map((x,i) => target*x + Math.sqrt(Math.max(0,1-target*target))*es[i]);
+    const r = pearson(xs, ys);
+    const mx = v => P + (v + 3) / 6 * (W - 10 - P);
+    const yMin = Math.min(...ys), yMax = Math.max(...ys);
+    const my = v => (H - P) - (v - yMin) / (yMax - yMin || 1) * (H - P - 14);
+    dots.forEach((d,i) => { d.setAttribute('cx', mx(Math.max(-3,Math.min(3,xs[i])))); d.setAttribute('cy', my(ys[i])); d.classList.toggle('neg', r < -0.05); });
+    // least-squares line in data units
+    const n=N, mxv=xs.reduce((p,c)=>p+c,0)/n, myv=ys.reduce((p,c)=>p+c,0)/n;
+    let sxy=0,sxx=0; for(let i=0;i<n;i++){sxy+=(xs[i]-mxv)*(ys[i]-myv); sxx+=(xs[i]-mxv)**2;}
+    const b=sxy/sxx, a=myv-b*mxv;
+    fit.setAttribute('x1',mx(-3)); fit.setAttribute('y1',my(a+b*-3)); fit.setAttribute('x2',mx(3)); fit.setAttribute('y2',my(a+b*3));
+    rv.textContent = (r>=0?'+':'−') + Math.abs(r).toFixed(2);
+    rv.classList.toggle('neg', r < -0.05);
+    const [t, sub] = curve ? ['r ≈ 0 인데 관계는 있다','곡선이라 피어슨이 못 잡는다'] : words(r);
+    vd.innerHTML = `${t}<small>${sub}</small>`;
+    xl.textContent = xname || '변수 X'; yl.textContent = yname || '변수 Y';
+  }
+  sl.addEventListener('input', () => { chips.forEach(c=>c.setAttribute('aria-pressed','false')); draw(+sl.value,false); });
+  chips.forEach(c => c.addEventListener('click', () => {
+    chips.forEach(o=>o.setAttribute('aria-pressed', o===c ? 'true':'false'));
+    if (c.dataset.curve) draw(0,true,c.dataset.x,c.dataset.y);
+    else { sl.value = c.dataset.r; draw(+c.dataset.r,false,c.dataset.x,c.dataset.y); }
+  }));
+  draw(0.75,false,'퇴비화 기간','GI(발아지수)');
+
+  const nb = document.getElementById('notesBtn-01'), notes = document.getElementById('notes-01');
+  const toggle = () => { notes.hidden = !notes.hidden; nb.setAttribute('aria-expanded', String(!notes.hidden)); };
+  nb.addEventListener('click', toggle);
+  document.addEventListener('keydown', e => { if (ROOT.hidden) return; if ((e.key==='n'||e.key==='N') && !e.target.closest('input')) toggle(); });
+})();
+</script>
+</div>
+<div class="deck-slide" id="slide-02" hidden>
+<section class="slide" id="r-vs-r2" data-slide="02">
+  <div class="top">
+    <div>
+      <div class="eyebrow"><b>Shi 2025 · Wang 2024</b> · 2.3–2.4 정확도 평가 · coefficient of determination [코에피션트 오브 디터미네이션]</div>
+      <h1>r은 <em>같이 움직이나</em>, R²는 <em>실제로 맞혔나</em></h1>
+      <p class="lede">두 숫자는 이름도 모양도 닮았지만 묻는 질문이 다르다. 예측을 일부러 <b>치우치게</b> 만들어 보면 차이가 바로 보인다.</p>
+    </div>
+  </div>
+
+  <div class="grid">
+    <div class="panel">
+      <div class="duo">
+        <div class="stat r"><div class="lab">피어슨 r (예측 ↔ 실제)</div><div class="num" id="rOut">0.97</div></div>
+        <div class="stat r2" id="r2Box"><div class="lab">결정계수 R²</div><div class="num" id="r2Out">0.94</div></div>
+      </div>
+      <div class="plotwrap"><svg id="plot2" viewBox="0 0 400 250" role="img" aria-label="실측 GI 대비 예측 GI 산점도"></svg></div>
+      <div>
+        <div class="varbar" aria-hidden="true"><div class="ex" id="exBar" style="width:94%"></div><div class="un"></div></div>
+        <div class="varleg"><span>모델이 설명한 변동 (R²)</span><span>설명 못 한 변동</span></div>
+      </div>
+      <div class="ctrl">
+        <label for="noise">흩어짐</label><input type="range" id="noise" min="0" max="40" step="1" value="9"><output id="noiseOut">9</output>
+        <label for="bias">치우침</label><input type="range" id="bias" min="0" max="40" step="1" value="0"><output id="biasOut">+0</output>
+      </div>
+      <div class="chips">
+        <button class="chip" data-n="9" data-b="0" aria-pressed="true">Shi RF 시험 R² ≈ 0.94</button>
+        <button class="chip" data-n="20" data-b="0">BPNN처럼 흩어짐</button>
+        <button class="chip curve" data-n="3" data-b="25">항상 +25 높게 예측</button>
+      </div>
+      <div class="src">가로축 실측 GI(%), 세로축 예측 GI(%), 점선 = 완벽한 예측(y = x). 점은 예시 데이터.</div>
+    </div>
+
+    <div class="right">
+      <div class="panel block">
+        <h2>한눈에 비교</h2>
+        <table>
+          <thead><tr><th></th><th>피어슨 r</th><th>결정계수 R²</th></tr></thead>
+          <tbody>
+            <tr><td>비교 대상</td><td>변수 ↔ 변수</td><td>예측값 ↔ 실제값</td></tr>
+            <tr><td>범위</td><td>−1 ~ +1, 방향 있음</td><td>보통 0 ~ 1</td></tr>
+            <tr><td>쓰는 시점</td><td>모델 만들기 <b>전</b><br><span class="src">데이터 전처리</span></td><td>모델 만든 <b>후</b><br><span class="src">성능 평가</span></td></tr>
+            <tr class="key"><td>+25 치우친 예측</td><td>그대로 높음</td><td>크게 떨어짐</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="panel block">
+        <h2>R²가 실제로 계산하는 것</h2>
+        <div class="formula">R² = 1 − (예측 오차²의 합) ÷ (평균에서 벗어난 정도²의 합)</div>
+        <p style="margin:0">“그냥 평균값만 찍었을 때”보다 오차를 얼마나 줄였는가. 0.937이면 GI 변동의 <b>93.7%를 설명</b>했다는 뜻이다.</p>
+      </div>
+
+      <div class="panel block">
+        <h2>둘이 같아지는 유일한 경우</h2>
+        <p style="margin:0">변수 <b>하나</b>로 직선을 그어 예측할 때만 <b>R² = r²</b>.<br>예: 기간↔GI r = 0.75 → 0.75² ≈ <b>0.56</b>. 기간 하나로는 GI의 56%만 설명된다. 7개 변수를 쓴 RF는 0.937까지 올렸다.</p>
+        <div class="caution"><b>읽을 때 주의.</b> Wang 논문의 “R² &gt; 90%”는 R² &gt; 0.90으로 읽는다. 시험 데이터에서는 평균보다 못 맞히면 R²가 <b>음수</b>도 나온다.</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="foot">
+    <span>퇴비화 × 머신러닝 · Shi 2025 / Wang 2024</span>
+    <span><button class="notes-btn" id="notesBtn-02" aria-expanded="false">발표 메모 (N)</button> · 02</span>
+  </div>
+</section>
+
+<aside class="notes" id="notes-02" hidden>
+  <h3>발표 메모 · 공부하며 나온 질문</h3>
+  <ol>
+    <li>Q. 피어슨 상관계수 값이 R² 값인가? → 아니다. r은 변수끼리의 관계(전처리), R²는 모델 성적(평가).</li>
+    <li>“항상 +25 높게 예측” 버튼으로 시연: r은 거의 1인데 R²는 크게 떨어진다. r은 같이 움직이는지만, R²는 맞혔는지를 본다.</li>
+    <li>R² = r²는 변수 하나로 직선 회귀할 때만 성립. 기간↔GI 0.75² ≈ 0.56.</li>
+    <li>실제 값: Shi RF 시험 R² 0.937 (RMSE 7.261), Wang XGB NH₃ 시험 R² 0.966, GWP 0.912.</li>
+  </ol>
+</aside>
+
+<script>
+(() => { const ROOT = document.getElementById('slide-02');
+  const svg = document.getElementById('plot2'), NS = 'http://www.w3.org/2000/svg';
+  const W = 400, H = 250, P = 34, N = 60, MAX = 160;
+  let s = 11; const rnd = () => (s = (s * 16807) % 2147483647) / 2147483647;
+  const gauss = () => Math.sqrt(-2 * Math.log(rnd())) * Math.cos(2 * Math.PI * rnd());
+  const actual = Array.from({length:N}, () => 5 + rnd() * 140), es = Array.from({length:N}, gauss);
+  const el = (t, a) => { const e = document.createElementNS(NS, t); for (const k in a) e.setAttribute(k, a[k]); return e; };
+  const mx = v => P + v / MAX * (W - 10 - P), my = v => (H - P) - Math.max(0, Math.min(MAX, v)) / MAX * (H - P - 10);
+  svg.append(el('line',{x1:P,y1:H-P,x2:W-10,y2:H-P,class:'axis'}), el('line',{x1:P,y1:10,x2:P,y2:H-P,class:'axis'}),
+    el('line',{x1:mx(0),y1:my(0),x2:mx(MAX),y2:my(MAX),class:'ideal'}));
+  const t1 = el('text',{x:W-10,y:H-10,'text-anchor':'end',class:'axlab'}); t1.textContent = '실측 GI (%)';
+  const t2 = el('text',{x:P-24,y:14,class:'axlab',transform:`rotate(-90 ${P-24} 14)`,'text-anchor':'end'}); t2.textContent = '예측 GI (%)';
+  svg.append(t1, t2);
+  const dots = actual.map(() => { const c = el('circle',{r:4,class:'pt'}); svg.append(c); return c; });
+
+  const nz = document.getElementById('noise'), bs = document.getElementById('bias');
+  const chips = [...ROOT.querySelectorAll('.chip')];
+  function update() {
+    const n = +nz.value, b = +bs.value;
+    document.getElementById('noiseOut').textContent = n; document.getElementById('biasOut').textContent = '+' + b;
+    const pred = actual.map((a,i) => a + b + n * es[i]);
+    const m = arr => arr.reduce((p,c)=>p+c,0) / arr.length;
+    const ma = m(actual), mp = m(pred);
+    let sab=0,saa=0,spp=0,res=0;
+    for (let i=0;i<N;i++){ const da=actual[i]-ma, dp=pred[i]-mp; sab+=da*dp; saa+=da*da; spp+=dp*dp; res+=(actual[i]-pred[i])**2; }
+    const r = sab/Math.sqrt(saa*spp), r2 = 1 - res/saa;
+    document.getElementById('rOut').textContent = r.toFixed(2);
+    document.getElementById('r2Out').textContent = (r2 < 0 ? '−' : '') + Math.abs(r2).toFixed(2);
+    document.getElementById('r2Box').classList.toggle('bad', r2 < 0.8);
+    document.getElementById('exBar').style.width = Math.max(0, Math.min(1, r2)) * 100 + '%';
+    dots.forEach((d,i) => { d.setAttribute('cx', mx(actual[i])); d.setAttribute('cy', my(pred[i])); });
+  }
+  [nz, bs].forEach(i => i.addEventListener('input', () => { chips.forEach(c=>c.setAttribute('aria-pressed','false')); update(); }));
+  chips.forEach(c => c.addEventListener('click', () => {
+    chips.forEach(o => o.setAttribute('aria-pressed', o===c ? 'true' : 'false'));
+    nz.value = c.dataset.n; bs.value = c.dataset.b; update();
+  }));
+  update();
+
+  const nb = document.getElementById('notesBtn-02'), notes = document.getElementById('notes-02');
+  const toggle = () => { notes.hidden = !notes.hidden; nb.setAttribute('aria-expanded', String(!notes.hidden)); };
+  nb.addEventListener('click', toggle);
+  document.addEventListener('keydown', e => { if (ROOT.hidden) return; if ((e.key==='n'||e.key==='N') && !e.target.closest('input')) toggle(); });
+})();
+</script>
+</div>
+<div class="deck-slide" id="slide-03" hidden>
+<section class="slide" id="standardize" data-slide="03">
+  <div class="top">
+    <div>
+      <div class="eyebrow"><b>Wang 2024</b> · 2.2 데이터 전처리 · standardization [스탠더다이제이션] · StandardScaler</div>
+      <h1>pH 3 차이가 NH₄⁺ 100 차이에 <em>묻히지 않게</em></h1>
+      <p class="lede">변수마다 단위와 크기가 다르면 숫자가 큰 변수가 모델을 독차지한다. 모든 값을 <b>“평균에서 표준편차 몇 칸 떨어졌나”</b>라는 같은 기준으로 바꾼다.</p>
+    </div>
+  </div>
+
+  <div class="grid">
+    <div class="panel">
+      <div class="sub">
+        <div class="subhead">
+          <h2>① 퇴비 A와 더 닮은 건 B일까, C일까?</h2>
+          <div class="seg" role="group" aria-label="값 보기 방식">
+            <button id="rawBtn" aria-pressed="true">원래 값</button><button id="zBtn" aria-pressed="false">표준화 후</button>
+          </div>
+        </div>
+        <table class="mini">
+          <thead><tr><th>퇴비</th><th>pH</th><th>NH₄⁺-N (mg/kg)</th></tr></thead>
+          <tbody id="sampleRows"></tbody>
+        </table>
+        <div class="dist">
+          <span>A ↔ B</span><div class="bar"><div class="ph" id="abPh"></div><div class="nh" id="abNh"></div></div><span class="v" id="abV"></span>
+          <span>A ↔ C</span><div class="bar"><div class="ph" id="acPh"></div><div class="nh" id="acNh"></div></div><span class="v" id="acV"></span>
+        </div>
+        <div class="legend"><span><i style="background:var(--warm)"></i>pH가 만든 거리</span><span><i style="background:var(--accent)"></i>NH₄⁺가 만든 거리</span></div>
+        <div class="answer" id="answer"></div>
+      </div>
+
+      <div class="sub">
+        <div class="subhead">
+          <h2>② 신경망의 S자 곡선(활성화 함수)에 넣어 보기</h2>
+        </div>
+        <svg class="sig" id="sig" viewBox="0 0 400 120" role="img" aria-label="시그모이드 활성화 함수와 입력값"></svg>
+        <input type="range" id="xin" min="-10" max="10" step="0.1" value="-0.27" aria-label="넣는 값">
+        <div class="chips">
+          <button class="chip" data-x="-0.27" aria-pressed="true">표준화한 NH₄⁺ −0.27</button>
+          <button class="chip" data-x="7">pH 7 그대로</button>
+          <button class="chip curve" data-x="1200">NH₄⁺ 1200 그대로</button>
+        </div>
+        <div class="sigread"><span>넣은 값 <b id="xv"></b></span><span>출력 <b id="yv"></b></span><span>기울기(학습 신호) <b id="gv"></b></span><span class="msg" id="gmsg"></span></div>
+      </div>
+      <div class="src">pH·NH₄⁺ 범위는 Shi 2025 데이터(pH 4.09–9.59, NH₄⁺-N 0–16,358 mg/kg) 기준. 퇴비 A·B·C와 μ·σ는 설명용 예시 값.</div>
+    </div>
+
+    <div class="right">
+      <div class="panel block">
+        <h2>식 하나</h2>
+        <div class="formula">Z = (X − μ) ÷ σ</div>
+        <p style="margin:0">X 원래 값, μ 평균, σ 표준편차. Z = +2면 “평균보다 표준편차 2칸 위”. <b>수능 표준점수와 같은 원리</b>로, 만점이 다른 과목도 같은 잣대로 비교할 수 있다.</p>
+      </div>
+
+      <div class="panel block">
+        <h2>문단 속 용어</h2>
+        <table class="terms">
+          <tbody>
+            <tr><td>척도(scale)</td><td>숫자의 단위와 크기. pH 4~10 vs NH₄⁺ 0~16,000</td></tr>
+            <tr><td>활성화 함수</td><td>신경망이 숫자를 0~1로 눌러 주는 S자 곡선</td></tr>
+            <tr class="key"><td>조기 포화</td><td>값이 너무 커서 곡선의 평평한 끝에 붙음 → 기울기 0</td></tr>
+            <tr><td>수렴</td><td>학습을 반복해 정답 근처로 안정되는 것. 기울기가 0이면 멈춘다</td></tr>
+            <tr><td>StandardScaler</td><td>평균 0, 분산 1로 바꿔 주는 파이썬(scikit-learn) 도구</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="panel block">
+        <div class="caution"><b>왜 μ, σ는 학습 데이터로만?</b> 시험 데이터는 “아직 안 본 시험지”다. 시험지의 평균까지 미리 쓰면 컨닝이 된다(<b>데이터 누수</b>).</div>
+        <div class="caution"><b>모든 모델에 필요할까?</b> 거리를 재는 <b>KNN</b>과 S자 곡선을 쓰는 <b>신경망</b>에는 필수다. 기준값으로 가지를 나누는 RF·XGB 같은 트리 모델은 크기 차이에 거의 영향을 받지 않는다.</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="foot">
+    <span>퇴비화 × 머신러닝 · Shi 2025 / Wang 2024</span>
+    <span><button class="notes-btn" id="notesBtn-03" aria-expanded="false">발표 메모 (N)</button> · 03</span>
+  </div>
+</section>
+
+<aside class="notes" id="notes-03" hidden>
+  <h3>발표 메모 · 공부하며 나온 질문</h3>
+  <ol>
+    <li>Q. 표준화 문단이 용어부터 이해가 안 된다 → 핵심은 “단위가 다른 변수를 같은 잣대로 맞춘다”.</li>
+    <li>① 시연: 원래 값에서는 A와 B가 가까워 보인다(NH₄⁺ 차이만 100). 표준화하면 pH 6 vs 9 차이가 드러나서 C가 더 닮은 것으로 뒤집힌다.</li>
+    <li>② 시연: “NH₄⁺ 1200 그대로”를 누르면 출력이 1에 붙고 기울기가 0 → 학습 신호가 사라진다 = 조기 포화.</li>
+    <li>비유: 수능 표준점수. 공식이 똑같다.</li>
+    <li>보충: 트리 모델(RF·XGB)은 표준화가 거의 필요 없다. Wang 논문은 KNN을 함께 썼기 때문에 표준화가 중요했다.</li>
+  </ol>
+</aside>
+
+<script>
+(() => { const ROOT = document.getElementById('slide-03');
+  // ① distance demo (illustrative μ, σ)
+  const MU = {ph:7.5, nh:2000}, SD = {ph:1.2, nh:3000};
+  const S = {A:{ph:6.0, nh:1200}, B:{ph:9.0, nh:1300}, C:{ph:6.1, nh:2500}};
+  const z = (v,k) => (v - MU[k]) / SD[k];
+  let mode = 'raw';
+  const rawBtn = document.getElementById('rawBtn'), zBtn = document.getElementById('zBtn');
+  function renderDist() {
+    const val = (s,k) => mode === 'raw' ? S[s][k] : z(S[s][k],k);
+    const fmt = (v,k) => mode === 'raw' ? (k==='ph' ? v.toFixed(1) : v.toLocaleString()) : (v>=0?'+':'−') + Math.abs(v).toFixed(2);
+    document.getElementById('sampleRows').innerHTML = ['A','B','C'].map(s =>
+      `<tr><td>${s}</td><td>${fmt(val(s,'ph'),'ph')}</td><td>${fmt(val(s,'nh'),'nh')}</td></tr>`).join('');
+    const pair = (a,b) => { const dp=(val(a,'ph')-val(b,'ph'))**2, dn=(val(a,'nh')-val(b,'nh'))**2; return {dp, dn, d:Math.sqrt(dp+dn)}; };
+    const ab = pair('A','B'), ac = pair('A','C'), max = Math.max(ab.d, ac.d);
+    const paint = (p, id) => {
+      const w = p.d / max * 100, sp = p.dp / (p.dp + p.dn);
+      document.getElementById(id+'Ph').style.width = w * sp + '%';
+      document.getElementById(id+'Nh').style.width = w * (1 - sp) + '%';
+      document.getElementById(id+'V').textContent = mode === 'raw' ? p.d.toFixed(0) : p.d.toFixed(2);
+    };
+    paint(ab,'ab'); paint(ac,'ac');
+    document.getElementById('answer').innerHTML = mode === 'raw'
+      ? '원래 값: <span>B가 더 가깝다</span>. pH 6 vs 9 차이는 숫자가 작아 무시됐다.'
+      : '표준화 후: <span>C가 더 가깝다</span>. pH 차이가 제대로 반영돼 결론이 뒤집혔다.';
+    rawBtn.setAttribute('aria-pressed', mode==='raw'); zBtn.setAttribute('aria-pressed', mode==='z');
+  }
+  rawBtn.addEventListener('click', () => { mode='raw'; renderDist(); });
+  zBtn.addEventListener('click', () => { mode='z'; renderDist(); });
+  renderDist();
+
+  // ② sigmoid saturation demo
+  const svg = document.getElementById('sig'), NS = 'http://www.w3.org/2000/svg';
+  const W=400, H=120, L=20, R=380, T=10, B=100, XR=8;
+  const el = (t,a) => { const e=document.createElementNS(NS,t); for (const k in a) e.setAttribute(k,a[k]); return e; };
+  const sx = x => L + (Math.max(-XR,Math.min(XR,x)) + XR) / (2*XR) * (R-L), sy = y => B - y * (B-T);
+  const sigm = x => 1 / (1 + Math.exp(-x));
+  svg.append(el('rect',{x:L,y:T,width:sx(-4)-L,height:B-T,class:'flat'}), el('rect',{x:sx(4),y:T,width:R-sx(4),height:B-T,class:'flat'}));
+  let d=''; for (let x=-XR; x<=XR; x+=0.1) d += (d?'L':'M') + sx(x).toFixed(1) + ' ' + sy(sigm(x)).toFixed(1);
+  svg.append(el('path',{d,class:'curve'}), el('line',{x1:L,y1:B,x2:R,y2:B,class:'axis'}));
+  const lab = (x,txt,anchor) => { const t=el('text',{x,y:B+14,class:'axlab','text-anchor':anchor}); t.textContent=txt; svg.append(t); };
+  lab(L,'평평(포화)','start'); lab(R,'평평(포화)','end'); lab(sx(0),'민감한 구간','middle');
+  const tan = el('line',{class:'tan'}), probe = el('circle',{r:6,class:'probe'}); svg.append(tan, probe);
+  const xin = document.getElementById('xin'), chips=[...ROOT.querySelectorAll('.chip')];
+  function renderSig(x) {
+    const y = sigm(x), g = y*(1-y), sat = g < 0.01;
+    const px = sx(x), py = sy(y), slope = g * (2*XR/(R-L)) * (B-T); // px-space slope
+    probe.setAttribute('cx',px); probe.setAttribute('cy',py); probe.classList.toggle('sat',sat);
+    tan.setAttribute('x1',px-40); tan.setAttribute('y1',py+40*slope); tan.setAttribute('x2',px+40); tan.setAttribute('y2',py-40*slope); tan.classList.toggle('sat',sat);
+    document.getElementById('xv').textContent = Math.abs(x) >= 100 ? x.toLocaleString() : x.toFixed(2);
+    document.getElementById('yv').textContent = y.toFixed(4);
+    document.getElementById('gv').textContent = g < 0.0001 ? '≈ 0' : g.toFixed(4);
+    document.getElementById('gmsg').textContent = sat ? '→ 학습 신호 없음 (포화)' : '→ 학습 잘 됨';
+  }
+  xin.addEventListener('input', () => { chips.forEach(c=>c.setAttribute('aria-pressed','false')); renderSig(+xin.value); });
+  chips.forEach(c => c.addEventListener('click', () => {
+    chips.forEach(o=>o.setAttribute('aria-pressed', o===c ? 'true':'false'));
+    const x = +c.dataset.x; xin.value = Math.max(-10, Math.min(10, x)); renderSig(x);
+  }));
+  renderSig(-0.27);
+
+  const nb = document.getElementById('notesBtn-03'), notes = document.getElementById('notes-03');
+  const toggle = () => { notes.hidden = !notes.hidden; nb.setAttribute('aria-expanded', String(!notes.hidden)); };
+  nb.addEventListener('click', toggle);
+  document.addEventListener('keydown', e => { if (ROOT.hidden) return; if ((e.key==='n'||e.key==='N') && !e.target.closest('input')) toggle(); });
+})();
+</script>
+</div>
+<div class="deck-slide" id="slide-04" hidden>
+<section class="slide" id="tree-vs-nn" data-slide="04">
+  <div class="top">
+    <div>
+      <div class="eyebrow"><b>Shi 2025 · Wang 2024</b> · 2.2–2.3 머신러닝 모델 · decision tree [디시전 트리] · neural network [뉴럴 네트워크]</div>
+      <h1>트리는 <em>순서</em>를 보고, 신경망·KNN은 <em>크기</em>를 본다</h1>
+      <p class="lede">그래서 표준화가 꼭 필요한 모델과 거의 상관없는 모델이 갈린다. 온도 단위를 바꿔 보며 트리의 기준선이 어떻게 움직이는지 보자.</p>
+    </div>
+  </div>
+
+  <div class="grid">
+    <div class="panel">
+      <div class="subhead">
+        <h2>결정 트리의 질문 하나: “온도가 기준보다 높은가?”</h2>
+        <div class="seg" role="group" aria-label="온도 단위">
+          <button data-u="C" aria-pressed="true">℃</button><button data-u="F" aria-pressed="false">℉</button><button data-u="Z" aria-pressed="false">표준화 Z</button>
+        </div>
+      </div>
+      <svg class="line-svg" id="tline" viewBox="0 0 400 150" role="img" aria-label="온도 축 위의 퇴비 시료와 트리 기준선"></svg>
+      <p class="src" id="umsg" style="margin:0"></p>
+
+      <div class="verdicts">
+        <div class="vcard"><span class="name">트리 (RF·XGB)</span><span class="how">기준선으로 나누기만 한다</span><span class="pill ok">단위 바꿔도 결과 같음</span></div>
+        <div class="vcard"><span class="name">KNN</span><span class="how">변수 차이로 거리를 잰다</span><span class="pill no">숫자 큰 변수가 독차지</span></div>
+        <div class="vcard"><span class="name">신경망 (BPNN·MLP)</span><span class="how">입력 × 가중치 → S자 곡선</span><span class="pill no">큰 값이면 포화</span></div>
+      </div>
+      <div class="src">점: 설명용 예시 퇴비 8개. 초록 = 부숙, 주황 = 미부숙. 고온기 퇴비일수록 아직 덜 익은 경우가 많다.</div>
+    </div>
+
+    <div class="right">
+      <div class="panel block">
+        <h2>두 모델 가족</h2>
+        <table>
+          <thead><tr><th></th><th>트리 모델</th><th>신경망</th></tr></thead>
+          <tbody>
+            <tr><td>계산 방식</td><td>“온도 &gt; 55℃?” 질문으로 계속 둘로 나눔</td><td>입력 × 가중치를 더해 S자 곡선(활성화 함수) 통과, 여러 층 반복</td></tr>
+            <tr><td>보는 것</td><td>값의 <b>순서</b></td><td>값의 <b>크기</b></td></tr>
+            <tr class="key"><td>표준화</td><td>거의 필요 없음</td><td>꼭 필요</td></tr>
+            <tr><td>논문 성적 (Shi 시험 R²)</td><td>RF 0.937 · ET 0.904 · XGB 0.900</td><td>BPNN 0.616 · MLP 0.664</td></tr>
+          </tbody>
+        </table>
+        <p class="src" style="margin:0">데이터가 184개로 적을 때는 트리 모델이 유리하다는 것이 Shi 논문의 가설이었고, 결과도 그렇게 나왔다.</p>
+      </div>
+
+      <div class="panel block">
+        <h2>데이터 누수를 막는 코드 순서</h2>
+        <div class="flow"><span><code>fit(X_train)</code><br><b>학습 데이터로 μ, σ 계산</b></span>→<span><code>transform(X_train)</code><br><code>transform(X_test)</code><br><b>같은 μ, σ로 둘 다 변환</b></span></div>
+        <div class="caution"><b>왜?</b> 시험 데이터는 “아직 못 본 미래”다. 시험 데이터의 평균까지 섞으면 모델이 시험지를 엿본 셈이 되어 성능이 부풀려진다(<b>데이터 누수</b>).</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="foot">
+    <span>퇴비화 × 머신러닝 · Shi 2025 / Wang 2024</span>
+    <span><button class="notes-btn" id="notesBtn-04" aria-expanded="false">발표 메모 (N)</button> · 04</span>
+  </div>
+</section>
+
+<aside class="notes" id="notes-04" hidden>
+  <h3>발표 메모 · 공부하며 나온 질문</h3>
+  <ol>
+    <li>Q. 신경망, 트리 모델이 뭐고, 왜 트리는 활성화 함수가 없고 변수 크기 변환에 영향을 안 받나?</li>
+    <li>시연: ℃ → ℉ → Z를 눌러도 기준선이 같이 움직여 <b>같은 퇴비들이 같은 쪽</b>에 남는다. 트리는 순서만 보기 때문.</li>
+    <li>“조기 포화” 이유는 신경망에만 해당. Wang 논문이 실제로 쓴 XGB·RF는 트리라서 해당 없음. 표준화가 의미 있는 건 KNN.</li>
+    <li>캡스톤/실습 코드: scaler.fit()은 학습 데이터에만, transform()은 학습·시험 모두.</li>
+  </ol>
+</aside>
+
+<script>
+(() => { const ROOT = document.getElementById('slide-04');
+  const temps = [28, 34, 41, 47, 55, 61, 66, 70];      // ℃, example samples
+  const mature = [1, 1, 1, 1, 0, 0, 0, 0];
+  const THR_C = 51, MU = 50, SD = 13;
+  const conv = { C: t => t, F: t => t * 9/5 + 32, Z: t => (t - MU) / SD };
+  const label = { C: v => v.toFixed(0) + '℃', F: v => v.toFixed(0) + '℉', Z: v => (v>=0?'+':'−') + Math.abs(v).toFixed(2) };
+  const svg = document.getElementById('tline'), NS = 'http://www.w3.org/2000/svg';
+  const el = (t,a) => { const e=document.createElementNS(NS,t); for (const k in a) e.setAttribute(k,a[k]); return e; };
+  const L=30, R=380, Y=78;
+  svg.append(el('line',{x1:L,y1:Y,x2:R,y2:Y,class:'axis'}));
+  const thr = el('line',{y1:20,y2:120,class:'thr'}); svg.append(thr);
+  const tl = el('text',{y:16,class:'tlab','text-anchor':'middle'}); svg.append(tl);
+  const lowT = el('text',{x:L,y:142,class:'ticklab'}), hiT = el('text',{x:R,y:142,class:'ticklab','text-anchor':'end'}); svg.append(lowT, hiT);
+  const dots = temps.map((t,i) => { const c = el('circle',{cy:Y,r:9,class:'c ' + (mature[i] ? 'mat' : 'imm')}); svg.append(c); return c; });
+  const left = el('text',{x:L,y:112,class:'ticklab'}); left.textContent='← 부숙 쪽'; const right = el('text',{x:R,y:112,class:'ticklab','text-anchor':'end'}); right.textContent='미부숙 쪽 →';
+  svg.append(left, right);
+  const btns = [...ROOT.querySelectorAll('.seg button')];
+  function draw(u) {
+    const vals = temps.map(conv[u]), lo = conv[u](20), hi = conv[u](75), sx = v => L + (v - lo) / (hi - lo) * (R - L);
+    dots.forEach((d,i) => d.setAttribute('cx', sx(vals[i])));
+    const tv = conv[u](THR_C), x = sx(tv);
+    thr.setAttribute('x1', x); thr.setAttribute('x2', x);
+    tl.setAttribute('x', x); tl.textContent = '기준선 ' + label[u](tv);
+    lowT.textContent = label[u](lo); hiT.textContent = label[u](hi);
+    document.getElementById('umsg').textContent = u === 'C'
+      ? '숫자가 바뀌어도 점들의 순서는 그대로다. 단위를 바꿔 보자.'
+      : `기준선 숫자는 ${label[u](tv)}로 바뀌었지만, 왼쪽 4개(부숙)와 오른쪽 4개(미부숙)는 그대로 나뉜다.`;
+    btns.forEach(b => b.setAttribute('aria-pressed', b.dataset.u === u));
+  }
+  btns.forEach(b => b.addEventListener('click', () => draw(b.dataset.u)));
+  draw('C');
+
+  const nb = document.getElementById('notesBtn-04'), notes = document.getElementById('notes-04');
+  const toggle = () => { notes.hidden = !notes.hidden; nb.setAttribute('aria-expanded', String(!notes.hidden)); };
+  nb.addEventListener('click', toggle);
+  document.addEventListener('keydown', e => { if (ROOT.hidden) return; if ((e.key==='n'||e.key==='N') && !e.target.closest('input')) toggle(); });
+})();
+</script>
+</div>
+<div class="deck-slide" id="slide-05" hidden>
+<section class="slide" id="corr-matrix" data-slide="05">
+  <div class="top">
+    <div>
+      <div class="eyebrow"><b>Shi 2025 Fig. 1 · Wang 2024 Fig. 1a</b> · correlation matrix [코릴레이션 매트릭스] · multicollinearity [멀티콜리니애리티]</div>
+      <h1>상관행렬에는 <em>성격이 다른 두 종류의 칸</em>이 섞여 있다</h1>
+      <p class="lede">상관행렬은 모든 변수 쌍의 r을 표 하나에 모은 것이다. 출력(GI)과 엮인 칸은 <b>높을수록 좋고</b>, 입력끼리 엮인 칸은 <b>낮을수록 좋다</b>. 버튼으로 나눠 보고, 칸을 눌러 읽어 보자.</p>
+    </div>
+  </div>
+
+  <div class="grid">
+    <div class="panel">
+      <div class="subhead">
+        <h2>Shi 2025 가축분뇨 데이터 (184개)</h2>
+        <div class="seg" role="group" aria-label="칸 강조">
+          <button data-m="all" aria-pressed="true">전체</button><button data-m="io" aria-pressed="false">입력 ↔ 출력</button><button data-m="ii" aria-pressed="false">입력 ↔ 입력</button>
+        </div>
+      </div>
+      <div class="matwrap"><table class="cm" id="cm"></table></div>
+      <div class="legendbar"><span>−1 반대로</span><span class="g"></span><span>+1 같이</span></div>
+      <div class="cellinfo" id="cellinfo">칸을 하나 눌러 보세요.</div>
+      <div class="src">숫자 칸은 논문 그림에 적힌 값. “·” 칸은 그림상 약한 상관(대부분 |r| &lt; 0.25)이라 여기서는 값을 생략했다.</div>
+    </div>
+
+    <div class="right">
+      <div class="panel block">
+        <h2>두 종류의 칸</h2>
+        <table>
+          <thead><tr><th>칸</th><th>묻는 것</th><th>바라는 값</th></tr></thead>
+          <tbody>
+            <tr><td>입력 ↔ 출력<br><span class="src">GI 줄</span></td><td>예측에 쓸모 있나?</td><td>높을수록 좋음<br><span class="src">기간 0.62, TN 0.54</span></td></tr>
+            <tr class="key"><td>입력 ↔ 입력<br><span class="src">나머지</span></td><td>같은 정보를 두 번 넣나? (<b>다중공선성</b>)</td><td>낮을수록 좋음<br><span class="src">최대 |r| 0.47</span></td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="panel block">
+        <h2>“0.2~0.4라서 중복 없음”을 바르게 읽기</h2>
+        <p style="margin:0">Wang 논문 문장은 “입력과 출력의 관계를 봤다”로 시작해서 “변수 간 중복이 없다”로 끝난다. 그런데 <b>중복 여부는 입력↔입력 칸만</b> 보고 판단해야 한다. 두 이야기를 나눠 읽자.</p>
+        <div class="caution"><b>기준.</b> 보통 입력끼리 |r| &gt; 0.8이면 중복을 의심한다. 두 논문 모두 입력끼리 가장 큰 값이 0.4대라서 다중공선성 걱정은 작다.</div>
+      </div>
+
+      <div class="panel block">
+        <h2>다중공선성이 왜 문제인가</h2>
+        <p style="margin:0">키와 몸무게처럼 닮은 두 변수를 같이 넣으면 모델이 영향을 둘에게 아무렇게나 나눠 준다. 예측은 맞아도 <b>“어떤 변수가 중요한가”</b> 해석(SHAP)이 흔들린다.</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="foot">
+    <span>퇴비화 × 머신러닝 · Shi 2025 / Wang 2024</span>
+    <span><button class="notes-btn" id="notesBtn-05" aria-expanded="false">발표 메모 (N)</button> · 05</span>
+  </div>
+</section>
+
+<aside class="notes" id="notes-05" hidden>
+  <h3>발표 메모 · 공부하며 나온 질문</h3>
+  <ol>
+    <li>Q. 상관행렬이 뭐고, 다중공선성 여부는 왜 따로 봐야 하나? → 행렬에 입력↔출력 칸과 입력↔입력 칸이 섞여 있고, 바라는 방향이 반대이기 때문.</li>
+    <li>시연: “입력 ↔ 출력” 버튼 → GI 줄만 남음(기간 0.62, TN 0.54가 큼). “입력 ↔ 입력” 버튼 → 나머지 칸, 최대 0.47(NH₄⁺–NO₃⁻)로 약함.</li>
+    <li>예시 칸: NH₄⁺–NO₃⁻ 0.47은 질산화(NH₄⁺ → NO₃⁻)로 둘 다 질소 변환과 엮여 있어서 생기는 관계.</li>
+    <li>Wang 논문의 같은 그림(11개 변수)에서도 입력끼리 대부분 −0.34~0.35. 예외인 “시간”은 퇴비화 진행 자체라 뺄 수 없다.</li>
+  </ol>
+</aside>
+
+<script>
+(() => { const ROOT = document.getElementById('slide-05');
+  const V = ['기간', 'pH', '온도', 'EC', 'NH₄⁺', 'NO₃⁻', 'TN', 'GI'];
+  const OUT = 7, known = {};
+  const set = (a, b, r) => { known[a + ',' + b] = r; known[b + ',' + a] = r; };
+  [[0,7,.62],[1,7,.29],[2,7,-.40],[3,7,-.35],[4,7,-.077],[5,7,.090],[6,7,.54],
+   [4,5,.47],[3,6,-.43],[0,2,-.40],[1,6,.40],[3,4,.33],[3,5,.30],[1,3,-.0042],[2,1,.013]].forEach(x => set(...x));
+  const notes = {
+    '0,7': '퇴비화가 오래될수록 GI가 오른다. 잘 익을수록 씨앗이 잘 자란다.',
+    '6,7': '총질소가 높을수록 GI가 높다. 유기물이 줄며 질소가 농축되는 흐름과 맞는다.',
+    '2,7': '온도가 높은 고온기에는 아직 덜 익어 GI가 낮다.',
+    '3,7': 'EC(염류)가 높을수록 씨앗 발아를 방해해 GI가 낮다.',
+    '4,5': '입력끼리 가장 큰 값이다. NH₄⁺가 질산화로 NO₃⁻가 되므로 같이 엮인다. 그래도 0.47이라 중복 걱정은 작다.',
+    '3,6': 'EC와 TN은 반대로 움직이는 편이다. 입력끼리 중간 정도의 관계.',
+    '0,2': '시간이 지나면 고온기가 끝나고 온도가 내려간다.'
+  };
+  const tbl = document.getElementById('cm'), info = document.getElementById('cellinfo');
+  const color = r => {
+    const a = Math.min(1, Math.abs(r)) * 85;
+    return `color-mix(in srgb, ${r >= 0 ? 'var(--accent)' : 'var(--warm)'} ${a}%, var(--paper))`;
+  };
+  let html = '<thead><tr><th></th>' + V.map(v => `<th>${v}</th>`).join('') + '</tr></thead><tbody>';
+  V.forEach((rv, i) => {
+    html += `<tr><th class="row">${rv}</th>`;
+    V.forEach((cv, j) => {
+      if (i === j) { html += `<td class="diag" data-i="${i}" data-j="${j}" style="background:color-mix(in srgb,var(--line) 60%,var(--paper))">1</td>`; return; }
+      const r = known[i + ',' + j];
+      const txt = r === undefined ? '·' : (Math.abs(r) < 0.1 ? r.toFixed(3) : r.toFixed(2)).replace('-', '−');
+      const bg = r === undefined ? 'color-mix(in srgb,var(--line) 25%,var(--paper))' : color(r);
+      const strong = r !== undefined && Math.abs(r) >= 0.5 ? ';color:var(--paper);font-weight:700' : '';
+      html += `<td tabindex="0" data-i="${i}" data-j="${j}" style="background:${bg}${strong}">${txt}</td>`;
+    });
+    html += '</tr>';
+  });
+  tbl.innerHTML = html + '</tbody>';
+  const cells = [...tbl.querySelectorAll('td')];
+  function pick(td) {
+    if (td.classList.contains('diag')) return;
+    cells.forEach(c => c.classList.toggle('sel', c === td));
+    const i = +td.dataset.i, j = +td.dataset.j, r = known[i + ',' + j];
+    const kind = (i === OUT || j === OUT) ? '입력 ↔ 출력: 높을수록 예측에 쓸모 있음' : '입력 ↔ 입력: 낮을수록 중복 없음';
+    const key = Math.min(i, j) + ',' + Math.max(i, j);
+    const val = r === undefined ? '약함 (값 생략)' : `r = <b class="v">${r.toFixed(Math.abs(r) < 0.1 ? 3 : 2).replace('-', '−')}</b>`;
+    info.innerHTML = `<b>${V[i]} ↔ ${V[j]}</b> · ${val}<br><span class="src">${kind}</span><br>${notes[key] || (r === undefined ? '두 변수는 거의 따로 움직인다.' : '')}`;
+  }
+  cells.forEach(c => {
+    c.addEventListener('click', () => pick(c));
+    c.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); pick(c); } });
+  });
+  const segBtns = [...ROOT.querySelectorAll('.seg button')];
+  segBtns.forEach(b => b.addEventListener('click', () => {
+    const m = b.dataset.m;
+    segBtns.forEach(o => o.setAttribute('aria-pressed', o === b));
+    cells.forEach(c => {
+      const i = +c.dataset.i, j = +c.dataset.j, io = (i === OUT || j === OUT) && i !== j;
+      c.classList.toggle('dim', (m === 'io' && !io) || (m === 'ii' && (io || i === j)));
+    });
+  }));
+  pick(cells.find(c => c.dataset.i === '0' && c.dataset.j === '7'));
+
+  const nb = document.getElementById('notesBtn-05'), notesEl = document.getElementById('notes-05');
+  const toggle = () => { notesEl.hidden = !notesEl.hidden; nb.setAttribute('aria-expanded', String(!notesEl.hidden)); };
+  nb.addEventListener('click', toggle);
+  document.addEventListener('keydown', e => { if (ROOT.hidden) return; if ((e.key==='n'||e.key==='N') && !e.target.closest('input')) toggle(); });
+})();
+</script>
+</div>
+<div class="deck-slide" id="slide-06" hidden>
+<section class="slide" id="shap" data-slide="06">
+  <div class="top">
+    <div>
+      <div class="eyebrow"><b>Shi 2025 · Wang 2024</b> · 2.4 모델 해석 · SHapley Additive exPlanations (SHAP) [섀플리 애디티브 익스플러네이션스]</div>
+      <h1>예측값을 변수들에게 <em>공정하게 나눠 주는</em> 계산</h1>
+      <p class="lede">팀 프로젝트 점수를 기여도대로 나누는 게임 이론 방법이다. <b>예측값 = 기준값(평균 예측) + 변수마다의 몫</b>. 슬라이더로 퇴비 하나를 바꾸며 몫이 어떻게 갈리는지 보자.</p>
+    </div>
+  </div>
+
+  <div class="grid">
+    <div class="panel">
+      <div class="subhead"><h2>퇴비 한 개의 GI 예측 쪼개 보기 (힘 그림, force plot)</h2></div>
+      <svg class="force" id="force" viewBox="0 0 420 150" role="img" aria-label="기준값에서 예측값까지 변수별 기여"></svg>
+      <div class="ctrl">
+        <label for="sd">퇴비화 기간</label><input type="range" id="sd" min="0" max="60" step="1" value="1"><output id="sdO"></output>
+        <label for="se">EC</label><input type="range" id="se" min="1" max="6" step="0.1" value="4.2"><output id="seO"></output>
+        <label for="sn">TN</label><input type="range" id="sn" min="1" max="4" step="0.1" value="2.8"><output id="snO"></output>
+      </div>
+      <div class="chips">
+        <button class="chip" data-d="1" data-e="4.2" data-n="2.8" aria-pressed="true">1일차 (초기)</button>
+        <button class="chip" data-d="13" data-e="3.8" data-n="2.2">13일차 (고온기)</button>
+        <button class="chip" data-d="36" data-e="2.2" data-n="3.3">36일차 (후숙)</button>
+      </div>
+      <div class="sum" id="sum"></div>
+      <div class="src">설명용 장난감 모델(변수 3개). SHAP 값은 이 모델에서 정확히 계산했다. 초록 = 예측을 올림, 주황 = 내림.</div>
+    </div>
+
+    <div class="right">
+      <div class="panel block">
+        <h2>원리: 순서를 바꿔 가며 “들어왔을 때 늘어난 점수”의 평균</h2>
+        <p style="margin:0">기간 → EC → TN 순서로 하나씩 넣을 때, EC가 들어오는 순간 예측이 얼마나 바뀌었나? 가능한 모든 순서에서 이 변화를 구해 평균 낸 것이 EC의 SHAP 값이다. 그래서 몫을 다 더하면 <b>정확히 예측값</b>이 된다.</p>
+      </div>
+
+      <div class="panel block">
+        <h2>전역(전체) 해석: Shi RF 모델의 변수 중요도</h2>
+        <div class="bars" id="gbars"></div>
+        <p class="src" style="margin:0">모든 시료에서 |SHAP|의 평균. Wang XGB(NH₃)는 시간 30% · 통기량 16.3% · C/N 15% · 함수율 14.6%.</p>
+      </div>
+
+      <div class="panel block">
+        <h2>국소(한 개) 해석: Shi 논문 Fig. 6의 실제 예측 GI</h2>
+        <div class="days"><span>기준값 57.90</span><span class="lo">1일 17.00</span><span class="lo">8일 27.87</span><span class="lo">13일 29.96</span><span class="lo">20일 54.55</span><span class="hi">36일 81.14</span></div>
+        <div class="caution"><b>읽는 법.</b> 초기·고온기에는 “기간”이 예측을 <b>끌어내리는</b> 가장 큰 힘이고, 후숙기에는 <b>끌어올리는</b> 가장 큰 힘이 된다. 같은 변수라도 시료마다 방향이 바뀐다.</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="foot">
+    <span>퇴비화 × 머신러닝 · Shi 2025 / Wang 2024</span>
+    <span><button class="notes-btn" id="notesBtn-06" aria-expanded="false">발표 메모 (N)</button> · 06</span>
+  </div>
+</section>
+
+<aside class="notes" id="notes-06" hidden>
+  <h3>발표 메모 · 공부하며 나온 질문</h3>
+  <ol>
+    <li>Q. SHAP이 뭐야? → 예측값을 변수들에게 공정하게 나눠 주는 방법. 팀 프로젝트 점수를 기여도대로 나누는 것과 같다.</li>
+    <li>식: f(x) = φ₀ + Σφᵢ. φ₀ = 평균 예측(기준값), φᵢ = 변수 i의 몫. 다 더하면 정확히 예측값.</li>
+    <li>시연: 1일차 → 36일차 버튼. 기간의 몫이 주황(내림)에서 초록(올림)으로 바뀐다. 논문 Fig. 6과 같은 흐름.</li>
+    <li>전역 vs 국소: 전역은 “평균적으로 누가 중요한가”(막대), 국소는 “이 시료 하나는 왜 이렇게 예측됐나”(힘 그림).</li>
+    <li>피어슨과 연결: 피어슨은 직선 관계만, SHAP은 모델이 실제로 쓴 관계(곡선 포함)를 보여 준다. 통기량↔NH₃가 그 예.</li>
+  </ol>
+</aside>
+
+<script>
+(() => { const ROOT = document.getElementById('slide-06');
+  // toy GI model with one interaction; baseline = average compost
+  const BASE = {d:20, e:3, n:2.5};
+  const f = x => 37.9 + 1.0 * x.d - 5 * (x.e - 3) + 6 * (x.n - 2.5) + 0.3 * (x.d - 20) * (x.n - 2.5);
+  const KEYS = ['d', 'e', 'n'], NAME = {d:'기간', e:'EC', n:'TN'};
+  const perms = [['d','e','n'],['d','n','e'],['e','d','n'],['e','n','d'],['n','d','e'],['n','e','d']];
+  function shap(x) {
+    const phi = {d:0, e:0, n:0};
+    perms.forEach(p => {
+      const cur = {...BASE};
+      p.forEach(k => { const before = f(cur); cur[k] = x[k]; phi[k] += (f(cur) - before) / perms.length; });
+    });
+    return phi;
+  }
+  const svg = document.getElementById('force'), NS = 'http://www.w3.org/2000/svg';
+  const el = (t,a) => { const e=document.createElementNS(NS,t); for (const k in a) e.setAttribute(k,a[k]); return e; };
+  const L = 20, R = 400, LO = -20, HI = 160, sx = v => L + (Math.max(LO, Math.min(HI, v)) - LO) / (HI - LO) * (R - L);
+  const sd = document.getElementById('sd'), se = document.getElementById('se'), sn = document.getElementById('sn');
+  const chips = [...ROOT.querySelectorAll('.chip')];
+  function draw() {
+    const x = {d:+sd.value, e:+se.value, n:+sn.value}, phi = shap(x), base = f(BASE), fx = f(x);
+    document.getElementById('sdO').textContent = x.d + '일'; document.getElementById('seO').textContent = x.e.toFixed(1); document.getElementById('snO').textContent = x.n.toFixed(1) + '%';
+    svg.replaceChildren();
+    svg.append(el('line',{x1:L,y1:118,x2:R,y2:118,class:'axis'}));
+    [0, 50, 100, 150].forEach(v => { const t = el('text',{x:sx(v),y:134,class:'flab m','text-anchor':'middle'}); t.textContent = v; svg.append(t); });
+    const ax = el('text',{x:R,y:148,class:'flab m','text-anchor':'end'}); ax.textContent = '예측 GI (%)'; svg.append(ax);
+    // stack: ups from base rightwards on row 1, downs from base leftwards on row 2 (like SHAP force plots, then net to f(x))
+    let pos = base;
+    const order = KEYS.slice().sort((a, b) => Math.abs(phi[b]) - Math.abs(phi[a]));
+    order.forEach((k, idx) => {
+      const v = phi[k], x0 = sx(pos), x1 = sx(pos + v), y = 30 + idx * 26;
+      const r = el('rect',{x:Math.min(x0,x1),y,width:Math.max(1,Math.abs(x1-x0)),height:20,rx:3,class: v >= 0 ? 'up' : 'down'});
+      svg.append(r);
+      const t = el('text',{x:(x0+x1)/2,y:y+14,'text-anchor':'middle',class: Math.abs(x1-x0) > 70 ? 'seglab' : 'flab'});
+      t.textContent = `${NAME[k]} ${v >= 0 ? '+' : '−'}${Math.abs(v).toFixed(1)}`;
+      if (Math.abs(x1 - x0) <= 70) { t.setAttribute('x', (v >= 0 ? Math.max(x0,x1) + 4 : Math.min(x0,x1) - 4)); t.setAttribute('text-anchor', v >= 0 ? 'start' : 'end'); }
+      svg.append(t);
+      pos += v;
+    });
+    svg.append(el('line',{x1:sx(base),y1:22,x2:sx(base),y2:118,class:'basemk'}));
+    svg.append(el('line',{x1:sx(fx),y1:22,x2:sx(fx),y2:118,class:'fxmk'}));
+    const bl = el('text',{x:sx(base),y:16,'text-anchor':'middle',class:'flab m'}); bl.textContent = '기준값 ' + base.toFixed(1);
+    const fl = el('text',{x:sx(fx),y:16,'text-anchor':'middle',class:'flab'}); fl.textContent = 'f(x) = ' + fx.toFixed(1);
+    if (Math.abs(sx(fx) - sx(base)) < 70) { bl.setAttribute('y', 8); }
+    svg.append(bl, fl);
+    const sgn = v => (v >= 0 ? '+ ' : '− ') + Math.abs(v).toFixed(1);
+    document.getElementById('sum').textContent = `${base.toFixed(1)} ${sgn(phi.d)} (기간) ${sgn(phi.e)} (EC) ${sgn(phi.n)} (TN) = ${fx.toFixed(1)}`;
+  }
+  [sd, se, sn].forEach(i => i.addEventListener('input', () => { chips.forEach(c => c.setAttribute('aria-pressed','false')); draw(); }));
+  chips.forEach(c => c.addEventListener('click', () => {
+    chips.forEach(o => o.setAttribute('aria-pressed', o === c ? 'true' : 'false'));
+    sd.value = c.dataset.d; se.value = c.dataset.e; sn.value = c.dataset.n; draw();
+  }));
+  draw();
+
+  // real global importance, Shi 2025 RF
+  const G = [['기간',46.17],['TN',14.09],['EC',9.67],['온도',9.49],['NO₃⁻-N',9.39],['NH₄⁺-N',6.77],['pH',4.42]];
+  document.getElementById('gbars').innerHTML = G.map(([k, v]) =>
+    `<span>${k}</span><div class="b" style="width:${v / 46.17 * 100}%"></div><span class="n">${v.toFixed(1)}%</span>`).join('');
+
+  const nb = document.getElementById('notesBtn-06'), notes = document.getElementById('notes-06');
+  const toggle = () => { notes.hidden = !notes.hidden; nb.setAttribute('aria-expanded', String(!notes.hidden)); };
+  nb.addEventListener('click', toggle);
+  document.addEventListener('keydown', e => { if (ROOT.hidden) return; if ((e.key==='n'||e.key==='N') && !e.target.closest('input')) toggle(); });
+})();
+</script>
+</div>
+<nav class="deck-bar" aria-label="슬라이드 넘기기">
+  <button id="deckPrev" aria-label="이전 슬라이드">← 이전</button>
+  <span class="deck-count" id="deckCount">1 / 6</span>
+  <button id="deckNext" aria-label="다음 슬라이드">다음 →</button>
+  <button id="deckFull">전체화면 (F)</button>
+  <span class="deck-hint">←/→ 넘기기 · N 발표 메모</span>
+</nav>
+<script>
+(() => {
+  const slides = [...document.querySelectorAll('.deck-slide')];
+  const prev = document.getElementById('deckPrev'), next = document.getElementById('deckNext'), count = document.getElementById('deckCount');
+  let i = 0;
+  const fromHash = () => { const m = /^#s(\d+)$/.exec(location.hash); return m ? Math.min(slides.length, Math.max(1, +m[1])) - 1 : 0; };
+  function show(k) {
+    i = Math.max(0, Math.min(slides.length - 1, k));
+    slides.forEach((s, j) => s.hidden = j !== i);
+    count.textContent = (i + 1) + ' / ' + slides.length;
+    prev.disabled = i === 0; next.disabled = i === slides.length - 1;
+    try { history.replaceState(null, '', '#s' + (i + 1)); } catch (e) {}
+    window.scrollTo(0, 0);
+  }
+  prev.addEventListener('click', () => show(i - 1));
+  next.addEventListener('click', () => show(i + 1));
+  const full = () => {
+    const d = document.documentElement;
+    if (document.fullscreenElement) document.exitFullscreen?.().catch(() => {});
+    else d.requestFullscreen?.().catch(() => {});
+  };
+  document.getElementById('deckFull').addEventListener('click', full);
+  document.addEventListener('keydown', e => {
+    if (e.target.closest('input, textarea, select')) return;
+    if (['ArrowRight', 'PageDown', ' '].includes(e.key)) { e.preventDefault(); show(i + 1); }
+    else if (['ArrowLeft', 'PageUp'].includes(e.key)) { e.preventDefault(); show(i - 1); }
+    else if (e.key === 'f' || e.key === 'F') full();
+  });
+  show(fromHash());
+})();
+</script>

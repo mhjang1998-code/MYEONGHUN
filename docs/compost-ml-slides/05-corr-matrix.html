@@ -1,0 +1,242 @@
+<title>상관행렬 읽기</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Black+Han+Sans&family=IBM+Plex+Sans+KR:wght@400;500;700&family=JetBrains+Mono:wght@500;700&display=swap">
+<style>
+/* Layout: one 16:9 slide — left = live scatter you can drag, right = the idea in three blocks. Shared template for every slide in the deck. */
+:root{
+  --bg:#e9ece4;        /* slide ground: pale moss-grey */
+  --paper:#f7f8f3;     /* panels */
+  --ink:#1d2a22;       /* text */
+  --muted:#5d6b61;
+  --line:#c9d0c3;
+  --accent:#2f6b45;    /* compost green */
+  --warm:#b5651d;      /* negative r / caution: humus amber */
+  --cool:#2f6b45;
+  --dot:#2f6b45;
+  --display:"Black Han Sans","IBM Plex Sans KR",system-ui,sans-serif;
+  --body:"IBM Plex Sans KR","Apple SD Gothic Neo","Malgun Gothic",system-ui,sans-serif;
+  --mono:"JetBrains Mono",ui-monospace,Menlo,monospace;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#141a16;--paper:#1c241f;--ink:#e6ebe3;--muted:#9aa89e;--line:#33403a;
+  --accent:#7cc495;--warm:#e39a55;--cool:#7cc495;--dot:#7cc495;color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#141a16;--paper:#1c241f;--ink:#e6ebe3;--muted:#9aa89e;--line:#33403a;
+  --accent:#7cc495;--warm:#e39a55;--cool:#7cc495;--dot:#7cc495;color-scheme:dark}
+
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font-family:var(--body);font-size:16px;line-height:1.55;
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:20px}
+.slide{max-width:1280px;margin:0 auto;display:flex;flex-direction:column;gap:18px}
+@media (min-width:960px){.slide{min-height:min(calc(100vh - 40px),720px)}}
+
+.top{display:flex;justify-content:space-between;align-items:baseline;gap:12px;flex-wrap:wrap}
+.eyebrow{font-size:.8rem;letter-spacing:.08em;color:var(--muted);font-weight:500}
+.eyebrow b{color:var(--accent)}
+h1{font-family:var(--display);font-weight:400;font-size:clamp(1.8rem,3.4vw,2.8rem);line-height:1.15;margin:4px 0 0;text-wrap:balance}
+h1 em{font-style:normal;color:var(--accent)}
+.lede{margin:6px 0 0;color:var(--muted);max-width:62ch}
+
+.grid{flex:1;display:grid;grid-template-columns:1.05fr 1fr;gap:22px;min-height:0}
+@media (max-width:860px){.grid{grid-template-columns:1fr}}
+.panel{background:var(--paper);border:1px solid var(--line);border-radius:10px;padding:18px;min-width:0;display:flex;flex-direction:column;gap:12px}
+
+/* scatter */
+.plotwrap{position:relative;flex:1;min-height:240px}
+svg{width:100%;height:100%;display:block}
+.axis{stroke:var(--line);stroke-width:1}
+.axlab{fill:var(--muted);font-size:12px;font-family:var(--body)}
+.pt{fill:var(--dot);opacity:.78;transition:cx .35s ease, cy .35s ease}
+.pt.neg{fill:var(--warm)}
+.fit{stroke:var(--ink);stroke-width:1.5;stroke-dasharray:5 5;opacity:.5;transition:all .35s ease}
+@media (prefers-reduced-motion:reduce){.pt,.fit{transition:none}}
+
+.readout{display:flex;align-items:center;gap:16px;flex-wrap:wrap}
+.rval{font-family:var(--mono);font-weight:700;font-size:2.2rem;font-variant-numeric:tabular-nums;color:var(--accent);min-width:5.2ch}
+.rval.neg{color:var(--warm)}
+.verdict{font-weight:700}
+.verdict small{display:block;font-weight:400;color:var(--muted)}
+input[type=range]{width:100%;accent-color:var(--accent)}
+.scale{display:flex;justify-content:space-between;font-family:var(--mono);font-size:.75rem;color:var(--muted)}
+
+.chips{display:flex;flex-wrap:wrap;gap:6px}
+.chip{font:inherit;font-size:.82rem;border:1px solid var(--line);background:transparent;color:var(--ink);border-radius:999px;padding:4px 10px;cursor:pointer}
+.chip:hover{border-color:var(--accent)}
+.chip[aria-pressed="true"]{background:var(--accent);color:var(--paper);border-color:var(--accent)}
+.chip.curve[aria-pressed="true"]{background:var(--warm);border-color:var(--warm)}
+.chip:focus-visible,input:focus-visible,button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.src{font-size:.75rem;color:var(--muted)}
+
+/* right column */
+.right{display:flex;flex-direction:column;gap:14px;min-width:0}
+.block h2{font-size:.78rem;letter-spacing:.08em;color:var(--muted);margin:0 0 6px;font-weight:700}
+table{width:100%;border-collapse:collapse;font-size:.9rem}
+th,td{text-align:left;padding:7px 8px;border-bottom:1px solid var(--line);vertical-align:top}
+th{font-size:.75rem;color:var(--muted);font-weight:500}
+tr.key td{background:color-mix(in srgb,var(--accent) 12%,transparent)}
+tr.key td:first-child{font-weight:700}
+.analogy{display:flex;gap:12px;align-items:flex-start}
+.analogy .big{font-family:var(--display);font-size:1.6rem;color:var(--accent);line-height:1}
+.caution{border-left:3px solid var(--warm);padding:8px 12px;background:color-mix(in srgb,var(--warm) 10%,transparent);border-radius:0 8px 8px 0;font-size:.9rem}
+.caution b{color:var(--warm)}
+.conclusion{font-size:1.02rem}
+.conclusion strong{background:color-mix(in srgb,var(--accent) 22%,transparent);padding:0 4px;border-radius:3px}
+
+.foot{display:flex;justify-content:space-between;font-size:.75rem;color:var(--muted);gap:12px;flex-wrap:wrap}
+.notes-btn{font:inherit;font-size:.75rem;background:none;border:1px solid var(--line);color:var(--muted);border-radius:6px;padding:2px 8px;cursor:pointer}
+.notes{background:var(--paper);border:1px dashed var(--line);border-radius:10px;padding:14px 18px;font-size:.92rem;max-width:1280px;margin:12px auto 0}
+.notes h3{margin:0 0 6px;font-size:.85rem;color:var(--muted)}
+.notes ol{margin:0;padding-left:1.2em}
+</style>
+<style>
+.seg{display:inline-flex;border:1px solid var(--line);border-radius:999px;overflow:hidden}
+.seg button{font:inherit;font-size:.8rem;border:0;background:transparent;color:var(--ink);padding:4px 12px;cursor:pointer}
+.seg button[aria-pressed="true"]{background:var(--accent);color:var(--paper)}
+.subhead{display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap}
+.subhead h2{font-size:.9rem;margin:0;font-weight:700}
+.matwrap{overflow-x:auto}
+.cm{border-collapse:separate;border-spacing:3px;font-family:var(--mono);font-size:.78rem;font-variant-numeric:tabular-nums;margin:0 auto}
+.cm th{font-family:var(--body);font-size:.75rem;color:var(--muted);font-weight:500;padding:2px 4px;border:0;text-align:center;white-space:nowrap}
+.cm th.row{text-align:right}
+.cm td{width:52px;height:34px;text-align:center;border:0;border-radius:4px;padding:0;cursor:pointer;color:var(--ink);transition:opacity .25s ease,outline-color .2s}
+.cm td.diag{cursor:default;color:var(--muted)}
+.cm td.dim{opacity:.18}
+.cm td.sel{outline:2px solid var(--ink);outline-offset:1px}
+.cm td:focus-visible{outline:2px solid var(--accent)}
+.cellinfo{border:1px solid var(--line);border-radius:8px;padding:10px 12px;font-size:.9rem;min-height:4.4em}
+.cellinfo b.v{font-family:var(--mono)}
+.legendbar{display:flex;align-items:center;gap:8px;font-size:.75rem;color:var(--muted);justify-content:center}
+.legendbar .g{width:160px;height:10px;border-radius:3px;background:linear-gradient(90deg,var(--warm),var(--paper),var(--accent));border:1px solid var(--line)}
+</style>
+
+<section class="slide" id="corr-matrix" data-slide="05">
+  <div class="top">
+    <div>
+      <div class="eyebrow"><b>Shi 2025 Fig. 1 · Wang 2024 Fig. 1a</b> · correlation matrix [코릴레이션 매트릭스] · multicollinearity [멀티콜리니애리티]</div>
+      <h1>상관행렬에는 <em>성격이 다른 두 종류의 칸</em>이 섞여 있다</h1>
+      <p class="lede">상관행렬은 모든 변수 쌍의 r을 표 하나에 모은 것이다. 출력(GI)과 엮인 칸은 <b>높을수록 좋고</b>, 입력끼리 엮인 칸은 <b>낮을수록 좋다</b>. 버튼으로 나눠 보고, 칸을 눌러 읽어 보자.</p>
+    </div>
+  </div>
+
+  <div class="grid">
+    <div class="panel">
+      <div class="subhead">
+        <h2>Shi 2025 가축분뇨 데이터 (184개)</h2>
+        <div class="seg" role="group" aria-label="칸 강조">
+          <button data-m="all" aria-pressed="true">전체</button><button data-m="io" aria-pressed="false">입력 ↔ 출력</button><button data-m="ii" aria-pressed="false">입력 ↔ 입력</button>
+        </div>
+      </div>
+      <div class="matwrap"><table class="cm" id="cm"></table></div>
+      <div class="legendbar"><span>−1 반대로</span><span class="g"></span><span>+1 같이</span></div>
+      <div class="cellinfo" id="cellinfo">칸을 하나 눌러 보세요.</div>
+      <div class="src">숫자 칸은 논문 그림에 적힌 값. “·” 칸은 그림상 약한 상관(대부분 |r| &lt; 0.25)이라 여기서는 값을 생략했다.</div>
+    </div>
+
+    <div class="right">
+      <div class="panel block">
+        <h2>두 종류의 칸</h2>
+        <table>
+          <thead><tr><th>칸</th><th>묻는 것</th><th>바라는 값</th></tr></thead>
+          <tbody>
+            <tr><td>입력 ↔ 출력<br><span class="src">GI 줄</span></td><td>예측에 쓸모 있나?</td><td>높을수록 좋음<br><span class="src">기간 0.62, TN 0.54</span></td></tr>
+            <tr class="key"><td>입력 ↔ 입력<br><span class="src">나머지</span></td><td>같은 정보를 두 번 넣나? (<b>다중공선성</b>)</td><td>낮을수록 좋음<br><span class="src">최대 |r| 0.47</span></td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="panel block">
+        <h2>“0.2~0.4라서 중복 없음”을 바르게 읽기</h2>
+        <p style="margin:0">Wang 논문 문장은 “입력과 출력의 관계를 봤다”로 시작해서 “변수 간 중복이 없다”로 끝난다. 그런데 <b>중복 여부는 입력↔입력 칸만</b> 보고 판단해야 한다. 두 이야기를 나눠 읽자.</p>
+        <div class="caution"><b>기준.</b> 보통 입력끼리 |r| &gt; 0.8이면 중복을 의심한다. 두 논문 모두 입력끼리 가장 큰 값이 0.4대라서 다중공선성 걱정은 작다.</div>
+      </div>
+
+      <div class="panel block">
+        <h2>다중공선성이 왜 문제인가</h2>
+        <p style="margin:0">키와 몸무게처럼 닮은 두 변수를 같이 넣으면 모델이 영향을 둘에게 아무렇게나 나눠 준다. 예측은 맞아도 <b>“어떤 변수가 중요한가”</b> 해석(SHAP)이 흔들린다.</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="foot">
+    <span>퇴비화 × 머신러닝 · Shi 2025 / Wang 2024</span>
+    <span><button class="notes-btn" id="notesBtn" aria-expanded="false">발표 메모 (N)</button> · 05</span>
+  </div>
+</section>
+
+<aside class="notes" id="notes" hidden>
+  <h3>발표 메모 · 공부하며 나온 질문</h3>
+  <ol>
+    <li>Q. 상관행렬이 뭐고, 다중공선성 여부는 왜 따로 봐야 하나? → 행렬에 입력↔출력 칸과 입력↔입력 칸이 섞여 있고, 바라는 방향이 반대이기 때문.</li>
+    <li>시연: “입력 ↔ 출력” 버튼 → GI 줄만 남음(기간 0.62, TN 0.54가 큼). “입력 ↔ 입력” 버튼 → 나머지 칸, 최대 0.47(NH₄⁺–NO₃⁻)로 약함.</li>
+    <li>예시 칸: NH₄⁺–NO₃⁻ 0.47은 질산화(NH₄⁺ → NO₃⁻)로 둘 다 질소 변환과 엮여 있어서 생기는 관계.</li>
+    <li>Wang 논문의 같은 그림(11개 변수)에서도 입력끼리 대부분 −0.34~0.35. 예외인 “시간”은 퇴비화 진행 자체라 뺄 수 없다.</li>
+  </ol>
+</aside>
+
+<script>
+(() => {
+  const V = ['기간', 'pH', '온도', 'EC', 'NH₄⁺', 'NO₃⁻', 'TN', 'GI'];
+  const OUT = 7, known = {};
+  const set = (a, b, r) => { known[a + ',' + b] = r; known[b + ',' + a] = r; };
+  [[0,7,.62],[1,7,.29],[2,7,-.40],[3,7,-.35],[4,7,-.077],[5,7,.090],[6,7,.54],
+   [4,5,.47],[3,6,-.43],[0,2,-.40],[1,6,.40],[3,4,.33],[3,5,.30],[1,3,-.0042],[2,1,.013]].forEach(x => set(...x));
+  const notes = {
+    '0,7': '퇴비화가 오래될수록 GI가 오른다. 잘 익을수록 씨앗이 잘 자란다.',
+    '6,7': '총질소가 높을수록 GI가 높다. 유기물이 줄며 질소가 농축되는 흐름과 맞는다.',
+    '2,7': '온도가 높은 고온기에는 아직 덜 익어 GI가 낮다.',
+    '3,7': 'EC(염류)가 높을수록 씨앗 발아를 방해해 GI가 낮다.',
+    '4,5': '입력끼리 가장 큰 값이다. NH₄⁺가 질산화로 NO₃⁻가 되므로 같이 엮인다. 그래도 0.47이라 중복 걱정은 작다.',
+    '3,6': 'EC와 TN은 반대로 움직이는 편이다. 입력끼리 중간 정도의 관계.',
+    '0,2': '시간이 지나면 고온기가 끝나고 온도가 내려간다.'
+  };
+  const tbl = document.getElementById('cm'), info = document.getElementById('cellinfo');
+  const color = r => {
+    const a = Math.min(1, Math.abs(r)) * 85;
+    return `color-mix(in srgb, ${r >= 0 ? 'var(--accent)' : 'var(--warm)'} ${a}%, var(--paper))`;
+  };
+  let html = '<thead><tr><th></th>' + V.map(v => `<th>${v}</th>`).join('') + '</tr></thead><tbody>';
+  V.forEach((rv, i) => {
+    html += `<tr><th class="row">${rv}</th>`;
+    V.forEach((cv, j) => {
+      if (i === j) { html += `<td class="diag" data-i="${i}" data-j="${j}" style="background:color-mix(in srgb,var(--line) 60%,var(--paper))">1</td>`; return; }
+      const r = known[i + ',' + j];
+      const txt = r === undefined ? '·' : (Math.abs(r) < 0.1 ? r.toFixed(3) : r.toFixed(2)).replace('-', '−');
+      const bg = r === undefined ? 'color-mix(in srgb,var(--line) 25%,var(--paper))' : color(r);
+      const strong = r !== undefined && Math.abs(r) >= 0.5 ? ';color:var(--paper);font-weight:700' : '';
+      html += `<td tabindex="0" data-i="${i}" data-j="${j}" style="background:${bg}${strong}">${txt}</td>`;
+    });
+    html += '</tr>';
+  });
+  tbl.innerHTML = html + '</tbody>';
+  const cells = [...tbl.querySelectorAll('td')];
+  function pick(td) {
+    if (td.classList.contains('diag')) return;
+    cells.forEach(c => c.classList.toggle('sel', c === td));
+    const i = +td.dataset.i, j = +td.dataset.j, r = known[i + ',' + j];
+    const kind = (i === OUT || j === OUT) ? '입력 ↔ 출력: 높을수록 예측에 쓸모 있음' : '입력 ↔ 입력: 낮을수록 중복 없음';
+    const key = Math.min(i, j) + ',' + Math.max(i, j);
+    const val = r === undefined ? '약함 (값 생략)' : `r = <b class="v">${r.toFixed(Math.abs(r) < 0.1 ? 3 : 2).replace('-', '−')}</b>`;
+    info.innerHTML = `<b>${V[i]} ↔ ${V[j]}</b> · ${val}<br><span class="src">${kind}</span><br>${notes[key] || (r === undefined ? '두 변수는 거의 따로 움직인다.' : '')}`;
+  }
+  cells.forEach(c => {
+    c.addEventListener('click', () => pick(c));
+    c.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); pick(c); } });
+  });
+  const segBtns = [...document.querySelectorAll('.seg button')];
+  segBtns.forEach(b => b.addEventListener('click', () => {
+    const m = b.dataset.m;
+    segBtns.forEach(o => o.setAttribute('aria-pressed', o === b));
+    cells.forEach(c => {
+      const i = +c.dataset.i, j = +c.dataset.j, io = (i === OUT || j === OUT) && i !== j;
+      c.classList.toggle('dim', (m === 'io' && !io) || (m === 'ii' && (io || i === j)));
+    });
+  }));
+  pick(cells.find(c => c.dataset.i === '0' && c.dataset.j === '7'));
+
+  const nb = document.getElementById('notesBtn'), notesEl = document.getElementById('notes');
+  const toggle = () => { notesEl.hidden = !notesEl.hidden; nb.setAttribute('aria-expanded', String(!notesEl.hidden)); };
+  nb.addEventListener('click', toggle);
+  document.addEventListener('keydown', e => { if ((e.key==='n'||e.key==='N') && !e.target.closest('input')) toggle(); });
+})();
+</script>

@@ -1,0 +1,225 @@
+<title>트리와 신경망</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Black+Han+Sans&family=IBM+Plex+Sans+KR:wght@400;500;700&family=JetBrains+Mono:wght@500;700&display=swap">
+<style>
+/* Layout: one 16:9 slide — left = live scatter you can drag, right = the idea in three blocks. Shared template for every slide in the deck. */
+:root{
+  --bg:#e9ece4;        /* slide ground: pale moss-grey */
+  --paper:#f7f8f3;     /* panels */
+  --ink:#1d2a22;       /* text */
+  --muted:#5d6b61;
+  --line:#c9d0c3;
+  --accent:#2f6b45;    /* compost green */
+  --warm:#b5651d;      /* negative r / caution: humus amber */
+  --cool:#2f6b45;
+  --dot:#2f6b45;
+  --display:"Black Han Sans","IBM Plex Sans KR",system-ui,sans-serif;
+  --body:"IBM Plex Sans KR","Apple SD Gothic Neo","Malgun Gothic",system-ui,sans-serif;
+  --mono:"JetBrains Mono",ui-monospace,Menlo,monospace;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#141a16;--paper:#1c241f;--ink:#e6ebe3;--muted:#9aa89e;--line:#33403a;
+  --accent:#7cc495;--warm:#e39a55;--cool:#7cc495;--dot:#7cc495;color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#141a16;--paper:#1c241f;--ink:#e6ebe3;--muted:#9aa89e;--line:#33403a;
+  --accent:#7cc495;--warm:#e39a55;--cool:#7cc495;--dot:#7cc495;color-scheme:dark}
+
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font-family:var(--body);font-size:16px;line-height:1.55;
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:20px}
+.slide{max-width:1280px;margin:0 auto;display:flex;flex-direction:column;gap:18px}
+@media (min-width:960px){.slide{min-height:min(calc(100vh - 40px),720px)}}
+
+.top{display:flex;justify-content:space-between;align-items:baseline;gap:12px;flex-wrap:wrap}
+.eyebrow{font-size:.8rem;letter-spacing:.08em;color:var(--muted);font-weight:500}
+.eyebrow b{color:var(--accent)}
+h1{font-family:var(--display);font-weight:400;font-size:clamp(1.8rem,3.4vw,2.8rem);line-height:1.15;margin:4px 0 0;text-wrap:balance}
+h1 em{font-style:normal;color:var(--accent)}
+.lede{margin:6px 0 0;color:var(--muted);max-width:62ch}
+
+.grid{flex:1;display:grid;grid-template-columns:1.05fr 1fr;gap:22px;min-height:0}
+@media (max-width:860px){.grid{grid-template-columns:1fr}}
+.panel{background:var(--paper);border:1px solid var(--line);border-radius:10px;padding:18px;min-width:0;display:flex;flex-direction:column;gap:12px}
+
+/* scatter */
+.plotwrap{position:relative;flex:1;min-height:240px}
+svg{width:100%;height:100%;display:block}
+.axis{stroke:var(--line);stroke-width:1}
+.axlab{fill:var(--muted);font-size:12px;font-family:var(--body)}
+.pt{fill:var(--dot);opacity:.78;transition:cx .35s ease, cy .35s ease}
+.pt.neg{fill:var(--warm)}
+.fit{stroke:var(--ink);stroke-width:1.5;stroke-dasharray:5 5;opacity:.5;transition:all .35s ease}
+@media (prefers-reduced-motion:reduce){.pt,.fit{transition:none}}
+
+.readout{display:flex;align-items:center;gap:16px;flex-wrap:wrap}
+.rval{font-family:var(--mono);font-weight:700;font-size:2.2rem;font-variant-numeric:tabular-nums;color:var(--accent);min-width:5.2ch}
+.rval.neg{color:var(--warm)}
+.verdict{font-weight:700}
+.verdict small{display:block;font-weight:400;color:var(--muted)}
+input[type=range]{width:100%;accent-color:var(--accent)}
+.scale{display:flex;justify-content:space-between;font-family:var(--mono);font-size:.75rem;color:var(--muted)}
+
+.chips{display:flex;flex-wrap:wrap;gap:6px}
+.chip{font:inherit;font-size:.82rem;border:1px solid var(--line);background:transparent;color:var(--ink);border-radius:999px;padding:4px 10px;cursor:pointer}
+.chip:hover{border-color:var(--accent)}
+.chip[aria-pressed="true"]{background:var(--accent);color:var(--paper);border-color:var(--accent)}
+.chip.curve[aria-pressed="true"]{background:var(--warm);border-color:var(--warm)}
+.chip:focus-visible,input:focus-visible,button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.src{font-size:.75rem;color:var(--muted)}
+
+/* right column */
+.right{display:flex;flex-direction:column;gap:14px;min-width:0}
+.block h2{font-size:.78rem;letter-spacing:.08em;color:var(--muted);margin:0 0 6px;font-weight:700}
+table{width:100%;border-collapse:collapse;font-size:.9rem}
+th,td{text-align:left;padding:7px 8px;border-bottom:1px solid var(--line);vertical-align:top}
+th{font-size:.75rem;color:var(--muted);font-weight:500}
+tr.key td{background:color-mix(in srgb,var(--accent) 12%,transparent)}
+tr.key td:first-child{font-weight:700}
+.analogy{display:flex;gap:12px;align-items:flex-start}
+.analogy .big{font-family:var(--display);font-size:1.6rem;color:var(--accent);line-height:1}
+.caution{border-left:3px solid var(--warm);padding:8px 12px;background:color-mix(in srgb,var(--warm) 10%,transparent);border-radius:0 8px 8px 0;font-size:.9rem}
+.caution b{color:var(--warm)}
+.conclusion{font-size:1.02rem}
+.conclusion strong{background:color-mix(in srgb,var(--accent) 22%,transparent);padding:0 4px;border-radius:3px}
+
+.foot{display:flex;justify-content:space-between;font-size:.75rem;color:var(--muted);gap:12px;flex-wrap:wrap}
+.notes-btn{font:inherit;font-size:.75rem;background:none;border:1px solid var(--line);color:var(--muted);border-radius:6px;padding:2px 8px;cursor:pointer}
+.notes{background:var(--paper);border:1px dashed var(--line);border-radius:10px;padding:14px 18px;font-size:.92rem;max-width:1280px;margin:12px auto 0}
+.notes h3{margin:0 0 6px;font-size:.85rem;color:var(--muted)}
+.notes ol{margin:0;padding-left:1.2em}
+</style>
+<style>
+.seg{display:inline-flex;border:1px solid var(--line);border-radius:999px;overflow:hidden}
+.seg button{font:inherit;font-size:.8rem;border:0;background:transparent;color:var(--ink);padding:4px 12px;cursor:pointer}
+.seg button[aria-pressed="true"]{background:var(--accent);color:var(--paper)}
+.subhead{display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap}
+.subhead h2{font-size:.9rem;margin:0;font-weight:700}
+.line-svg{height:150px}
+.mat{fill:var(--accent)}
+.imm{fill:var(--warm)}
+.thr{stroke:var(--ink);stroke-width:2;stroke-dasharray:6 4;transition:x1 .4s ease,x2 .4s ease}
+.ticklab{fill:var(--muted);font-size:11px;font-family:var(--mono)}
+.tlab{fill:var(--ink);font-size:12px;font-family:var(--body);font-weight:700}
+.c{transition:cx .4s ease}
+@media (prefers-reduced-motion:reduce){.c,.thr{transition:none}}
+.verdicts{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+@media (max-width:520px){.verdicts{grid-template-columns:1fr}}
+.vcard{border:1px solid var(--line);border-radius:8px;padding:10px;display:flex;flex-direction:column;gap:4px}
+.vcard .name{font-weight:700}
+.vcard .how{font-size:.8rem;color:var(--muted)}
+.pill{align-self:flex-start;font-size:.78rem;font-weight:700;border-radius:999px;padding:2px 10px}
+.pill.ok{background:color-mix(in srgb,var(--accent) 20%,transparent);color:var(--accent)}
+.pill.no{background:color-mix(in srgb,var(--warm) 20%,transparent);color:var(--warm)}
+.flow{display:flex;align-items:center;gap:6px;flex-wrap:wrap;font-size:.85rem}
+.flow span{border:1px solid var(--line);border-radius:6px;padding:4px 8px}
+.flow b{color:var(--muted);font-weight:400}
+code{font-family:var(--mono);font-size:.85em;background:color-mix(in srgb,var(--accent) 10%,transparent);padding:1px 5px;border-radius:4px}
+</style>
+
+<section class="slide" id="tree-vs-nn" data-slide="04">
+  <div class="top">
+    <div>
+      <div class="eyebrow"><b>Shi 2025 · Wang 2024</b> · 2.2–2.3 머신러닝 모델 · decision tree [디시전 트리] · neural network [뉴럴 네트워크]</div>
+      <h1>트리는 <em>순서</em>를 보고, 신경망·KNN은 <em>크기</em>를 본다</h1>
+      <p class="lede">그래서 표준화가 꼭 필요한 모델과 거의 상관없는 모델이 갈린다. 온도 단위를 바꿔 보며 트리의 기준선이 어떻게 움직이는지 보자.</p>
+    </div>
+  </div>
+
+  <div class="grid">
+    <div class="panel">
+      <div class="subhead">
+        <h2>결정 트리의 질문 하나: “온도가 기준보다 높은가?”</h2>
+        <div class="seg" role="group" aria-label="온도 단위">
+          <button data-u="C" aria-pressed="true">℃</button><button data-u="F" aria-pressed="false">℉</button><button data-u="Z" aria-pressed="false">표준화 Z</button>
+        </div>
+      </div>
+      <svg class="line-svg" id="tline" viewBox="0 0 400 150" role="img" aria-label="온도 축 위의 퇴비 시료와 트리 기준선"></svg>
+      <p class="src" id="umsg" style="margin:0"></p>
+
+      <div class="verdicts">
+        <div class="vcard"><span class="name">트리 (RF·XGB)</span><span class="how">기준선으로 나누기만 한다</span><span class="pill ok">단위 바꿔도 결과 같음</span></div>
+        <div class="vcard"><span class="name">KNN</span><span class="how">변수 차이로 거리를 잰다</span><span class="pill no">숫자 큰 변수가 독차지</span></div>
+        <div class="vcard"><span class="name">신경망 (BPNN·MLP)</span><span class="how">입력 × 가중치 → S자 곡선</span><span class="pill no">큰 값이면 포화</span></div>
+      </div>
+      <div class="src">점: 설명용 예시 퇴비 8개. 초록 = 부숙, 주황 = 미부숙. 고온기 퇴비일수록 아직 덜 익은 경우가 많다.</div>
+    </div>
+
+    <div class="right">
+      <div class="panel block">
+        <h2>두 모델 가족</h2>
+        <table>
+          <thead><tr><th></th><th>트리 모델</th><th>신경망</th></tr></thead>
+          <tbody>
+            <tr><td>계산 방식</td><td>“온도 &gt; 55℃?” 질문으로 계속 둘로 나눔</td><td>입력 × 가중치를 더해 S자 곡선(활성화 함수) 통과, 여러 층 반복</td></tr>
+            <tr><td>보는 것</td><td>값의 <b>순서</b></td><td>값의 <b>크기</b></td></tr>
+            <tr class="key"><td>표준화</td><td>거의 필요 없음</td><td>꼭 필요</td></tr>
+            <tr><td>논문 성적 (Shi 시험 R²)</td><td>RF 0.937 · ET 0.904 · XGB 0.900</td><td>BPNN 0.616 · MLP 0.664</td></tr>
+          </tbody>
+        </table>
+        <p class="src" style="margin:0">데이터가 184개로 적을 때는 트리 모델이 유리하다는 것이 Shi 논문의 가설이었고, 결과도 그렇게 나왔다.</p>
+      </div>
+
+      <div class="panel block">
+        <h2>데이터 누수를 막는 코드 순서</h2>
+        <div class="flow"><span><code>fit(X_train)</code><br><b>학습 데이터로 μ, σ 계산</b></span>→<span><code>transform(X_train)</code><br><code>transform(X_test)</code><br><b>같은 μ, σ로 둘 다 변환</b></span></div>
+        <div class="caution"><b>왜?</b> 시험 데이터는 “아직 못 본 미래”다. 시험 데이터의 평균까지 섞으면 모델이 시험지를 엿본 셈이 되어 성능이 부풀려진다(<b>데이터 누수</b>).</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="foot">
+    <span>퇴비화 × 머신러닝 · Shi 2025 / Wang 2024</span>
+    <span><button class="notes-btn" id="notesBtn" aria-expanded="false">발표 메모 (N)</button> · 04</span>
+  </div>
+</section>
+
+<aside class="notes" id="notes" hidden>
+  <h3>발표 메모 · 공부하며 나온 질문</h3>
+  <ol>
+    <li>Q. 신경망, 트리 모델이 뭐고, 왜 트리는 활성화 함수가 없고 변수 크기 변환에 영향을 안 받나?</li>
+    <li>시연: ℃ → ℉ → Z를 눌러도 기준선이 같이 움직여 <b>같은 퇴비들이 같은 쪽</b>에 남는다. 트리는 순서만 보기 때문.</li>
+    <li>“조기 포화” 이유는 신경망에만 해당. Wang 논문이 실제로 쓴 XGB·RF는 트리라서 해당 없음. 표준화가 의미 있는 건 KNN.</li>
+    <li>캡스톤/실습 코드: scaler.fit()은 학습 데이터에만, transform()은 학습·시험 모두.</li>
+  </ol>
+</aside>
+
+<script>
+(() => {
+  const temps = [28, 34, 41, 47, 55, 61, 66, 70];      // ℃, example samples
+  const mature = [1, 1, 1, 1, 0, 0, 0, 0];
+  const THR_C = 51, MU = 50, SD = 13;
+  const conv = { C: t => t, F: t => t * 9/5 + 32, Z: t => (t - MU) / SD };
+  const label = { C: v => v.toFixed(0) + '℃', F: v => v.toFixed(0) + '℉', Z: v => (v>=0?'+':'−') + Math.abs(v).toFixed(2) };
+  const svg = document.getElementById('tline'), NS = 'http://www.w3.org/2000/svg';
+  const el = (t,a) => { const e=document.createElementNS(NS,t); for (const k in a) e.setAttribute(k,a[k]); return e; };
+  const L=30, R=380, Y=78;
+  svg.append(el('line',{x1:L,y1:Y,x2:R,y2:Y,class:'axis'}));
+  const thr = el('line',{y1:20,y2:120,class:'thr'}); svg.append(thr);
+  const tl = el('text',{y:16,class:'tlab','text-anchor':'middle'}); svg.append(tl);
+  const lowT = el('text',{x:L,y:142,class:'ticklab'}), hiT = el('text',{x:R,y:142,class:'ticklab','text-anchor':'end'}); svg.append(lowT, hiT);
+  const dots = temps.map((t,i) => { const c = el('circle',{cy:Y,r:9,class:'c ' + (mature[i] ? 'mat' : 'imm')}); svg.append(c); return c; });
+  const left = el('text',{x:L,y:112,class:'ticklab'}); left.textContent='← 부숙 쪽'; const right = el('text',{x:R,y:112,class:'ticklab','text-anchor':'end'}); right.textContent='미부숙 쪽 →';
+  svg.append(left, right);
+  const btns = [...document.querySelectorAll('.seg button')];
+  function draw(u) {
+    const vals = temps.map(conv[u]), lo = conv[u](20), hi = conv[u](75), sx = v => L + (v - lo) / (hi - lo) * (R - L);
+    dots.forEach((d,i) => d.setAttribute('cx', sx(vals[i])));
+    const tv = conv[u](THR_C), x = sx(tv);
+    thr.setAttribute('x1', x); thr.setAttribute('x2', x);
+    tl.setAttribute('x', x); tl.textContent = '기준선 ' + label[u](tv);
+    lowT.textContent = label[u](lo); hiT.textContent = label[u](hi);
+    document.getElementById('umsg').textContent = u === 'C'
+      ? '숫자가 바뀌어도 점들의 순서는 그대로다. 단위를 바꿔 보자.'
+      : `기준선 숫자는 ${label[u](tv)}로 바뀌었지만, 왼쪽 4개(부숙)와 오른쪽 4개(미부숙)는 그대로 나뉜다.`;
+    btns.forEach(b => b.setAttribute('aria-pressed', b.dataset.u === u));
+  }
+  btns.forEach(b => b.addEventListener('click', () => draw(b.dataset.u)));
+  draw('C');
+
+  const nb = document.getElementById('notesBtn'), notes = document.getElementById('notes');
+  const toggle = () => { notes.hidden = !notes.hidden; nb.setAttribute('aria-expanded', String(!notes.hidden)); };
+  nb.addEventListener('click', toggle);
+  document.addEventListener('keydown', e => { if ((e.key==='n'||e.key==='N') && !e.target.closest('input')) toggle(); });
+})();
+</script>
