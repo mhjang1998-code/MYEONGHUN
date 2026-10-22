@@ -1,129 +1,105 @@
 <style>
-#p-r2 .duo{display:grid;grid-template-columns:1fr 1fr;gap:16px}
-#p-r2 .stat{border:1.5px solid var(--rule);padding:12px 18px;display:flex;align-items:baseline;justify-content:space-between}
-#p-r2 .stat .k{font-size:19px;font-weight:700;color:var(--note)}
-#p-r2 .stat .v{font-size:54px;font-weight:700;line-height:1;color:var(--deep)}
-#p-r2 .stat.r2{border-color:var(--main)}
-#p-r2 .stat.r2 .v{color:var(--main)}
-#p-r2 svg{width:1060px;height:300px;display:block}
-#p-r2 .pt{fill:var(--main);opacity:.72}
-#p-r2 .ideal{stroke:var(--deep);stroke-width:2;stroke-dasharray:8 6}
-#p-r2 .vb{display:flex;height:22px;border:1.5px solid var(--rule)}
-#p-r2 .vb .ex{background:var(--main);transition:width .35s var(--ease)}
-#p-r2 .vb .un{background:var(--g0);flex:1}
-#p-r2 .vleg{display:flex;justify-content:space-between;font-size:16px;color:var(--note);margin-top:4px}
-#p-r2 .cmp td:first-child{font-weight:700;white-space:nowrap}
+#p-r2 .read{display:flex;align-items:baseline;gap:24px;flex-wrap:wrap}
+#p-r2 .read .v{font-size:64px;font-weight:700;color:var(--main);line-height:1}
+#p-r2 .read .k{font-size:22px;font-weight:700;color:var(--deep)}
+#p-r2 .read .r{font-size:20px;color:var(--note)}
+#p-r2 svg{width:100%;height:260px;display:block}
+#p-r2 .pt{fill:var(--main);opacity:.72;transition:cy .45s var(--ease)}
+#p-r2 .ideal{stroke:var(--deep);stroke-width:2.5;stroke-dasharray:8 6}
 </style>
 
 <section class="page" id="p-r2" data-sec="③ 평가">
-  <div class="sec rv">③ 평가 · 결정계수 R² · Shi 2025 · Wang 2024</div>
-  <h1 class="hl rv" style="--d:80ms">r은 같이 움직이는지, R²는 실제로 맞혔는지 본다</h1>
-  <p class="sub rv" style="--d:150ms">결정계수 R²: 모델 예측값이 실제값을 얼마나 설명하는가. 예측이 치우치면 r은 그대로, R²만 떨어진다</p>
+  <div class="sec rv">③ 평가 · 결정계수 R²</div>
+  <h1 class="hl rv" style="--d:80ms">R²는 모델 점수다. 1에 가까울수록 잘 맞혔다</h1>
+  <p class="sub rv" style="--d:150ms">점이 대각선(예측 = 실제)에 가까이 모일수록 R²가 1에 가깝다. 0.9면 실제 값 변화의 90%를 설명한 것</p>
 
   <div class="body">
     <div class="left">
-      <div class="duo rv" style="--d:250ms">
-        <div class="stat"><span class="k">피어슨 r (예측↔실제)</span><span class="v" id="r2-r">0.97</span></div>
-        <div class="stat r2"><span class="k">결정계수 R²</span><span class="v" id="r2-v">0.94</span></div>
+      <div class="term rv" style="--d:200ms"><span class="ko">결정계수</span><span class="en">coefficient of determination (R²)</span><span class="pr">[코에피션트 오브 디터미네이션 · 알 스퀘어]</span>
+        <span class="def">모델이 실제 값의 오르내림을 몇 %나 설명했는지 나타내는 점수 (보통 0~1). 앞에서 배운 r과는 다르다.</span></div>
+      <div class="box rv" style="--d:280ms">
+        <div class="row" id="r2-chips">
+          <button class="btn" data-n="9" data-b="0" data-c="0" aria-pressed="true">잘 맞힌 모델</button>
+          <button class="btn" data-n="22" data-b="0" data-c="1">흩어진 모델</button>
+          <button class="btn" data-n="3" data-b="25" data-c="2">한쪽으로 치우친 모델</button>
+        </div>
+        <div class="read"><span class="v" id="r2-v"></span><span class="k">R²</span><span class="r" id="r2-r"></span></div>
+        <svg id="r2-svg" viewBox="0 0 1000 260" role="img" aria-label="실제 GI 대비 예측 GI 산점도"></svg>
+        <div class="msg" id="r2-msg" style="min-height:0"></div>
       </div>
-      <svg id="r2-svg" viewBox="0 0 1060 300" role="img" aria-label="실측 GI 대비 예측 GI 산점도" class="rv" style="--d:320ms"></svg>
-      <div class="rv" style="--d:380ms">
-        <div class="vb" aria-hidden="true"><div class="ex" id="r2-bar" style="width:94%"></div><div class="un"></div></div>
-        <div class="vleg"><span>모델이 설명한 변동 (R²)</span><span>설명 못 한 변동</span></div>
-      </div>
-      <div class="ctl rv" style="--d:420ms">
-        <label for="r2-n">흩어짐 (오차)</label><input type="range" id="r2-n" min="0" max="40" step="1" value="9"><output id="r2-no">±9</output>
-        <label for="r2-b">치우침</label><input type="range" id="r2-b" min="0" max="40" step="1" value="0"><output id="r2-bo">+0</output>
-      </div>
-      <div class="row rv" style="--d:480ms" id="r2-chips">
-        <button class="btn" data-n="9" data-b="0" data-c="rf" aria-pressed="true">① 잘 맞는 예측</button>
-        <button class="btn" data-n="20" data-b="0" data-c="bp">② 넓게 흩어진 예측</button>
-        <button class="btn" data-n="3" data-b="25" data-c="bias">③ 한쪽으로 치우친 예측</button>
-      </div>
-      <div class="callout rv" id="r2-cap" style="--d:520ms;background:var(--panel)"></div>
     </div>
 
     <aside class="side rv" style="--d:300ms">
-      <span class="lab">Shi 논문 RF 모델 · 시험 데이터</span>
-      <div class="big">0.937<small>R²</small></div>
-      <p>발아지수(GI) 변동의 <b>93.7%</b>를 모델이 설명했다. 같은 데이터에서 신경망 BPNN은 0.616.</p>
+      <span class="lab">외울 한 줄</span>
       <button class="btn more" data-drawer="detail">내역 보기 ›</button>
-      <div class="insight"><span class="il">캡스톤 인사이트 · 우리 데이터 설계에서는</span><span class="ih">성적은 시험 데이터 R²로만, RMSE와 함께 말한다</span><ul><li>같은 논문(실험)의 날짜별 데이터가 학습·시험에 섞이면 성적이 부풀려진다 → 논문 단위로 나눈다</li><li>R²는 설명 비율일 뿐, 실제 몇 g 틀렸는지는 RMSE로 본다</li></ul></div>
+      <div class="memo">R² = 모델 점수 (0~1). 1에 가까울수록 실제 값을 잘 설명</div>
+      <p class="p2"><b>논문에서는</b> Shi RF 0.937(1위), 신경망 BPNN 0.616. Wang XGB는 NH₃ 0.966. “R² &gt; 90%”는 R² &gt; 0.90으로 읽는다.</p>
+      <div class="insight"><span class="il">우리 캡스톤에서는</span><span class="ih">점수는 시험 데이터 R²로만 말한다</span><ul><li>같은 논문의 데이터가 학습·시험에 섞이지 않게 논문 단위로 나눈다</li><li>R²와 함께 RMSE(몇 g 틀렸나)도 같이 적는다</li></ul></div>
     </aside>
   </div>
 
-  <div class="note">산점도는 예시 데이터 · 가로축 실측 GI(%), 세로축 예측 GI(%), 점선은 완벽한 예측(y = x)</div>
+  <div class="note">점은 예시 데이터 · 가로 실제 GI, 세로 예측 GI, 점선 = 완벽한 예측</div>
   <div class="foot"><span>Shi et al. (2025) 2.3, 3.2 · Wang et al. (2024) 2.4, Table 1</span><span class="pn"></span></div>
 
   <template data-tab="detail">
-    <h4>한눈에 비교</h4>
+    <h4>이 장의 용어</h4>
+    <table class="tb"><thead><tr><th>용어</th><th>영어 [발음]</th><th>쉬운 뜻</th></tr></thead><tbody>
+      <tr><td><b>결정계수</b></td><td>coefficient of determination, R² [알 스퀘어]</td><td>모델 점수. 실제 변화의 몇 %를 설명했나</td></tr>
+      <tr><td><b>예측값 / 실측값</b></td><td>predicted / observed value [프리딕티드 / 옵저브드 밸류]</td><td>모델이 낸 답 / 실제로 잰 값</td></tr></tbody></table>
+    <h4>r과 R²는 어떻게 다른가</h4>
     <table class="tb"><thead><tr><th></th><th>피어슨 r</th><th>결정계수 R²</th></tr></thead><tbody>
-      <tr><td>비교</td><td>변수 ↔ 변수</td><td>예측 ↔ 실제</td></tr><tr><td>범위</td><td>−1 ~ +1</td><td>보통 0 ~ 1</td></tr>
-      <tr><td>시점</td><td>모델 만들기 전</td><td>모델 만든 후</td></tr><tr class="k"><td>치우친 예측</td><td>그대로 높음</td><td>크게 떨어짐</td></tr></tbody></table>
-    <h4>R²가 실제로 계산하는 것</h4>
+      <tr><td>무엇끼리</td><td>변수 ↔ 변수</td><td>예측 ↔ 실제</td></tr>
+      <tr><td>언제</td><td>모델 만들기 전 (전처리)</td><td>모델 만든 후 (평가)</td></tr>
+      <tr class="k"><td>항상 25 높게 예측하면</td><td>그대로 높음 (같이 움직이니까)</td><td>크게 떨어짐 (실제로 틀렸으니까)</td></tr></tbody></table>
+    <h4>계산</h4>
     <div class="eq">R² = 1 − (예측 오차²의 합) ÷ (평균에서 벗어난 정도²의 합)</div>
-    <p>“그냥 평균값만 찍었을 때”보다 오차를 얼마나 줄였는가를 본다.</p>
-    <h4>둘이 같아지는 유일한 경우</h4>
-    <p>변수 <b>하나</b>로 직선을 그어 예측할 때만 R² = r². 예: 기간↔GI r = 0.75 → 0.75² ≈ 0.56. 기간 하나로는 GI의 56%만 설명된다. 7개 변수를 쓴 RF는 0.937까지 올렸다.</p>
-    <h4>읽을 때 주의</h4>
-    <ul><li>Wang 논문의 “R² &gt; 90%”는 R² &gt; 0.90으로 읽는다.</li>
-    <li>시험 데이터에서 평균보다 못 맞히면 R²가 음수도 나온다.</li></ul>
+    <p>“그냥 평균값만 찍었을 때”보다 얼마나 덜 틀렸나. 평균보다 못하면 음수도 나온다.</p>
   </template>
   <template data-tab="source">
-    <p><b>Shi 2025 시험 R²:</b> RF 0.937, ET 0.904, XGB 0.900, GBDT 0.777, BPNN 0.616, MLP 0.664. RF의 MAE 5.685, MSE 52.727, RMSE 7.261.</p>
+    <p><b>Shi 2025 시험 R²:</b> RF 0.937, ET 0.904, XGB 0.900, GBDT 0.777, BPNN 0.616, MLP 0.664.</p>
     <p><b>Wang 2024 시험 R²:</b> NH₃ XGB 0.966 · RF 0.932 · KNN 0.851, GWP XGB 0.912.</p>
-    <p><b>예시 데이터:</b> 산점도 60개 점과 흩어짐·치우침 슬라이더는 원리 설명용 계산이다.</p>
+    <p><b>예시 데이터:</b> 산점도 60개 점, 흩어짐·치우침 정도는 설명용 계산.</p>
   </template>
   <template data-tab="notes">
-    <ol><li>Q. 피어슨 상관계수 값이 R² 값인가? → 아니다. r은 변수끼리의 관계(전처리), R²는 모델 성적(평가).</li>
-    <li>“③ 한쪽으로 치우친 예측” 시연: r은 거의 1인데 R²는 크게 떨어진다.</li>
-    <li>Q. “BPNN처럼 흩어짐”이 뭐야? → BPNN(역전파 신경망)은 Shi 논문이 비교한 모델 중 하나. 시험 R² 0.616으로 예측이 넓게 흩어졌다. 그 정도의 흩어짐을 재현한 버튼.</li>
-    <li>R² = r²는 변수 하나로 직선 회귀할 때만 성립.</li></ol>
+    <ol><li>“잘 맞힌 모델”: 점이 대각선에 붙음, R² ≈ 0.95 (Shi RF 수준).</li>
+    <li>“흩어진 모델”: 방향은 맞지만 넓게 퍼짐, R²가 떨어짐 (Shi 신경망 BPNN 수준).</li>
+    <li>“치우친 모델”: 항상 25 높게. 같이 움직이니 r은 높지만 R²는 크게 떨어진다.</li></ol>
   </template>
 </section>
 
 <script>
 DECK.register('p-r2', root => {
   const svg = root.querySelector('#r2-svg'), NS = 'http://www.w3.org/2000/svg';
-  const W = 1060, H = 300, P = 52, N = 60, MAX = 160;
+  const W = 1000, H = 260, P = 52, N = 60, MAX = 160;
   let s = 11; const rnd = () => (s = (s * 16807) % 2147483647) / 2147483647;
   const gauss = () => Math.sqrt(-2 * Math.log(rnd())) * Math.cos(2 * Math.PI * rnd());
   const actual = Array.from({length: N}, () => 5 + rnd() * 140), es = Array.from({length: N}, gauss);
-  const el = (t, a) => { const e = document.createElementNS(NS, t); for (const k in a) e.setAttribute(k, a[k]); return e; };
+  const el = (t, a, x) => { const e = document.createElementNS(NS, t); for (const k in a) e.setAttribute(k, a[k]); if (x != null) e.textContent = x; return e; };
   const mx = v => P + v / MAX * (W - 10 - P), my = v => (H - P) - Math.max(0, Math.min(MAX, v)) / MAX * (H - P - 12);
   svg.append(el('line', {x1: P, y1: H - P, x2: W - 10, y2: H - P, class: 'ax'}), el('line', {x1: P, y1: 10, x2: P, y2: H - P, class: 'ax'}),
-    el('line', {x1: mx(0), y1: my(0), x2: mx(MAX), y2: my(MAX), class: 'ideal'}));
-  const t1 = el('text', {x: W - 10, y: H - 14, 'text-anchor': 'end', class: 'axl'}); t1.textContent = '실측 GI (%)';
-  const t2 = el('text', {x: 20, y: 16, class: 'axl', transform: 'rotate(-90 20 16)', 'text-anchor': 'end'}); t2.textContent = '예측 GI (%)';
-  svg.append(t1, t2);
-  const dots = actual.map(() => { const c = el('circle', {r: 7, class: 'pt'}); svg.append(c); return c; });
-  const nz = root.querySelector('#r2-n'), bs = root.querySelector('#r2-b'), chips = [...root.querySelectorAll('#r2-chips .btn')];
-  function update() {
-    const n = +nz.value, b = +bs.value;
-    root.querySelector('#r2-no').textContent = '±' + n; root.querySelector('#r2-bo').textContent = '+' + b;
-    const pred = actual.map((a, i) => a + b + n * es[i]);
-    const m = a => a.reduce((p, c) => p + c, 0) / a.length, ma = m(actual), mp = m(pred);
+    el('line', {x1: mx(0), y1: my(0), x2: mx(MAX), y2: my(MAX), class: 'ideal'}),
+    el('text', {x: W - 10, y: H - 14, 'text-anchor': 'end', class: 'axl'}, '실제 GI (%)'),
+    el('text', {x: 20, y: 16, class: 'axl', transform: 'rotate(-90 20 16)', 'text-anchor': 'end'}, '예측 GI (%)'));
+  const dots = actual.map(a => { const c = el('circle', {r: 7, class: 'pt', cx: mx(a)}); svg.append(c); return c; });
+  const MSG = [
+    '점이 대각선에 붙어 있다. 실제 변화의 대부분을 설명 = <b>좋은 모델</b> (Shi 논문 RF 수준).',
+    '방향은 맞지만 점이 넓게 퍼졌다. 점수가 떨어진다 (Shi 논문 신경망 BPNN 수준).',
+    '모든 점이 대각선보다 위. <b>항상 25만큼 높게</b> 예측했다. r은 높지만(같이 움직임) R²는 크게 떨어진다.'
+  ];
+  const chips = [...root.querySelectorAll('#r2-chips .btn')];
+  function show(c) {
+    const n = +c.dataset.n, b = +c.dataset.b, pred = actual.map((a, i) => a + b + n * es[i]);
+    const m = a => a.reduce((p, q) => p + q, 0) / a.length, ma = m(actual), mp = m(pred);
     let ab = 0, aa = 0, pp = 0, res = 0;
     for (let i = 0; i < N; i++) { const da = actual[i] - ma, dp = pred[i] - mp; ab += da * dp; aa += da * da; pp += dp * dp; res += (actual[i] - pred[i]) ** 2; }
     const r = ab / Math.sqrt(aa * pp), r2 = 1 - res / aa;
-    root.querySelector('#r2-r').textContent = r.toFixed(2);
     root.querySelector('#r2-v').textContent = (r2 < 0 ? '−' : '') + Math.abs(r2).toFixed(2);
-    root.querySelector('#r2-bar').style.width = Math.max(0, Math.min(1, r2)) * 100 + '%';
-    dots.forEach((d, i) => { d.setAttribute('cx', mx(actual[i])); d.setAttribute('cy', my(pred[i])); });
-  }
-  [nz, bs].forEach(i => i.addEventListener('input', () => { chips.forEach(c => c.setAttribute('aria-pressed', 'false')); update(); }));
-  chips.forEach(c => c.addEventListener('click', () => {
+    root.querySelector('#r2-r').textContent = `(참고: 피어슨 r = ${r.toFixed(2)})`;
+    root.querySelector('#r2-msg').innerHTML = MSG[+c.dataset.c];
+    dots.forEach((d, i) => d.setAttribute('cy', my(pred[i])));
     chips.forEach(o => o.setAttribute('aria-pressed', String(o === c)));
-    nz.value = c.dataset.n; bs.value = c.dataset.b; update(); caption(c.dataset.c);
-  }));
-  const CAP = {
-    rf: '<b>① 잘 맞는 예측.</b> Shi 논문 RF(랜덤 포레스트) 수준. 점이 대각선 가까이 모여 R² ≈ 0.94.',
-    bp: '<b>② 넓게 흩어진 예측.</b> BPNN(역전파 신경망) 수준. Shi 논문 6개 모델 중 하나로, 시험 R² 0.616. 방향은 맞지만 점이 대각선 위아래로 넓게 퍼진다.',
-    bias: '<b>③ 한쪽으로 치우친 예측.</b> 실제보다 항상 25만큼 높게 예측. 같이 움직이니 r은 거의 1이지만, 실제로는 틀렸으니 R²는 크게 떨어진다.',
-    none: '슬라이더로 직접 바꾸는 중. <b>흩어짐</b>은 예측이 들쭉날쭉한 정도, <b>치우침</b>은 한쪽으로 쏠린 정도다.'
-  };
-  const capEl = root.querySelector('#r2-cap'), caption = k => { capEl.innerHTML = CAP[k]; };
-  [nz, bs].forEach(i => i.addEventListener('input', () => caption('none')));
-  update(); caption('rf');
+  }
+  chips.forEach(c => c.addEventListener('click', () => show(c)));
+  show(chips[0]);
 });
 </script>

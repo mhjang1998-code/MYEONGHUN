@@ -118,3 +118,13 @@ html.still .page.on .rv{opacity:1;transform:none}
 .term .en{font-size:20px;font-weight:700;color:var(--main)}
 .term .pr{font-size:18px;color:var(--note)}
 .term .def{flex-basis:100%;font-size:21px;line-height:1.45;color:var(--ink)}
+
+/* easy pages */
+.say{font-size:26px;font-weight:700;color:var(--deep);line-height:1.4}
+.say b{color:var(--main)}
+.box{border:1.5px solid var(--rule);padding:20px 24px;display:flex;flex-direction:column;gap:14px}
+.msg{font-size:22px;line-height:1.5;color:var(--ink);min-height:66px}
+.msg b{color:var(--main)}
+.memo{font-size:28px;font-weight:700;color:var(--main);line-height:1.4;border-top:3px solid var(--main);padding-top:12px}
+.side .p2{font-size:21px;line-height:1.5;margin:0}
+.side .p2 b{color:var(--deep)}

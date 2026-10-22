@@ -1,0 +1,104 @@
+<style>
+#p-dt svg{width:100%;height:330px;display:block}
+#p-dt .nd{fill:var(--white);stroke:var(--rule);stroke-width:2.5;transition:all .35s}
+#p-dt .nd.q{fill:var(--panel)}
+#p-dt .nd.on{stroke:var(--main);stroke-width:4}
+#p-dt .nd.leaf.on{fill:var(--main)}
+#p-dt .nt{fill:var(--deep);font-size:21px;font-weight:700;transition:fill .35s}
+#p-dt .nt.on{fill:var(--white)}
+#p-dt .eg{stroke:var(--rule);stroke-width:3;transition:all .35s}
+#p-dt .eg.on{stroke:var(--main);stroke-width:6}
+#p-dt .el{fill:var(--note);font-size:18px;font-weight:700}
+</style>
+
+<section class="page" id="p-dt" data-sec="② 모델">
+  <div class="sec rv">② 모델 · 결정 트리</div>
+  <h1 class="hl rv" style="--d:80ms">결정 트리는 예/아니오 질문을 이어 가는 스무고개다</h1>
+  <p class="sub rv" style="--d:150ms">RF, ET, GBDT, XGB는 모두 이 나무를 여러 그루 쓰는 모델이다. 그래서 나무부터 알아야 한다</p>
+
+  <div class="body">
+    <div class="left">
+      <div class="term rv" style="--d:200ms"><span class="ko">결정 트리</span><span class="en">decision tree</span><span class="pr">[디시전 트리]</span>
+        <span class="def">질문을 따라 가지를 내려가며 답을 정하는 모델. 질문과 기준값(55℃, 20일)은 데이터를 보고 컴퓨터가 스스로 정한다.</span></div>
+      <div class="box rv" style="--d:280ms">
+        <div class="row" id="dt-s"><button class="btn" data-s="0" aria-pressed="true">퇴비 ① 62℃ · 5일차</button><button class="btn" data-s="1">퇴비 ② 30℃ · 4일차</button><button class="btn" data-s="2">퇴비 ③ 35℃ · 40일차</button></div>
+        <svg id="dt-svg" viewBox="0 0 1000 330" role="img" aria-label="온도와 기간으로 부숙 여부를 판정하는 결정 트리"></svg>
+        <div class="msg" id="dt-msg"></div>
+      </div>
+    </div>
+
+    <aside class="side rv" style="--d:300ms">
+      <span class="lab">외울 한 줄</span>
+      <button class="btn more" data-drawer="detail">내역 보기 ›</button>
+      <div class="memo">결정 트리 = 예/아니오 질문을 이어 붙여 답을 찾는 스무고개</div>
+      <p class="p2"><b>논문에서는</b> Shi는 나무 계열 4개(RF·ET·GBDT·XGB), Wang은 2개(RF·XGB)를 썼다.</p>
+      <div class="insight"><span class="il">우리 캡스톤에서는</span><span class="ih">나무 계열을 기본 모델로 생각한다</span><ul><li>“55℃보다 높은가?”처럼 기준선만 보므로 단위 차이에 강하다</li><li>데이터가 수백 개 정도여도 잘 작동한다</li></ul></div>
+    </aside>
+  </div>
+
+  <div class="note">예시 데이터 · 나무의 질문과 기준값(55℃, 20일)은 설명용으로 정한 값</div>
+  <div class="foot"><span>Shi et al. (2025) 2.2 · Wang et al. (2024) 2.3</span><span class="pn"></span></div>
+
+  <template data-tab="detail">
+    <h4>이 장의 용어</h4>
+    <table class="tb"><thead><tr><th>용어</th><th>영어 [발음]</th><th>쉬운 뜻</th></tr></thead><tbody>
+      <tr><td><b>결정 트리</b></td><td>decision tree [디시전 트리]</td><td>질문을 따라 내려가며 답을 정하는 나무 모양 모델</td></tr>
+      <tr><td><b>노드</b></td><td>node [노드]</td><td>질문 하나가 적힌 칸 (맨 위는 뿌리 root [루트])</td></tr>
+      <tr><td><b>잎</b></td><td>leaf [리프]</td><td>더 이상 질문이 없는 맨 끝 칸 = 최종 답</td></tr>
+      <tr><td><b>분할</b></td><td>split [스플릿]</td><td>질문 하나로 데이터를 둘로 나누는 것</td></tr></tbody></table>
+    <h4>컴퓨터는 질문을 어떻게 정하나</h4>
+    <p>가능한 질문(온도 &gt; 40? 50? 55? 기간 &gt; 10? 20? …)을 전부 시험해 보고, 나눴을 때 양쪽이 가장 깔끔하게 갈리는(부숙끼리, 미부숙끼리 모이는) 질문을 고른다. 이것을 끝까지 반복한 것이 “학습”이다.</p>
+    <h4>나무 하나의 약점</h4>
+    <p>질문을 너무 많이 이어 붙이면 학습 데이터 하나하나에 맞춘 “외운 나무”가 된다 (다음 장: 과적합).</p>
+  </template>
+  <template data-tab="source">
+    <p><b>Shi 2025, 2.2:</b> 결정 트리는 작은 데이터셋 예측에 적합하다. RF·ET·XGB·GBDT 네 가지 결정 트리 기법을 사용했다.</p>
+    <p><b>예시 데이터:</b> 퇴비 ①②③과 나무의 질문은 설명용이다. 실제 모델의 질문은 데이터에서 자동으로 정해진다.</p>
+  </template>
+  <template data-tab="notes">
+    <ol><li>스무고개 비유로 시작. “동물인가요? → 다리가 4개인가요?”처럼 질문을 이어 간다.</li>
+    <li>퇴비 ①: 아직 뜨거우니 바로 미부숙. ②: 식었지만 4일차라 아직 초기 → 미부숙. ③: 식었고 40일 지남 → 부숙.</li>
+    <li>질문과 기준값은 사람이 정하지 않는다. 컴퓨터가 데이터에서 찾는다 = 학습.</li></ol>
+  </template>
+</section>
+
+<script>
+DECK.register('p-dt', root => {
+  const svg = root.querySelector('#dt-svg'), NS = 'http://www.w3.org/2000/svg';
+  const el = (t, a, s) => { const e = document.createElementNS(NS, t); for (const k in a) e.setAttribute(k, a[k]); if (s != null) e.textContent = s; return e; };
+  const N = {
+    r: {x: 500, y: 45, w: 300, t: '온도 > 55℃ ?', q: 1},
+    a: {x: 800, y: 165, w: 300, t: '미부숙 (아직 뜨거움)', leaf: 1},
+    b: {x: 290, y: 165, w: 300, t: '기간 > 20일 ?', q: 1},
+    c: {x: 130, y: 285, w: 260, t: '미부숙 (아직 초기)', leaf: 1},
+    d: {x: 450, y: 285, w: 220, t: '부숙', leaf: 1}
+  };
+  const E = [['r', 'a', '예'], ['r', 'b', '아니오'], ['b', 'c', '아니오'], ['b', 'd', '예']];
+  const eg = {}, nd = {}, nt = {};
+  E.forEach(([p, c, l]) => {
+    const A = N[p], B = N[c]; eg[c] = el('line', {x1: A.x, y1: A.y + 30, x2: B.x, y2: B.y - 30, class: 'eg'}); svg.append(eg[c]);
+    svg.append(el('text', {x: (A.x + B.x) / 2 + (B.x > A.x ? 16 : -16), y: (A.y + B.y) / 2 + 4, class: 'el', 'text-anchor': B.x > A.x ? 'start' : 'end'}, l));
+  });
+  Object.entries(N).forEach(([k, n]) => {
+    nd[k] = el('rect', {x: n.x - n.w / 2, y: n.y - 30, width: n.w, height: 60, class: 'nd' + (n.q ? ' q' : ' leaf')});
+    nt[k] = el('text', {x: n.x, y: n.y + 8, class: 'nt', 'text-anchor': 'middle'}, n.t);
+    svg.append(nd[k], nt[k]);
+  });
+  const PATH = [['r', 'a'], ['r', 'b', 'c'], ['r', 'b', 'd']];
+  const MSG = [
+    '퇴비 ① 62℃: 첫 질문 “55℃보다 뜨거운가?”에 <b>예</b> → 바로 <b>미부숙</b>. 아직 고온기다.',
+    '퇴비 ② 30℃: 뜨겁지 않다(아니오) → “20일 넘었나?” <b>아니오</b> → <b>미부숙</b>. 식었지만 아직 초기다.',
+    '퇴비 ③ 35℃: 뜨겁지 않다(아니오) → “20일 넘었나?” <b>예</b> → <b>부숙</b>. 다 익었다.'
+  ];
+  const btns = [...root.querySelectorAll('#dt-s .btn')];
+  function show(i) {
+    const on = new Set(PATH[i]);
+    Object.keys(N).forEach(k => { nd[k].classList.toggle('on', on.has(k)); nt[k].classList.toggle('on', on.has(k) && !!N[k].leaf); });
+    Object.keys(eg).forEach(k => eg[k].classList.toggle('on', on.has(k)));
+    root.querySelector('#dt-msg').innerHTML = MSG[i];
+    btns.forEach(b => b.setAttribute('aria-pressed', String(+b.dataset.s === i)));
+  }
+  btns.forEach(b => b.addEventListener('click', () => show(+b.dataset.s)));
+  show(0);
+});
+</script>

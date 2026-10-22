@@ -1,5 +1,7 @@
 <style>
-#p-nn svg{width:100%;height:330px;display:block}
+#p-nn svg{width:100%;height:270px;display:block}
+#p-nn .terms2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+#p-nn .terms2 .def{font-size:18px}
 #p-nn .node{fill:var(--white);stroke:var(--main);stroke-width:3}
 #p-nn .node.sum{fill:var(--panel)}
 #p-nn .node.act{fill:var(--main)}
@@ -24,15 +26,19 @@
 </style>
 
 <section class="page" id="p-nn" data-sec="② 모델">
-  <div class="sec rv">② 모델 선택 · 신경망과 활성화 함수 · Shi 2025 · Wang 2024</div>
-  <h1 class="hl rv" style="--d:80ms">신경망은 가중합을 활성화 함수에 통과시키며 학습한다</h1>
-  <p class="sub rv" style="--d:150ms">활성화 함수: 뉴런이 받은 값을 다음으로 보낼 신호(0~1)로 바꾸는 S자 곡선. 곡선이 평평하면 학습이 멈춘다</p>
+  <div class="sec rv">② 모델 · 신경망과 활성화 함수</div>
+  <h1 class="hl rv" style="--d:80ms">신경망은 숫자를 더한 뒤 밝기 조절기로 신호를 만든다</h1>
+  <p class="sub rv" style="--d:150ms">밝기 조절기를 너무 세게 돌리면 최대 밝기에서 멈춘다. 그러면 더 돌려도 변화가 없어 배울 수 없다(포화)</p>
 
   <div class="body">
     <div class="left">
+      <div class="terms2 rv" style="--d:200ms">
+        <div class="term"><span class="ko">신경망</span><span class="en">neural network</span><span class="pr">[뉴럴 네트워크]</span><span class="def">입력 × 가중치를 더하고(①) 신호로 바꾸는(②) 계산을 여러 층 쌓은 모델</span></div>
+        <div class="term"><span class="ko">활성화 함수</span><span class="en">activation function</span><span class="pr">[액티베이션 펑션]</span><span class="def">더한 값을 0~1 신호로 바꾸는 밝기 조절기 (S자 곡선)</span></div>
+      </div>
       <div class="panel rv" style="--d:250ms">
-        <h3>앞 장의 퇴비 A를 뉴런 하나에 넣어 보기 · 정답은 “미부숙 = 0”</h3>
-        <svg id="nn-svg" viewBox="0 0 1010 330" role="img" aria-label="뉴런 구조와 활성화 함수 곡선"></svg>
+        <h3>퇴비 A (pH 6.0, NH₄⁺ 1,200)를 뉴런 하나에 넣고 학습시켜 보기 · 정답은 “미부숙 = 0”</h3>
+        <svg id="nn-svg" viewBox="0 0 1010 330" preserveAspectRatio="xMidYMid meet" role="img" aria-label="뉴런 구조와 활성화 함수 곡선"></svg>
         <div class="row">
           <div class="row" id="nn-in"><button class="btn" data-m="raw" aria-pressed="true">원래 값 넣기</button><button class="btn" data-m="z" aria-pressed="false">표준화 값 넣기</button></div>
           <span class="sep" aria-hidden="true"></span>
@@ -42,19 +48,18 @@
         <table class="tb ro"><thead><tr><th>학습 횟수</th><th>가중합 z</th><th>출력 y</th><th>기울기 (학습 신호)</th><th>방금 가중치 변화</th></tr></thead>
           <tbody><tr><td id="nn-n"></td><td id="nn-z"></td><td id="nn-y"></td><td id="nn-g"></td><td id="nn-dw"></td></tr></tbody></table>
       </div>
-      <div class="callout rv" style="--d:380ms;background:var(--panel)"><b>학습 = 가중치 고치기(역전파).</b> 출력과 정답의 차이 × 곡선의 기울기만큼 가중치를 조금씩 고친다. 원래 값(NH₄⁺ 1,200)을 넣으면 z가 수백이 되어 곡선의 평평한 끝에 붙고, 기울기가 0이라 <b>몇 번을 반복해도 가중치가 안 바뀐다</b>. 이것이 “조기 포화”다.</div>
     </div>
 
     <aside class="side rv" style="--d:300ms">
-      <span class="lab">Shi 논문의 신경망 · 시험 R²</span>
+      <span class="lab">외울 한 줄</span>
       <button class="btn more" data-drawer="detail">내역 보기 ›</button>
-      <div class="big">0.616<small>BPNN</small></div>
-      <p>MLP는 0.664. 같은 데이터 184개에서 RF(0.937)보다 낮았다. 배울 가중치는 많은데 데이터가 적었다.</p>
+      <div class="memo">활성화 함수 = 밝기 조절기. 값이 너무 크면 끝에 붙어(포화) 학습이 멈춘다</div>
+      <p class="p2"><b>논문에서는</b> Shi의 신경망 BPNN 시험 R² 0.616, MLP 0.664. 데이터 184개로는 나무 모델(RF 0.937)보다 약했다.</p>
       <table class="tb"><tbody>
         <tr><td><b>가중치 w</b></td><td>입력을 얼마나 중요하게 볼지. 학습으로 고쳐짐</td></tr>
         <tr class="k"><td>활성화 함수</td><td>가중합 z를 0~1 신호로 바꾸는 곡선</td></tr>
         <tr><td><b>역전파</b></td><td>오차 × 기울기만큼 가중치를 고치는 학습</td></tr></tbody></table>
-      <div class="insight"><span class="il">캡스톤 인사이트 · 우리 데이터 설계에서는</span><span class="ih">신경망을 비교 모델로 쓰려면 표준화는 필수다</span><ul><li>원래 값 그대로 넣으면 포화되어 학습이 멈춘다</li><li>문헌 데이터 수백 개 규모에선 신경망이 불리 → 트리를 기본, 신경망은 비교용</li></ul></div>
+      <div class="insight"><span class="il">우리 캡스톤에서는</span><span class="ih">신경망을 비교 모델로 쓰려면 표준화는 필수다</span><ul><li>원래 값 그대로 넣으면 포화되어 학습이 멈춘다</li><li>문헌 데이터 수백 개 규모에선 신경망이 불리 → 트리를 기본, 신경망은 비교용</li></ul></div>
     </aside>
   </div>
 

@@ -1,137 +1,125 @@
 <style>
-#p-shap svg{width:100%;height:250px;display:block}
+#p-shap svg{width:100%;height:240px;display:block}
 #p-shap .up{fill:var(--main)}
 #p-shap .dn{fill:var(--t2)}
 #p-shap .bm{stroke:var(--note);stroke-width:2;stroke-dasharray:6 5}
 #p-shap .fm{stroke:var(--deep);stroke-width:3.5}
-#p-shap .fl{fill:var(--ink);font-size:18px;font-weight:700}
+#p-shap .fl{fill:var(--ink);font-size:19px;font-weight:700}
 #p-shap .fl.m{fill:var(--note);font-weight:500}
-#p-shap .sl{fill:var(--white);font-size:17px;font-weight:700}
+#p-shap .sl{fill:var(--white);font-size:18px;font-weight:700}
 #p-shap .sl.d{fill:var(--deep)}
-#p-shap .sum{background:var(--panel);padding:10px 16px;font-size:21px;font-weight:700;color:var(--deep)}
-#p-shap .lg{display:flex;gap:18px;font-size:16px;color:var(--note)}
+#p-shap .lg{display:flex;gap:18px;font-size:17px;color:var(--note)}
 #p-shap .lg i{display:inline-block;width:14px;height:14px;margin-right:6px;vertical-align:-2px}
-#p-shap .bars{display:grid;grid-template-columns:96px 1fr 70px;gap:4px 12px;align-items:center;font-size:19px}
-#p-shap .bars .b{height:16px;background:var(--main)}
+#p-shap .bars{display:grid;grid-template-columns:96px 1fr 70px;gap:4px 12px;align-items:center;font-size:18px}
+#p-shap .bars .b{height:15px;background:var(--main)}
 #p-shap .bars .b.s{background:var(--t1)}
 #p-shap .bars .b.t{background:var(--t2)}
 #p-shap .bars .val{text-align:right;font-weight:700}
 </style>
 
 <section class="page" id="p-shap" data-sec="④ 해석">
-  <div class="sec rv">④ 해석 · 변수 중요도 · Shi 2025 · Wang 2024</div>
-  <h1 class="hl rv" style="--d:80ms">SHAP은 예측값을 변수별 몫으로 공정하게 나눈다</h1>
-  <p class="sub rv" style="--d:150ms">예측값 = 기준값(평균 예측) + 변수마다의 몫. 팀 점수를 기여도대로 나누는 게임 이론 방법</p>
+  <div class="sec rv">④ 해석 · SHAP</div>
+  <h1 class="hl rv" style="--d:80ms">SHAP은 예측값을 변수별 몫으로 나눠 “왜”를 보여 준다</h1>
+  <p class="sub rv" style="--d:150ms">팀 프로젝트 점수를 누가 얼마나 기여했는지 나누는 것처럼, 예측 GI를 기간·EC·TN의 몫으로 나눈다</p>
 
   <div class="body">
     <div class="left">
-      <div class="panel rv" style="--d:250ms">
-        <h3>퇴비 한 개의 GI 예측 쪼개 보기 (힘 그림, force plot)</h3>
-        <svg id="sh-svg" viewBox="0 0 1010 250" role="img" aria-label="기준값에서 예측값까지 변수별 기여"></svg>
-        <div class="lg"><span><i style="background:var(--main)"></i>예측을 올림</span><span><i style="background:var(--t2)"></i>예측을 내림</span></div>
+      <div class="term rv" style="--d:200ms"><span class="ko">SHAP</span><span class="en">SHapley Additive exPlanations</span><span class="pr">[샙 · 섀플리 애디티브 익스플러네이션스]</span>
+        <span class="def">예측값 = 평균 예측(기준값) + 변수마다의 몫. 몫이 +면 예측을 올렸고, −면 내렸다.</span></div>
+      <div class="box rv" style="--d:280ms">
+        <div class="row" id="sh-chips">
+          <button class="btn" data-k="0" aria-pressed="true">1일차 퇴비 (초기)</button>
+          <button class="btn" data-k="1">13일차 퇴비 (고온기)</button>
+          <button class="btn" data-k="2">36일차 퇴비 (다 익음)</button>
+        </div>
+        <svg id="sh-svg" viewBox="0 0 1010 240" role="img" aria-label="기준값에서 예측값까지 변수별 몫"></svg>
+        <div class="lg"><span><i style="background:var(--main)"></i>예측을 올린 몫</span><span><i style="background:var(--t2)"></i>예측을 내린 몫</span></div>
+        <div class="msg" id="sh-msg" style="min-height:0"></div>
       </div>
-      <div class="ctl rv" style="--d:330ms">
-        <label for="sh-d">퇴비화 기간</label><input type="range" id="sh-d" min="0" max="60" step="1" value="1"><output id="sh-do"></output>
-        <label for="sh-e">EC</label><input type="range" id="sh-e" min="1" max="6" step="0.1" value="4.2"><output id="sh-eo"></output>
-        <label for="sh-n">TN</label><input type="range" id="sh-n" min="1" max="4" step="0.1" value="2.8"><output id="sh-no"></output>
-      </div>
-      <div class="row rv" style="--d:400ms" id="sh-chips">
-        <button class="btn" data-d="1" data-e="4.2" data-n="2.8" aria-pressed="true">1일차 (초기)</button>
-        <button class="btn" data-d="13" data-e="3.8" data-n="2.2">13일차 (고온기)</button>
-        <button class="btn" data-d="36" data-e="2.2" data-n="3.3">36일차 (후숙)</button>
-      </div>
-      <div class="sum rv" id="sh-sum" style="--d:450ms"></div>
-      <div class="callout rv" style="--d:500ms;background:var(--panel)"><b>같은 변수, 다른 방향.</b> Shi Fig. 6 실제 예측: 1일차 17.0 → 36일차 81.1 (기준값 57.9). 기간이 초기엔 끌어내리고 후숙기엔 끌어올린다.</div>
     </div>
 
     <aside class="side rv" style="--d:300ms">
-      <span class="lab">Shi RF 모델 · 전역 중요도 1위</span>
-      <div class="big">46.2<small>% 기간</small></div>
-      <div class="bars" id="sh-bars"></div>
+      <span class="lab">외울 한 줄</span>
       <button class="btn more" data-drawer="detail">내역 보기 ›</button>
-      <div class="insight"><span class="il">캡스톤 인사이트 · 우리 데이터 설계에서는</span><span class="ih">SHAP 결과가 퇴비화 원리와 맞는지로 모델을 검증한다</span><ul><li>Wang: NH₃에 통기량·C/N이 중요 = 원리와 일치 → 믿을 만하다</li><li>원리와 반대 방향이 나오면 그래프 추출·단위 오류부터 의심한다</li></ul></div>
+      <div class="memo">SHAP = 예측값을 변수별 몫으로 나눠 “왜 그렇게 예측했나”를 보여 줌</div>
+      <span class="lab">Shi 논문 RF · 변수별 평균 몫 (중요도)</span>
+      <div class="bars" id="sh-bars"></div>
+      <div class="insight"><span class="il">우리 캡스톤에서는</span><span class="ih">SHAP 결과가 퇴비화 원리와 맞는지 확인한다</span><ul><li>맞으면 믿을 만한 모델 (Wang: NH₃에 통기량·C/N이 중요)</li><li>반대로 나오면 데이터 추출·단위 실수부터 의심</li></ul></div>
     </aside>
   </div>
 
-  <div class="note">왼쪽 힘 그림은 변수 3개짜리 예시 모델로 계산한 SHAP 값(예시 데이터 · 입력에 따른 계산) · 오른쪽은 Shi 2025 Fig. 5a 실제 값</div>
-  <div class="foot"><span>Shi et al. (2025) 2.4 식 (1), 3.3 Fig. 5–6 · Wang et al. (2024) 2.5, 3.4 Fig. 4</span><span class="pn"></span></div>
+  <div class="note">왼쪽 그림은 변수 3개짜리 예시 모델로 계산한 값 (예시 데이터 · 입력에 따른 계산) · 오른쪽 막대는 Shi 2025 Fig. 5a 실제 값</div>
+  <div class="foot"><span>Shi et al. (2025) 2.4, 3.3 Fig. 5–6 · Wang et al. (2024) 2.5, 3.4 Fig. 4</span><span class="pn"></span></div>
 
   <template data-tab="detail">
-    <h4>식</h4>
-    <div class="eq">f(x) = φ₀ + φ₁ + φ₂ + … + φₙ</div>
-    <p>φ₀ = 기준값(모델의 평균 예측), φᵢ = 변수 i의 몫(SHAP 값). 몫을 다 더하면 정확히 예측값이 된다.</p>
-    <h4>원리: 순서를 바꿔 가며 평균</h4>
-    <p>기간 → EC → TN 순서로 하나씩 넣을 때, EC가 들어오는 순간 예측이 얼마나 바뀌었나? 가능한 모든 순서에서 이 변화를 구해 평균 낸 것이 EC의 SHAP 값이다.</p>
-    <h4>전역 vs 국소</h4>
-    <table class="tb"><tbody>
-      <tr><td><b>전역</b></td><td>평균적으로 누가 중요한가 (막대 그래프, 벌떼 그림)</td></tr>
-      <tr><td><b>국소</b></td><td>이 시료 하나는 왜 이렇게 예측됐나 (힘 그림)</td></tr></tbody></table>
-    <h4>피어슨과의 차이</h4>
-    <p>피어슨은 직선 관계만 본다. SHAP은 모델이 실제로 쓴 관계(곡선 포함)를 보여 준다. Wang 논문에서 통기량은 “너무 많아도, 적어도 NH₃ 휘산이 줄어드는” 곡선 관계로 나타났다.</p>
+    <h4>이 장의 용어</h4>
+    <table class="tb"><thead><tr><th>용어</th><th>영어 [발음]</th><th>쉬운 뜻</th></tr></thead><tbody>
+      <tr><td><b>SHAP</b></td><td>SHapley Additive exPlanations [샙]</td><td>예측을 변수별 몫으로 나누는 방법</td></tr>
+      <tr><td><b>기준값</b></td><td>base value [베이스 밸류]</td><td>모든 데이터의 평균 예측. 출발점</td></tr>
+      <tr><td><b>전역 해석</b></td><td>global [글로벌]</td><td>전체 데이터에서 평균적으로 누가 중요한가 (오른쪽 막대)</td></tr>
+      <tr><td><b>국소 해석</b></td><td>local [로컬]</td><td>퇴비 하나는 왜 이렇게 예측됐나 (왼쪽 그림)</td></tr>
+      <tr><td><b>블랙박스</b></td><td>black box [블랙박스]</td><td>속을 들여다볼 수 없는 모델. SHAP이 속을 보여 준다</td></tr></tbody></table>
+    <h4>몫은 어떻게 나누나</h4>
+    <p>변수를 하나씩 넣어 보는 모든 순서에서, 그 변수가 들어올 때 예측이 얼마나 바뀌었는지 평균 낸다. 몫을 다 더하면 정확히 예측값이 된다.</p>
+    <h4>피어슨 r과 다른 점</h4>
+    <p>r은 직선 관계만 본다. SHAP은 모델이 실제로 쓴 관계(곡선 포함)를 보여 준다.</p>
   </template>
   <template data-tab="source">
-    <p><b>Shi 2025 Fig. 5a (RF 전역 기여):</b> 기간 46.17%, TN 14.09%, EC 9.67%, 온도 9.49%, NO₃⁻-N 9.39%, NH₄⁺-N 6.77%, pH 4.42%.</p>
-    <p><b>Shi 2025 Fig. 6 (국소):</b> 기준값 57.90. 예측 GI 1일 17.00, 8일 27.87, 13일 29.96, 20일 54.55, 36일 81.14.</p>
-    <p><b>Wang 2024 Fig. 4 (XGB, NH₃):</b> 시간 30%, 통기량 16.3%, C/N 15%, 함수율 14.6%. GWP에서는 시간을 빼면 NO₃⁻가 가장 중요했다.</p>
-    <p><b>예시 데이터:</b> 왼쪽 모델 GI = 37.9 + 기간 − 5(EC−3) + 6(TN−2.5) + 0.3(기간−20)(TN−2.5), 기준 시료(20일, EC 3, TN 2.5). 6가지 순서를 모두 계산한 정확한 SHAP 값이다.</p>
+    <p><b>Shi 2025 Fig. 5a:</b> 기간 46.17%, TN 14.09%, EC 9.67%, 온도 9.49%, NO₃⁻-N 9.39%, NH₄⁺-N 6.77%, pH 4.42%.</p>
+    <p><b>Shi 2025 Fig. 6:</b> 기준값 57.90, 예측 GI 1일 17.00 · 13일 29.96 · 36일 81.14. 초기엔 기간이 GI를 끌어내리고, 후숙기엔 끌어올렸다.</p>
+    <p><b>Wang 2024 Fig. 4:</b> NH₃ 예측에서 시간 30%, 통기량 16.3%, C/N 15%, 함수율 14.6%.</p>
+    <p><b>예시 데이터:</b> GI = 37.9 + 기간 − 5(EC−3) + 6(TN−2.5) + 0.3(기간−20)(TN−2.5), 기준 시료(20일, EC 3, TN 2.5).</p>
   </template>
   <template data-tab="notes">
-    <ol><li>Q. SHAP이 뭐야? → 예측값을 변수들에게 공정하게 나눠 주는 방법. 팀 프로젝트 점수를 기여도대로 나누는 것과 같다.</li>
-    <li>시연: 1일차 → 36일차. 기간의 몫이 “내림”에서 “올림”으로 바뀐다. 논문 Fig. 6과 같은 흐름.</li>
-    <li>전역(막대)과 국소(힘 그림)를 구분해서 말한다.</li></ol>
+    <ol><li>비유: 팀 프로젝트 점수 나누기.</li>
+    <li>1일차: 기간(1일)이 예측을 크게 끌어내림 → 덜 익었다. 36일차: 기간이 크게 끌어올림 → 다 익었다.</li>
+    <li>논문 Fig. 6도 같은 흐름 (1일 17.0 → 36일 81.1).</li></ol>
   </template>
 </section>
 
 <script>
 DECK.register('p-shap', root => {
-  const BASE = {d: 20, e: 3, n: 2.5};
+  const BASE = {d: 20, e: 3, n: 2.5}, PRESET = [{d: 1, e: 4.2, n: 2.8}, {d: 13, e: 3.8, n: 2.2}, {d: 36, e: 2.2, n: 3.3}];
   const f = x => 37.9 + x.d - 5 * (x.e - 3) + 6 * (x.n - 2.5) + 0.3 * (x.d - 20) * (x.n - 2.5);
   const NAME = {d: '기간', e: 'EC', n: 'TN'};
   const perms = [['d','e','n'],['d','n','e'],['e','d','n'],['e','n','d'],['n','d','e'],['n','e','d']];
-  function shap(x) {
-    const phi = {d: 0, e: 0, n: 0};
-    perms.forEach(p => { const cur = {...BASE}; p.forEach(k => { const b = f(cur); cur[k] = x[k]; phi[k] += (f(cur) - b) / perms.length; }); });
-    return phi;
-  }
-  const $ = id => root.querySelector('#' + id);
-  const svg = $('sh-svg'), NS = 'http://www.w3.org/2000/svg';
-  const el = (t, a) => { const e = document.createElementNS(NS, t); for (const k in a) e.setAttribute(k, a[k]); return e; };
-  const L = 20, R = 990, LO = -10, HI = 150, sx = v => L + (Math.max(LO, Math.min(HI, v)) - LO) / (HI - LO) * (R - L);
-  const sd = $('sh-d'), se = $('sh-e'), sn = $('sh-n'), chips = [...root.querySelectorAll('#sh-chips .btn')];
-  function draw() {
-    const x = {d: +sd.value, e: +se.value, n: +sn.value}, phi = shap(x), base = f(BASE), fx = f(x);
-    $('sh-do').textContent = x.d + '일'; $('sh-eo').textContent = x.e.toFixed(1) + ' mS/cm'; $('sh-no').textContent = x.n.toFixed(1) + '%';
+  const shap = x => { const phi = {d: 0, e: 0, n: 0};
+    perms.forEach(p => { const cur = {...BASE}; p.forEach(k => { const b = f(cur); cur[k] = x[k]; phi[k] += (f(cur) - b) / perms.length; }); }); return phi; };
+  const svg = root.querySelector('#sh-svg'), NS = 'http://www.w3.org/2000/svg';
+  const el = (t, a, s) => { const e = document.createElementNS(NS, t); for (const k in a) e.setAttribute(k, a[k]); if (s != null) e.textContent = s; return e; };
+  const L = 20, R = 990, sx = v => L + (Math.max(-10, Math.min(150, v)) + 10) / 160 * (R - L);
+  const MSG = [
+    '1일차: <b>기간(1일)</b>이 예측을 크게 끌어내렸다 → 아직 덜 익었다고 판단.',
+    '13일차: 기간이 여전히 내리지만 덜하다. 고온기라 아직 다 익지 않았다.',
+    '36일차: 이번엔 <b>기간이 예측을 크게 끌어올렸다</b> → 다 익었다고 판단. 같은 변수도 퇴비마다 방향이 바뀐다.'
+  ];
+  const chips = [...root.querySelectorAll('#sh-chips .btn')];
+  function draw(k) {
+    const x = PRESET[k], phi = shap(x), base = f(BASE), fx = f(x);
     svg.replaceChildren();
-    svg.append(el('line', {x1: L, y1: 200, x2: R, y2: 200, class: 'ax'}));
-    [0, 50, 100, 150].forEach(v => { const t = el('text', {x: sx(v), y: 222, class: 'fl m', 'text-anchor': 'middle'}); t.textContent = v; svg.append(t); });
-    const ax = el('text', {x: R, y: 245, class: 'fl m', 'text-anchor': 'end'}); ax.textContent = '예측 GI (%)'; svg.append(ax);
+    svg.append(el('line', {x1: L, y1: 190, x2: R, y2: 190, class: 'ax'}));
+    [0, 50, 100, 150].forEach(v => svg.append(el('text', {x: sx(v), y: 214, class: 'fl m', 'text-anchor': 'middle'}, v)));
+    svg.append(el('text', {x: R, y: 236, class: 'fl m', 'text-anchor': 'end'}, '예측 GI (%)'));
     let pos = base;
-    Object.keys(phi).sort((a, b) => Math.abs(phi[b]) - Math.abs(phi[a])).forEach((k, i) => {
-      const v = phi[k], x0 = sx(pos), x1 = sx(pos + v), y = 52 + i * 46, w = Math.abs(x1 - x0);
+    Object.keys(phi).sort((a, b) => Math.abs(phi[b]) - Math.abs(phi[a])).forEach((key, i) => {
+      const v = phi[key], x0 = sx(pos), x1 = sx(pos + v), y = 46 + i * 46, w = Math.abs(x1 - x0), inside = w > 110;
       svg.append(el('rect', {x: Math.min(x0, x1), y, width: Math.max(2, w), height: 34, class: v >= 0 ? 'up' : 'dn'}));
-      const inside = w > 110, t = el('text', {y: y + 23, class: inside ? (v >= 0 ? 'sl' : 'sl d') : 'fl'});
-      t.textContent = `${NAME[k]} ${v >= 0 ? '+' : '−'}${Math.abs(v).toFixed(1)}`;
+      const t = el('text', {y: y + 23, class: inside ? (v >= 0 ? 'sl' : 'sl d') : 'fl'}, `${NAME[key]} ${v >= 0 ? '+' : '−'}${Math.abs(v).toFixed(1)}`);
       if (inside) { t.setAttribute('x', (x0 + x1) / 2); t.setAttribute('text-anchor', 'middle'); }
       else { t.setAttribute('x', v >= 0 ? Math.max(x0, x1) + 8 : Math.min(x0, x1) - 8); t.setAttribute('text-anchor', v >= 0 ? 'start' : 'end'); }
       svg.append(t); pos += v;
     });
-    svg.append(el('line', {x1: sx(base), y1: 40, x2: sx(base), y2: 200, class: 'bm'}), el('line', {x1: sx(fx), y1: 40, x2: sx(fx), y2: 200, class: 'fm'}));
-    const near = Math.abs(sx(fx) - sx(base)) < 160;
-    const bl = el('text', {x: sx(base), y: near ? 14 : 30, class: 'fl m', 'text-anchor': 'middle'}); bl.textContent = '기준값 ' + base.toFixed(1);
-    const fl = el('text', {x: sx(fx), y: 30, class: 'fl', 'text-anchor': 'middle'}); fl.textContent = '예측 f(x) = ' + fx.toFixed(1);
-    svg.append(bl, fl);
-    const sg = v => (v >= 0 ? '+ ' : '− ') + Math.abs(v).toFixed(1);
-    $('sh-sum').textContent = `${base.toFixed(1)} ${sg(phi.d)} (기간) ${sg(phi.e)} (EC) ${sg(phi.n)} (TN) = ${fx.toFixed(1)}`;
+    svg.append(el('line', {x1: sx(base), y1: 34, x2: sx(base), y2: 190, class: 'bm'}), el('line', {x1: sx(fx), y1: 34, x2: sx(fx), y2: 190, class: 'fm'}));
+    const near = Math.abs(sx(fx) - sx(base)) < 170;
+    svg.append(el('text', {x: sx(base), y: near ? 12 : 26, class: 'fl m', 'text-anchor': 'middle'}, '기준값(평균) ' + base.toFixed(1)),
+      el('text', {x: sx(fx), y: 26, class: 'fl', 'text-anchor': 'middle'}, '예측 ' + fx.toFixed(1)));
+    root.querySelector('#sh-msg').innerHTML = MSG[k];
+    chips.forEach(o => o.setAttribute('aria-pressed', String(+o.dataset.k === k)));
   }
-  [sd, se, sn].forEach(i => i.addEventListener('input', () => { chips.forEach(c => c.setAttribute('aria-pressed', 'false')); draw(); }));
-  chips.forEach(c => c.addEventListener('click', () => {
-    chips.forEach(o => o.setAttribute('aria-pressed', String(o === c)));
-    sd.value = c.dataset.d; se.value = c.dataset.e; sn.value = c.dataset.n; draw();
-  }));
-  draw();
-
+  chips.forEach(c => c.addEventListener('click', () => draw(+c.dataset.k)));
+  draw(0);
   const G = [['기간', 46.17], ['TN', 14.09], ['EC', 9.67], ['온도', 9.49], ['NO₃⁻-N', 9.39], ['NH₄⁺-N', 6.77], ['pH', 4.42]];
-  $('sh-bars').innerHTML = G.map(([k, v], i) =>
+  root.querySelector('#sh-bars').innerHTML = G.map(([k, v], i) =>
     `<span>${k}</span><div><div class="b ${i === 0 ? '' : i < 3 ? 's' : 't'} grow" style="width:${v / 46.17 * 100}%;--d:${400 + i * 60}ms"></div></div><span class="val">${v.toFixed(1)}%</span>`).join('');
 });
 </script>

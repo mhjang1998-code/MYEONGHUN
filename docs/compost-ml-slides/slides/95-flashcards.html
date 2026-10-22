@@ -1,0 +1,67 @@
+<style>
+#p-fc .bar{position:absolute;left:0;right:0;top:0;display:flex;gap:10px;align-items:center}
+#p-fc .grid{position:absolute;left:0;right:0;top:60px;bottom:0;display:grid;grid-template-columns:repeat(4,1fr);grid-auto-rows:1fr;gap:14px}
+#p-fc .card{font:inherit;position:relative;border:1.5px solid var(--rule);background:var(--white);cursor:pointer;padding:12px 16px;text-align:left;display:flex;flex-direction:column;justify-content:center;gap:4px}
+#p-fc .card:hover{border-color:var(--main)}
+#p-fc .card .ko{font-size:23px;font-weight:700;color:var(--deep)}
+#p-fc .card .en{font-size:16px;color:var(--note)}
+#p-fc .card .back{display:none;font-size:19px;line-height:1.4;color:var(--white);font-weight:700}
+#p-fc .card.flip{background:var(--main);border-color:var(--main)}
+#p-fc .card.flip .ko{font-size:17px;color:var(--t3)}
+#p-fc .card.flip .en{display:none}
+#p-fc .card.flip .back{display:block}
+#p-fc .cnt{font-size:19px;font-weight:700;color:var(--deep);margin-left:auto}
+</style>
+
+<section class="page" id="p-fc" data-sec="암기">
+  <div class="sec rv">암기 카드</div>
+  <h1 class="hl rv" style="--d:80ms">카드를 눌러 뒤집으며 한 줄 정의를 외운다</h1>
+  <p class="sub rv" style="--d:150ms">앞면: 용어와 영어 [발음] · 뒷면: 외울 한 줄. 먼저 뜻을 말해 보고 뒤집어 확인하자</p>
+
+  <div class="body">
+    <div class="bar rv" style="--d:200ms"><button class="btn" id="fc-all">모두 뒤집기</button><button class="btn" id="fc-reset">모두 앞면</button><button class="btn" id="fc-shuf">섞기</button><span class="cnt" id="fc-cnt"></span></div>
+    <div class="grid rv" style="--d:260ms" id="fc-grid"></div>
+  </div>
+
+  <div class="note">각 장 오른쪽 위 “외울 한 줄”을 모은 카드</div>
+  <div class="foot"><span>Shi et al. (2025) · Wang et al. (2024)</span><span class="pn"></span></div>
+
+  <template data-tab="detail"><p>시험 전에는 “모두 앞면” → 하나씩 뜻을 말해 보고 → 눌러서 확인. 틀린 카드는 해당 장으로 돌아가 다시 본다.</p></template>
+  <template data-tab="source"><p>각 장의 내용을 요약했다.</p></template>
+  <template data-tab="notes"><ol><li>외울 것은 이 16개 한 줄.</li><li>“섞기”로 순서를 바꿔 가며 반복.</li></ol></template>
+</section>
+
+<script>
+DECK.register('p-fc', root => {
+  const C = [
+    ['피어슨 상관계수 r', 'Pearson correlation [피어슨 코릴레이션]', '두 값이 같이 움직이는 정도. +1 같이, −1 반대로, 0 상관없음'],
+    ['다중공선성', 'multicollinearity [멀티콜리니어리티]', '입력 변수끼리 같은 정보를 담고 있는 상태 (키와 몸무게)'],
+    ['표준화', 'standardization [스탠더다이제이션]', '숫자를 “평균보다 몇 칸 높은가·낮은가”로 바꾸기'],
+    ['데이터 누수', 'data leakage [데이터 리키지]', '시험용 데이터를 미리 엿봐 점수가 부풀려지는 실수'],
+    ['결정 트리', 'decision tree [디시전 트리]', '예/아니오 질문을 이어 붙이는 스무고개'],
+    ['과적합', 'overfitting [오버피팅]', '학습 데이터를 외워서 새 데이터를 틀림'],
+    ['일반화', 'generalization [제너럴라이제이션]', '처음 보는 데이터도 잘 맞히는 능력'],
+    ['랜덤 포레스트', 'random forest [랜덤 포레스트]', '조금씩 다른 나무 여러 그루의 평균. 덜 흔들린다'],
+    ['XGBoost', 'eXtreme gradient boosting [익스트림 그래디언트 부스팅]', '틀린 만큼 다음 나무가 고치는 오답노트 + 벌점'],
+    ['규제 (L1·L2)', 'regularization [레귤러라이제이션]', '복잡하면 벌점. L1은 버리고, L2는 골고루 줄인다'],
+    ['KNN', 'k-nearest neighbors [케이 니어리스트 네이버스]', '비슷한 이웃 k개의 다수결. 학습 없이 예측 때 계산'],
+    ['활성화 함수', 'activation function [액티베이션 펑션]', '가중합을 0~1 신호로 바꾸는 밝기 조절기. 너무 크면 포화'],
+    ['결정계수 R²', 'coefficient of determination [코에피션트 오브 디터미네이션]', '모델이 실제 변화의 몇 %를 설명했나 (1에 가까울수록 좋음)'],
+    ['RMSE', 'root mean squared error [루트 민 스퀘어드 에러]', '평균 몇 점 틀렸나 (원래 단위). 큰 실수에 엄격'],
+    ['SHAP', 'SHapley additive exPlanations [샙]', '예측값을 변수별 몫으로 나눠 “왜”를 보여 줌'],
+    ['견고성', 'robustness [로버스트니스]', '데이터가 조금 바뀌어도 결과가 크게 안 흔들림']
+  ];
+  const grid = root.querySelector('#fc-grid'), cnt = root.querySelector('#fc-cnt');
+  let order = C.map((_, i) => i);
+  function render() {
+    grid.innerHTML = order.map(i => `<button class="card" data-i="${i}"><span class="ko">${C[i][0]}</span><span class="en">${C[i][1]}</span><span class="back">${C[i][2]}</span></button>`).join('');
+    count();
+  }
+  const count = () => { cnt.textContent = `뒤집은 카드 ${grid.querySelectorAll('.flip').length} / ${C.length}`; };
+  grid.addEventListener('click', e => { const c = e.target.closest('.card'); if (c) { c.classList.toggle('flip'); count(); } });
+  root.querySelector('#fc-all').addEventListener('click', () => { grid.querySelectorAll('.card').forEach(c => c.classList.add('flip')); count(); });
+  root.querySelector('#fc-reset').addEventListener('click', () => { grid.querySelectorAll('.card').forEach(c => c.classList.remove('flip')); count(); });
+  root.querySelector('#fc-shuf').addEventListener('click', () => { for (let i = order.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [order[i], order[j]] = [order[j], order[i]]; } render(); });
+  render();
+});
+</script>

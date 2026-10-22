@@ -1,0 +1,110 @@
+<style>
+#p-knn .two{display:grid;grid-template-columns:1fr 330px;gap:16px;align-items:start}
+#p-knn svg{width:100%;height:330px;display:block;cursor:crosshair}
+#p-knn .m{fill:var(--main)}
+#p-knn .i{fill:var(--white);stroke:var(--main);stroke-width:3}
+#p-knn .q{fill:var(--acc)}
+#p-knn .ql{fill:var(--deep);font-size:20px;font-weight:700}
+#p-knn .nb{stroke:var(--deep);stroke-width:2.5;stroke-dasharray:6 5}
+#p-knn .ring{fill:none;stroke:var(--deep);stroke-width:2;stroke-dasharray:4 6}
+#p-knn .vote{font-size:22px;font-weight:700;color:var(--deep);line-height:1.5}
+#p-knn .vote b{color:var(--main);font-size:30px}
+#p-knn .cmp{font-size:18px}
+#p-knn .cmp td,#p-knn .cmp th{padding:7px 8px}
+</style>
+
+<section class="page" id="p-knn" data-sec="② 모델">
+  <div class="sec rv">② 모델 · KNN</div>
+  <h1 class="hl rv" style="--d:80ms">KNN은 가장 비슷한 과거 퇴비 k개에게 물어보는 다수결이다</h1>
+  <p class="sub rv" style="--d:150ms">미리 공부(학습)하지 않고 데이터를 저장만 해 둔다. 질문이 오면 그때 전부와 거리를 잰다 = 오픈북 시험</p>
+
+  <div class="body">
+    <div class="left">
+      <div class="term rv" style="--d:200ms"><span class="ko">k-최근접 이웃</span><span class="en">k-nearest neighbors (KNN)</span><span class="pr">[케이 니어리스트 네이버스]</span>
+        <span class="def">새 퇴비와 측정값이 가장 비슷한(가까운) 과거 퇴비 k개를 찾아, 그들이 많이 가진 답을 따른다.</span></div>
+      <div class="box rv" style="--d:280ms">
+        <div class="row" id="kn-k"><span class="cap" style="font-size:19px;font-weight:700;color:var(--deep)">몇 명에게 물어볼까?</span><button class="btn" data-k="1">k = 1</button><button class="btn" data-k="3" aria-pressed="true">k = 3</button><button class="btn" data-k="5">k = 5</button><span class="cap">그림을 누르면 새 퇴비(주황)가 옮겨진다</span></div>
+        <div class="two">
+          <svg id="kn-svg" viewBox="0 0 640 330" role="img" aria-label="퇴비화 기간과 온도 평면의 과거 퇴비와 새 퇴비"></svg>
+          <div style="display:flex;flex-direction:column;gap:12px">
+            <div class="vote" id="kn-vote"></div>
+            <table class="tb cmp"><thead><tr><th></th><th>미리 할 일 (학습)</th><th>예측할 때</th></tr></thead><tbody>
+              <tr><td><b>RF·XGB</b></td><td>나무를 다 만들어 둠</td><td>나무만 따라감 (빠름)</td></tr>
+              <tr class="k"><td>KNN</td><td>저장만 함</td><td>모든 퇴비와 거리 계산</td></tr></tbody></table>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <aside class="side rv" style="--d:300ms">
+      <span class="lab">외울 한 줄</span>
+      <button class="btn more" data-drawer="detail">내역 보기 ›</button>
+      <div class="memo">KNN = 비슷한 이웃 k개의 다수결. 학습 없이 예측할 때 계산한다</div>
+      <p class="p2"><b>논문에서는</b> Wang 논문이 퇴비 부숙 여부(GI 80% 초과) 판정에 KNN을 써서 정확도 92%. 숫자 예측(NH₃)에서는 학습 1.00 → 시험 0.851로 외웠다.</p>
+      <div class="insight"><span class="il">우리 캡스톤에서는</span><span class="ih">KNN을 쓰면 표준화가 필수다</span><ul><li>거리로 비교하므로 숫자 큰 변수가 결과를 독차지한다</li><li>값이 빠진(결측) 칸이 있으면 거리를 못 재므로 결측부터 정리한다</li></ul></div>
+    </aside>
+  </div>
+
+  <div class="note">예시 데이터 · 과거 퇴비 16개의 기간·온도·부숙 여부는 설명용 값 · 두 축은 표준화했다고 보고 같은 길이로 그림</div>
+  <div class="foot"><span>Wang et al. (2024) 2.3.3 식 (7), 3.3 Fig. 3</span><span class="pn"></span></div>
+
+  <template data-tab="detail">
+    <h4>이 장의 용어</h4>
+    <table class="tb"><thead><tr><th>용어</th><th>영어 [발음]</th><th>쉬운 뜻</th></tr></thead><tbody>
+      <tr><td><b>KNN</b></td><td>k-nearest neighbors [케이 니어리스트 네이버스]</td><td>가장 가까운 이웃 k개의 다수결(또는 평균)</td></tr>
+      <tr><td><b>거리</b></td><td>Euclidean distance [유클리디언 디스턴스]</td><td>두 퇴비의 측정값 차이를 피타고라스처럼 잰 것</td></tr>
+      <tr><td><b>게으른 학습</b></td><td>lazy learning [레이지 러닝]</td><td>미리 공부 안 하고 질문이 올 때 계산하는 방식</td></tr>
+      <tr><td><b>분류</b></td><td>classification [클래시피케이션]</td><td>부숙/미부숙처럼 종류를 맞히기</td></tr>
+      <tr><td><b>회귀</b></td><td>regression [리그레션]</td><td>NH₃ 몇 g처럼 숫자를 맞히기</td></tr></tbody></table>
+    <h4>왜 직관적인가</h4>
+    <p>“비슷한 퇴비는 비슷하게 익었을 것”이라는 사람의 생각과 똑같다. 수식이나 나무 없이 거리와 다수결만 쓴다.</p>
+    <h4>그럼 원래 다 예측할 때 계산하나?</h4>
+    <p>아니다. 대부분의 모델(RF, XGB, 신경망)은 <b>학습할 때</b> 시간을 들여 규칙(나무, 가중치)을 만들어 두고, 예측할 때는 그 규칙에 값을 넣기만 한다. KNN만 학습 때 아무것도 하지 않고 데이터를 저장해 두었다가, <b>예측할 때</b> 모든 데이터와 거리를 잰다. 그래서 데이터가 아주 많으면 예측이 느려진다.</p>
+    <h4>k 고르기</h4>
+    <p>k가 너무 작으면(1) 이상한 이웃 하나에 휘둘리고, 너무 크면 멀리 있는 퇴비까지 끼어든다. 교차검증으로 고른다.</p>
+  </template>
+  <template data-tab="source">
+    <p><b>Wang 2024, 2.3:</b> KNN은 직관적이고 이해하기 쉬운 알고리즘으로, 모든 계산이 예측 시점에 이루어지므로 별도의 학습 단계가 필요 없다.</p>
+    <p><b>Wang 2024, 2.3.3 · 3.3:</b> 유클리드 거리, 분류는 다수결. GI &gt; 80%를 부숙으로 판정. 부숙 93.3%, 미부숙 90.0% 정확 (평균 약 92%).</p>
+    <p><b>예시 데이터:</b> 과거 퇴비 16개와 새 퇴비 위치는 설명용 값.</p>
+  </template>
+  <template data-tab="notes">
+    <ol><li>비유: 오픈북 시험. 미리 요약 노트를 만들지 않고, 문제가 나오면 그때 책 전체를 뒤진다.</li>
+    <li>k = 1 → 3 → 5로 바꾸면 판정이 바뀔 수 있다. 그림을 눌러 새 퇴비를 옮겨 보기.</li>
+    <li>Q. 왜 학습 단계가 없어? → 데이터를 저장만 하고, 예측할 때 거리를 계산하기 때문.</li></ol>
+  </template>
+</section>
+
+<script>
+DECK.register('p-knn', root => {
+  // [days, temp, mature]
+  const P = [[5, 62, 0], [8, 66, 0], [12, 60, 0], [3, 40, 0], [10, 52, 0], [15, 57, 0], [18, 48, 0], [22, 55, 0],
+             [26, 42, 1], [30, 38, 1], [35, 33, 1], [40, 30, 1], [45, 28, 1], [50, 26, 1], [28, 48, 0], [33, 44, 1]];
+  const svg = root.querySelector('#kn-svg'), NS = 'http://www.w3.org/2000/svg';
+  const el = (t, a, s) => { const e = document.createElementNS(NS, t); for (const k in a) e.setAttribute(k, a[k]); if (s != null) e.textContent = s; return e; };
+  const L = 60, R = 630, T = 10, B = 290, sx = d => L + d / 55 * (R - L), sy = t => B - (t - 20) / 50 * (B - T);
+  const ix = x => (x - L) / (R - L) * 55, iy = y => 20 + (B - y) / (B - T) * 50;
+  let q = [27, 47], k = 3;
+  function draw() {
+    svg.replaceChildren();
+    svg.append(el('line', {x1: L, y1: B, x2: R, y2: B, class: 'ax'}), el('line', {x1: L, y1: T, x2: L, y2: B, class: 'ax'}),
+      el('text', {x: R, y: B + 30, class: 'axl', 'text-anchor': 'end'}, '퇴비화 기간 (일)'), el('text', {x: 14, y: T + 10, class: 'axl', transform: `rotate(-90 14 ${T + 10})`, 'text-anchor': 'end'}, '온도 (℃)'));
+    const qx = sx(q[0]), qy = sy(q[1]);
+    const ranked = P.map(p => ({p, d: Math.hypot(sx(p[0]) - qx, sy(p[1]) - qy)})).sort((a, b) => a.d - b.d).slice(0, k);
+    svg.append(el('circle', {cx: qx, cy: qy, r: ranked[ranked.length - 1].d + 12, class: 'ring'}));
+    ranked.forEach(r => svg.append(el('line', {x1: qx, y1: qy, x2: sx(r.p[0]), y2: sy(r.p[1]), class: 'nb'})));
+    P.forEach(p => svg.append(el('circle', {cx: sx(p[0]), cy: sy(p[1]), r: 10, class: p[2] ? 'm' : 'i'})));
+    svg.append(el('circle', {cx: qx, cy: qy, r: 12, class: 'q'}), el('text', {x: qx + 18, y: qy - 12, class: 'ql'}, '새 퇴비 ?'));
+    const yes = ranked.filter(r => r.p[2]).length, no = k - yes;
+    root.querySelector('#kn-vote').innerHTML = `가까운 ${k}개 중<br>부숙(●) ${yes}표 · 미부숙(○) ${no}표<br>판정: <b>${yes > no ? '부숙' : '미부숙'}</b>`;
+    root.querySelectorAll('#kn-k .btn').forEach(b => b.setAttribute('aria-pressed', String(+b.dataset.k === k)));
+  }
+  root.querySelectorAll('#kn-k .btn').forEach(b => b.addEventListener('click', () => { k = +b.dataset.k; draw(); }));
+  svg.addEventListener('click', e => {
+    const pt = svg.createSVGPoint(); pt.x = e.clientX; pt.y = e.clientY;
+    const loc = pt.matrixTransform(svg.getScreenCTM().inverse());
+    q = [Math.max(0, Math.min(55, ix(loc.x))), Math.max(20, Math.min(70, iy(loc.y)))]; draw();
+  });
+  draw();
+});
+</script>

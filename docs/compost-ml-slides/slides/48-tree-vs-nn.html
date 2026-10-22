@@ -25,9 +25,9 @@
 </style>
 
 <section class="page" id="p-tree" data-sec="② 모델">
-  <div class="sec rv">② 모델 선택 · 트리와 신경망 · Shi 2025</div>
+  <div class="sec rv">② 모델 · 표준화가 필요한 모델</div>
   <h1 class="hl rv" style="--d:80ms">트리는 값의 순서만 보므로 표준화가 거의 필요 없다</h1>
-  <p class="sub rv" style="--d:150ms">표준화가 꼭 필요한 건 거리를 재는 KNN과 S자 곡선을 쓰는 신경망. 단위를 바꿔도 트리의 나눔은 그대로다</p>
+  <p class="sub rv" style="--d:150ms">나무는 “55℃보다 높은가?”처럼 크다/작다만 본다. ℃를 ℉로 바꿔도 같은 퇴비가 같은 쪽으로 간다</p>
 
   <div class="body">
     <div class="left">
@@ -45,12 +45,13 @@
     </div>
 
     <aside class="side rv" style="--d:300ms">
+      <span class="lab">외울 한 줄</span>
+      <div class="memo">나무는 순서만, KNN·신경망은 크기를 본다 → 표준화는 KNN·신경망에 필수</div>
       <span class="lab">Shi 논문 · 데이터 184개 · 시험 R²</span>
-      <div class="big">0.937<small>RF</small></div>
       <div class="bars" id="tr-bars"></div>
       <div class="lg"><span><i style="background:var(--main)"></i>트리 모델</span><span><i style="background:var(--t2)"></i>신경망</span></div>
       <button class="btn more" data-drawer="detail">내역 보기 ›</button>
-      <div class="insight"><span class="il">캡스톤 인사이트 · 우리 데이터 설계에서는</span><span class="ih">문헌 데이터 수백 개 규모 → RF·XGB를 기본 모델로</span><ul><li>학습 R²와 시험 R²의 차이로 과적합을 확인한다 (XGB 0.999 → 0.900)</li><li>KNN·신경망을 비교할 때만 표준화가 결과를 바꾼다</li></ul></div>
+      <div class="insight"><span class="il">우리 캡스톤에서는</span><span class="ih">문헌 데이터 수백 개 규모 → RF·XGB를 기본 모델로</span><ul><li>학습 R²와 시험 R²의 차이로 과적합을 확인한다 (XGB 0.999 → 0.900)</li><li>KNN·신경망을 비교할 때만 표준화가 결과를 바꾼다</li></ul></div>
     </aside>
   </div>
 

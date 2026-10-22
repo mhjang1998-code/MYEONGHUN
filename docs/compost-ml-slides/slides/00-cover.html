@@ -11,15 +11,15 @@
 #p-cover .kpi .v small{font-size:22px;color:var(--ink);margin-left:4px}
 #p-cover .kpi .k{font-size:17px;color:var(--note);margin-top:4px}
 #p-cover .toc{list-style:none;margin:0;padding:0;display:flex;flex-direction:column}
-#p-cover .toc button{font:inherit;width:100%;display:flex;gap:10px;align-items:baseline;background:none;border:0;border-bottom:1px solid var(--rule);padding:5px 0;cursor:pointer;text-align:left;font-size:21px;color:var(--ink)}
+#p-cover .toc button{font:inherit;width:100%;display:flex;gap:10px;align-items:baseline;background:none;border:0;border-bottom:1px solid var(--rule);padding:8px 0;line-height:1.35;cursor:pointer;text-align:left;font-size:21px;color:var(--ink)}
 #p-cover .toc button:hover{color:var(--main)}
-#p-cover .toc .stg{font-weight:700;color:var(--main);width:5.2em;flex:none;font-size:18px}
+#p-cover .toc .stg{font-weight:700;color:var(--main);width:4.6em;flex:none;font-size:18px}
 </style>
 
 <section class="page" id="p-cover" data-sec="표지" data-title="퇴비가 다 익었는지, 머신러닝이 어떻게 맞히는가">
   <div class="sec rv">학부생 세미나 · 10분</div>
   <h1 class="ttl rv" style="--d:100ms">퇴비가 다 익었는지, <em>머신러닝</em>이<br>어떻게 맞히는가</h1>
-  <p class="st rv" style="--d:250ms">선행연구 두 편으로 배우는 용어 · 각 장 오른쪽 아래 「캡스톤 인사이트」에서 우리 데이터 설계로 연결</p>
+  <p class="st rv" style="--d:250ms">선행연구 두 편으로 쉽게 배우는 머신러닝 · 장마다 「외울 한 줄」과 「우리 캡스톤에서는」</p>
 
   <div class="cards">
     <div class="card rv" style="--d:400ms">
@@ -39,16 +39,13 @@
       </div>
     </div>
     <div class="card rv" style="--d:520ms">
-      <span class="who">캡스톤 파이프라인 순서로 보는 용어</span>
+      <span class="who">오늘의 흐름 · 누르면 이동</span>
       <ul class="toc">
-        <li><button data-goto="2"><span class="stg">① 전처리</span>피어슨 상관계수 r</button></li>
-        <li><button data-goto="3"><span class="stg"></span>상관행렬 · 다중공선성</button></li>
-        <li><button data-goto="4"><span class="stg"></span>표준화 (Z 점수)</button></li>
-        <li><button data-goto="5"><span class="stg">② 모델</span>신경망 · 활성화 함수</button></li>
-        <li><button data-goto="6"><span class="stg"></span>트리 모델 vs 신경망</button></li>
-        <li><button data-goto="7"><span class="stg">③ 평가</span>결정계수 R²</button></li>
-        <li><button data-goto="8"><span class="stg"></span>RMSE</button></li>
-        <li><button data-goto="9"><span class="stg">④ 해석</span>SHAP 기여도</button></li>
+        <li><button data-goto="2"><span class="stg">① 다듬기</span>상관 r · 다중공선성 · 표준화</button></li>
+        <li><button data-goto="5"><span class="stg">② 모델</span>결정 트리 · 과적합 · RF · XGB · 규제 · KNN · 신경망</button></li>
+        <li><button data-goto="14"><span class="stg">③ 점수</span>R² · RMSE</button></li>
+        <li><button data-goto="16"><span class="stg">④ 이유</span>SHAP</button></li>
+        <li><button data-goto="17"><span class="stg">정리</span>한 장 요약 · 암기 카드</button></li>
       </ul>
     </div>
   </div>

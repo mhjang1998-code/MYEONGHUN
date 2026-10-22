@@ -1,69 +1,62 @@
 <style>
-#p-cm .ph{display:flex;justify-content:space-between;align-items:center;gap:12px}
-#p-cm .cm{border-collapse:separate;border-spacing:4px;font-size:18px;margin:0 auto}
-#p-cm .cm th{font-size:17px;color:var(--note);font-weight:700;padding:0 6px;text-align:center;white-space:nowrap}
+#p-cm .cm{border-collapse:separate;border-spacing:3px;font-size:17px;margin:0 auto}
+#p-cm .cm th{font-size:16px;color:var(--note);font-weight:700;padding:0 6px;text-align:center;white-space:nowrap}
 #p-cm .cm th.r{text-align:right}
-#p-cm .cm td{width:104px;height:48px;text-align:center;cursor:pointer;color:var(--ink);font-weight:500;transition:opacity .3s var(--ease)}
+#p-cm .cm td{width:96px;height:36px;text-align:center;cursor:pointer;color:var(--ink);transition:opacity .3s var(--ease)}
 #p-cm .cm td.dg{cursor:default;color:var(--note);background:var(--g0)}
-#p-cm .cm td.dim{opacity:.15}
+#p-cm .cm td.dim{opacity:.12}
 #p-cm .cm td.sel{outline:3px solid var(--acc);outline-offset:1px}
-#p-cm .info{border:1.5px solid var(--rule);padding:12px 18px;font-size:19px;line-height:1.45;min-height:96px}
-#p-cm .info .kind{font-size:16px;color:var(--note)}
-#p-cm .lgd{display:flex;align-items:center;gap:10px;font-size:16px;color:var(--note);justify-content:center}
-#p-cm .lgd .g{width:220px;height:14px;background:linear-gradient(90deg,var(--note),var(--white),var(--main));border:1px solid var(--rule)}
 </style>
 
 <section class="page" id="p-cm" data-sec="① 전처리">
-  <div class="sec rv">① 전처리 · 중복 확인 · Shi 2025 Fig. 1</div>
-  <h1 class="hl rv" style="--d:80ms">상관행렬은 입력↔출력, 입력↔입력 칸을 나눠 읽는다</h1>
-  <p class="sub rv" style="--d:150ms">출력(GI)과 엮인 칸은 높을수록 예측에 쓸모 있고, 입력끼리 엮인 칸은 낮을수록 중복이 없다</p>
+  <div class="sec rv">① 전처리 · 상관행렬과 다중공선성</div>
+  <h1 class="hl rv" style="--d:80ms">입력 변수끼리 너무 닮았으면 하나는 빼도 된다</h1>
+  <p class="sub rv" style="--d:150ms">키와 몸무게를 둘 다 넣으면 컴퓨터는 결과가 누구 덕분인지 헷갈린다. 이 겹침을 상관행렬로 찾는다</p>
 
   <div class="body">
     <div class="left">
-      <div class="ph rv" style="--d:250ms"><h3 style="margin:0;font-size:20px;color:var(--deep)">Shi 2025 가축분뇨 데이터 184개의 피어슨 상관행렬</h3>
-        <div class="row" id="cm-mode"><button class="btn" data-m="all" aria-pressed="true">전체</button><button class="btn" data-m="io" aria-pressed="false">입력↔출력</button><button class="btn" data-m="ii" aria-pressed="false">입력↔입력</button></div></div>
-      <table class="cm rv" id="cm-t" style="--d:320ms"></table>
-      <div class="lgd"><span>−1 반대로</span><span class="g"></span><span>+1 같이</span></div>
-      <div class="info rv" id="cm-info" style="--d:400ms"></div>
+      <div class="term rv" style="--d:200ms"><span class="ko">다중공선성</span><span class="en">multicollinearity</span><span class="pr">[멀티콜리니어리티]</span>
+        <span class="def">입력 변수 두 개가 거의 같은 정보를 담고 있는 상태. 상관행렬(모든 변수 쌍의 r을 모은 표)에서 입력끼리 r이 큰 칸으로 찾는다.</span></div>
+      <div class="box rv" style="--d:280ms">
+        <div class="row" id="cm-mode"><button class="btn" data-m="all" aria-pressed="true">전체 보기</button><button class="btn" data-m="io">GI와의 관계 (쓸모 확인)</button><button class="btn" data-m="ii">입력끼리 (겹침 확인)</button></div>
+        <table class="cm" id="cm-t"></table>
+        <div class="msg" id="cm-msg" style="min-height:0"></div>
+      </div>
     </div>
 
     <aside class="side rv" style="--d:300ms">
-      <span class="lab">입력끼리 가장 큰 상관 (NH₄⁺ ↔ NO₃⁻)</span>
-      <div class="big">0.47<small>r</small></div>
-      <p>중복을 의심하는 기준(|r| &gt; 0.8)보다 훨씬 낮다. <b>다중공선성 걱정은 작다.</b></p>
+      <span class="lab">외울 한 줄</span>
       <button class="btn more" data-drawer="detail">내역 보기 ›</button>
-      <div class="callout"><b>Wang 문장 읽기.</b> “0.2~0.4라서 중복 없음”은 <b>입력↔입력 칸</b>에 대한 판단이다.</div>
-      <div class="insight"><span class="il">캡스톤 인사이트 · 우리 데이터 설계에서는</span><span class="ih">변수 후보표를 만들면 상관행렬부터 그린다</span><ul><li>입력↔입력 칸에서 |r| 큰 쌍을 표시하고 둘 중 하나를 고른다</li><li>입력↔출력 칸은 참고만 한다. 최종 중요도는 모델을 만든 뒤 SHAP으로</li></ul></div>
+      <div class="memo">다중공선성 = 입력끼리 같은 정보를 두 번 넣은 상태 (키와 몸무게)</div>
+      <p class="p2"><b>논문에서는</b> Shi 데이터에서 입력끼리 가장 닮은 쌍은 NH₄⁺–NO₃⁻ (r = 0.47). 0.8보다 한참 낮아 겹침 걱정은 없다.</p>
+      <div class="insight"><span class="il">우리 캡스톤에서는</span><span class="ih">변수 후보를 모으면 상관행렬부터 그린다</span><ul><li>입력끼리 r이 0.8을 넘는 쌍은 하나만 남긴다</li><li>GI(출력)와의 r은 참고만, 최종 중요도는 SHAP으로</li></ul></div>
     </aside>
   </div>
 
-  <div class="note">숫자 칸은 Shi 2025 Fig. 1에 적힌 값 · “·” 칸은 그림상 약한 상관(대부분 |r| &lt; 0.25)이라 값을 생략함</div>
-  <div class="foot"><span>Shi et al. (2025) 3.1 Fig. 1 · Wang et al. (2024) 2.2, 3.1 Fig. 1a</span><span class="pn"></span></div>
+  <div class="note">숫자 칸은 Shi 2025 Fig. 1 값 · “·” 칸은 그림상 약한 상관(대부분 |r| &lt; 0.25)이라 생략 · 칸을 누르면 설명이 나온다</div>
+  <div class="foot"><span>Shi et al. (2025) 3.1 Fig. 1 · Wang et al. (2024) 2.2</span><span class="pn"></span></div>
 
   <template data-tab="detail">
+    <h4>이 장의 용어</h4>
+    <table class="tb"><thead><tr><th>용어</th><th>영어 [발음]</th><th>쉬운 뜻</th></tr></thead><tbody>
+      <tr><td><b>상관행렬</b></td><td>correlation matrix [코릴레이션 매트릭스]</td><td>모든 변수 쌍의 r을 표 하나에 모은 것</td></tr>
+      <tr><td><b>다중공선성</b></td><td>multicollinearity [멀티콜리니어리티]</td><td>입력 변수끼리 같은 정보를 담은 상태</td></tr>
+      <tr><td><b>중복</b></td><td>overlap [오버랩]</td><td>논문 표현 “overlap between variables”가 다중공선성을 뜻함</td></tr></tbody></table>
     <h4>두 종류의 칸</h4>
     <table class="tb"><thead><tr><th>칸</th><th>묻는 것</th><th>바라는 값</th></tr></thead><tbody>
-      <tr><td>입력↔출력</td><td>예측에 쓸모 있나?</td><td>높을수록 좋음</td></tr>
-      <tr class="k"><td>입력↔입력</td><td>같은 정보를 두 번 넣나?</td><td>낮을수록 좋음</td></tr></tbody></table>
-    <h4>용어</h4>
-    <table class="tb"><tbody>
-      <tr><td><b>상관행렬</b></td><td>모든 변수 쌍의 r을 표 하나에 모은 것. 대각선은 자기 자신이라 1</td></tr>
-      <tr class="k"><td>다중공선성</td><td>입력끼리 너무 닮아서 같은 정보를 두 번 넣는 문제</td></tr></tbody></table>
-    <h4>다중공선성이 왜 문제인가</h4>
-    <p>키와 몸무게처럼 닮은 두 변수를 같이 넣으면 모델이 영향을 둘에게 아무렇게나 나눠 준다. 예측은 맞아도 “어떤 변수가 중요한가” 해석(SHAP)이 흔들린다.</p>
-    <h4>왜 따로 봐야 하나</h4>
-    <p>행렬에는 바라는 방향이 반대인 두 종류의 칸이 섞여 있다. 출력과의 상관이 높은 건 좋은 신호지만, 입력끼리의 상관이 높은 건 나쁜 신호다. 그래서 중복 여부는 입력끼리의 칸만 따로 본다.</p>
-    <h4>Wang 논문의 같은 그림 (11개 변수)</h4>
-    <p>입력끼리 대부분 −0.34~0.35. 예외인 “시간”은 퇴비화 진행 자체라 뺄 수 없다. 가장 강한 관계는 시간–GI 0.75, 시간–온도 −0.66.</p>
+      <tr><td>입력 ↔ GI(출력)</td><td>예측에 쓸모 있나?</td><td>클수록 좋음</td></tr>
+      <tr class="k"><td>입력 ↔ 입력</td><td>같은 정보를 두 번 넣나?</td><td>작을수록 좋음</td></tr></tbody></table>
+    <h4>왜 문제인가</h4>
+    <p>닮은 두 변수를 같이 넣으면 모델이 영향을 둘에게 아무렇게나 나눠 준다. 예측은 맞아도 “어떤 변수가 중요한가”(SHAP)가 흔들린다.</p>
   </template>
   <template data-tab="source">
-    <p><b>Shi 2025 Fig. 1:</b> GI와의 상관 기간 0.62, TN 0.54, pH 0.29, NO₃⁻ 0.090, NH₄⁺ −0.077, EC −0.35, 온도 −0.40. 입력끼리 NH₄⁺–NO₃⁻ 0.47, EC–TN −0.43, 기간–온도 −0.40, pH–TN 0.40, EC–NH₄⁺ 0.33, EC–NO₃⁻ 0.30, pH–EC −0.0042, 온도–pH 0.013.</p>
-    <p><b>생략한 칸:</b> 논문 그림에서 읽은 값이 정리되지 않은 칸이다. 지어내지 않고 “·”로 표시했다.</p>
+    <p><b>Shi 2025 Fig. 1:</b> GI와 기간 0.62, TN 0.54, pH 0.29, NO₃⁻ 0.090, NH₄⁺ −0.077, EC −0.35, 온도 −0.40. 입력끼리 NH₄⁺–NO₃⁻ 0.47, EC–TN −0.43, 기간–온도 −0.40, pH–TN 0.40, EC–NH₄⁺ 0.33, EC–NO₃⁻ 0.30.</p>
+    <p><b>Wang 2024, 2.2:</b> PCC 절댓값 0.2~0.4로 변수 간 뚜렷한 중복이 없었다.</p>
   </template>
   <template data-tab="notes">
-    <ol><li>Q. 상관행렬이 뭐고, 다중공선성 여부는 왜 따로 봐야 하나?</li>
-    <li>시연: “입력↔출력” → GI 줄만 남음(기간 0.62, TN 0.54). “입력↔입력” → 최대 0.47로 약함.</li>
-    <li>NH₄⁺–NO₃⁻ 0.47은 질산화(NH₄⁺ → NO₃⁻)로 엮여 생기는 관계.</li></ol>
+    <ol><li>비유: 키와 몸무게.</li>
+    <li>“GI와의 관계” → 기간 0.62, TN 0.54가 크다 = 쓸모 있는 변수.</li>
+    <li>“입력끼리” → 가장 큰 게 0.47 = 겹침 걱정 없음.</li></ol>
   </template>
 </section>
 
@@ -74,12 +67,11 @@ DECK.register('p-cm', root => {
   [[0,7,.62],[1,7,.29],[2,7,-.40],[3,7,-.35],[4,7,-.077],[5,7,.090],[6,7,.54],
    [4,5,.47],[3,6,-.43],[0,2,-.40],[1,6,.40],[3,4,.33],[3,5,.30],[1,3,-.0042],[2,1,.013]].forEach(x => set(...x));
   const why = {
-    '0,7': '퇴비화가 오래될수록 GI가 오른다. 잘 익을수록 씨앗이 잘 자란다.',
-    '6,7': '총질소가 높을수록 GI가 높다. 유기물이 줄며 질소가 농축되는 흐름과 맞는다.',
-    '2,7': '온도가 높은 고온기에는 아직 덜 익어 GI가 낮다.',
-    '3,7': 'EC(염류)가 높을수록 씨앗 발아를 방해해 GI가 낮다.',
-    '4,5': '입력끼리 가장 큰 값. NH₄⁺가 질산화로 NO₃⁻가 되므로 같이 엮인다. 그래도 0.47이라 중복 걱정은 작다.',
-    '3,6': 'EC와 TN은 반대로 움직이는 편이다. 입력끼리 중간 정도의 관계.',
+    '0,7': '퇴비화가 오래될수록 GI가 오른다. GI 예측에 쓸모 있는 변수.',
+    '6,7': '총질소가 높을수록 GI가 높다. 쓸모 있는 변수.',
+    '2,7': '뜨거운 고온기에는 아직 덜 익어 GI가 낮다.',
+    '4,5': '입력끼리 가장 닮은 쌍. NH₄⁺가 변해서 NO₃⁻가 되기 때문. 그래도 0.47이라 둘 다 넣어도 된다.',
+    '3,6': 'EC와 TN은 반대로 움직이는 편. 0.43이라 겹침 걱정은 없다.',
     '0,2': '시간이 지나면 고온기가 끝나고 온도가 내려간다.'
   };
   const fmt = r => (Math.abs(r) < 0.1 ? r.toFixed(3) : r.toFixed(2)).replace('-', '−');
@@ -96,24 +88,26 @@ DECK.register('p-cm', root => {
     h += '</tr>';
   });
   const t = root.querySelector('#cm-t'); t.innerHTML = h + '</tbody>';
-  const cells = [...t.querySelectorAll('td')], info = root.querySelector('#cm-info');
+  const cells = [...t.querySelectorAll('td')], msg = root.querySelector('#cm-msg');
+  const MODE = {
+    all: '진한 파랑 = 같이 오름, 진한 회색 = 반대로. 칸을 눌러 보자.',
+    io: '<b>GI 줄만</b> 남겼다. 기간(0.62)·TN(0.54)이 커서 GI 예측에 쓸모 있다.',
+    ii: '<b>입력끼리</b>만 남겼다. 가장 큰 값이 0.47 → 0.8보다 한참 낮아 <b>겹치는 변수 없음</b>.'
+  };
   function pick(td) {
     if (td.classList.contains('dg')) return;
     cells.forEach(c => c.classList.toggle('sel', c === td));
     const i = +td.dataset.i, j = +td.dataset.j, r = known[i + ',' + j], key = Math.min(i, j) + ',' + Math.max(i, j);
-    const kind = (i === OUT || j === OUT) ? '입력↔출력 칸 · 높을수록 예측에 쓸모 있음' : '입력↔입력 칸 · 낮을수록 중복 없음';
-    info.innerHTML = `<b>${V[i]} ↔ ${V[j]}</b> · ${r === undefined ? '약함 (값 생략)' : 'r = <b>' + fmt(r) + '</b>'}<br><span class="kind">${kind}</span><br>${why[key] || (r === undefined ? '두 변수는 거의 따로 움직인다.' : '')}`;
+    msg.innerHTML = `<b>${V[i]} ↔ ${V[j]}</b> ${r === undefined ? '(약함, 값 생략)' : 'r = ' + fmt(r)} · ${why[key] || '두 변수는 거의 따로 움직인다.'}`;
   }
-  cells.forEach(c => {
-    c.addEventListener('click', () => pick(c));
-    c.addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); pick(c); } });
-  });
+  cells.forEach(c => { c.addEventListener('click', () => pick(c)); c.addEventListener('keydown', e => { if (e.key === 'Enter') pick(c); }); });
   const mb = [...root.querySelectorAll('#cm-mode .btn')];
   mb.forEach(b => b.addEventListener('click', () => {
     const m = b.dataset.m; mb.forEach(o => o.setAttribute('aria-pressed', String(o === b)));
     cells.forEach(c => { const i = +c.dataset.i, j = +c.dataset.j, io = (i === OUT || j === OUT) && i !== j;
-      c.classList.toggle('dim', (m === 'io' && !io) || (m === 'ii' && (io || i === j))); });
+      c.classList.remove('sel'); c.classList.toggle('dim', (m === 'io' && !io) || (m === 'ii' && (io || i === j))); });
+    msg.innerHTML = MODE[m];
   }));
-  pick(cells.find(c => c.dataset.i === '0' && c.dataset.j === '7'));
+  msg.innerHTML = MODE.all;
 });
 </script>

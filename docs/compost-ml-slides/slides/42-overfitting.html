@@ -1,0 +1,119 @@
+<style>
+#p-of .terms{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+#p-of .term .def{font-size:19px}
+#p-of svg{width:100%;height:280px;display:block}
+#p-of .tr{fill:var(--deep)}
+#p-of .te{fill:var(--white);stroke:var(--main);stroke-width:3}
+#p-of .fit{fill:none;stroke:var(--main);stroke-width:4}
+#p-of .score{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+#p-of .sc{border:1.5px solid var(--rule);padding:8px 16px;display:flex;justify-content:space-between;align-items:baseline;font-size:19px;font-weight:700;color:var(--note)}
+#p-of .sc b{font-size:34px;color:var(--deep)}
+#p-of .sc.t{border-color:var(--main)}
+#p-of .sc.t b{color:var(--main)}
+</style>
+
+<section class="page" id="p-of" data-sec="② 모델">
+  <div class="sec rv">② 모델 · 과적합과 일반화</div>
+  <h1 class="hl rv" style="--d:80ms">학습 데이터를 외운 모델은 새 데이터에서 틀린다</h1>
+  <p class="sub rv" style="--d:150ms">기출문제 답만 외운 학생은 새 문제를 못 푼다. 원리를 이해한 학생이 “일반화”를 잘하는 학생이다</p>
+
+  <div class="body">
+    <div class="left">
+      <div class="terms rv" style="--d:200ms">
+        <div class="term"><span class="ko">과적합</span><span class="en">overfitting</span><span class="pr">[오버피팅]</span><span class="def">학습 데이터의 우연한 흔들림까지 외운 상태</span></div>
+        <div class="term"><span class="ko">일반화</span><span class="en">generalization</span><span class="pr">[제너럴라이제이션]</span><span class="def">처음 보는 데이터도 잘 맞히는 능력</span></div>
+      </div>
+      <div class="box rv" style="--d:280ms">
+        <div class="row" id="of-m"><button class="btn" data-m="0">너무 단순한 모델</button><button class="btn" data-m="1" aria-pressed="true">적당한 모델</button><button class="btn" data-m="2">외운 모델 (과적합)</button></div>
+        <svg id="of-svg" viewBox="0 0 1000 280" role="img" aria-label="퇴비화 기간에 따른 GI와 모델 곡선"></svg>
+        <div class="score"><div class="sc"><span>● 공부한 문제 (학습) 틀린 정도</span><b id="of-tr"></b></div><div class="sc t"><span>○ 새 문제 (시험) 틀린 정도</span><b id="of-te"></b></div></div>
+        <div class="msg" id="of-msg"></div>
+      </div>
+    </div>
+
+    <aside class="side rv" style="--d:300ms">
+      <span class="lab">외울 한 줄</span>
+      <button class="btn more" data-drawer="detail">내역 보기 ›</button>
+      <div class="memo">과적합 = 외워서 새 문제를 틀림 · 일반화 = 새 문제도 맞힘</div>
+      <p class="p2"><b>논문에서는</b> Shi의 XGB가 학습 R² 0.999 → 시험 0.900, Wang의 KNN이 학습 1.00 → 시험 0.851. 학습 점수만 보면 속는다.</p>
+      <div class="insight"><span class="il">우리 캡스톤에서는</span><span class="ih">성능은 “처음 보는 데이터” 점수로만 말한다</span><ul><li>같은 논문의 데이터가 학습·시험에 섞이면 외운 문제로 시험 보는 셈이다</li><li>학습 점수와 시험 점수 차이가 크면 과적합을 의심한다</li></ul></div>
+    </aside>
+  </div>
+
+  <div class="note">예시 데이터 · 점은 기간에 따라 GI가 오르는 모양으로 만든 값 · 틀린 정도 = RMSE (GI %p)</div>
+  <div class="foot"><span>Shi et al. (2025) 3.2 · Wang et al. (2024) 3.2 Table 1</span><span class="pn"></span></div>
+
+  <template data-tab="detail">
+    <h4>이 장의 용어</h4>
+    <table class="tb"><thead><tr><th>용어</th><th>영어 [발음]</th><th>쉬운 뜻</th></tr></thead><tbody>
+      <tr><td><b>과적합</b></td><td>overfitting [오버피팅]</td><td>학습 데이터를 외워 새 데이터에서 틀림</td></tr>
+      <tr><td><b>과소적합</b></td><td>underfitting [언더피팅]</td><td>너무 단순해서 학습 데이터조차 못 맞힘</td></tr>
+      <tr><td><b>일반화 성능</b></td><td>generalization performance [제너럴라이제이션 퍼포먼스]</td><td>처음 보는 데이터에서의 점수</td></tr>
+      <tr><td><b>학습 / 시험 데이터</b></td><td>training / test data [트레이닝 / 테스트 데이터]</td><td>공부용 문제 / 실력 확인용 새 문제</td></tr></tbody></table>
+    <h4>과적합은 왜 생기나</h4>
+    <ol><li>데이터에는 진짜 규칙(기간이 길수록 GI ↑)과 우연한 흔들림(측정 오차, 그래프 추출 오차)이 섞여 있다.</li>
+    <li>모델이 너무 복잡하면(질문이 너무 많은 나무, 꾸불꾸불한 곡선) 흔들림까지 그대로 따라 그린다.</li>
+    <li>새 데이터의 흔들림은 다르기 때문에, 외운 흔들림이 오히려 오답이 된다.</li></ol>
+    <h4>“일반화 성능이 향상된다”의 의미</h4>
+    <p>새 데이터(시험 데이터, 다른 논문, 실제 현장)에서 틀리는 정도가 줄어든다는 뜻이다. 학습 점수가 오르는 것과는 다르다.</p>
+  </template>
+  <template data-tab="source">
+    <p><b>Shi 2025 3.2:</b> 학습 R² RF 0.934 · ET 0.961 · XGB 0.999 / 시험 R² RF 0.937 · ET 0.904 · XGB 0.900. RF·ET가 시험에서 XGB보다 우수해 일반화 성능이 더 뛰어났다.</p>
+    <p><b>Wang 2024 3.2:</b> NH₃ 예측 KNN 학습 R² 1, 시험 0.851. 학습 데이터에 과적합된 것으로 해석했다.</p>
+    <p><b>예시 데이터:</b> GI = 10 + 90 ÷ (1 + e<sup>−(기간−25)/6</sup>)에 흔들림을 더한 10개(학습)·10개(시험) 점. 곡선은 1차·3차·9차 다항식.</p>
+  </template>
+  <template data-tab="notes">
+    <ol><li>비유: 기출문제 답만 외운 학생 vs 원리를 이해한 학생.</li>
+    <li>“외운 모델”: 검은 점(학습)은 전부 지나가서 틀린 정도 ≈ 0. 그런데 흰 점(새 문제)은 크게 틀린다.</li>
+    <li>“너무 단순한 모델”: 둘 다 틀린다 (과소적합). “적당한 모델”이 새 문제에서 가장 잘 맞힌다.</li>
+    <li>Q. 일반화 성능이 향상된다는 게 무슨 의미? → 새 데이터에서 덜 틀리게 된다는 뜻.</li></ol>
+  </template>
+</section>
+
+<script>
+DECK.register('p-of', root => {
+  const truth = d => 10 + 90 / (1 + Math.exp(-(d - 25) / 6));
+  const noiseA = [6, -7, 5, -4, 8, -6, 4, -5, 7, -3], noiseB = [-5, 6, -6, 5, -4, 7, -6, 4, -5, 6];
+  const trX = [2, 8, 14, 20, 26, 32, 38, 44, 50, 56], teX = [5, 11, 17, 23, 29, 35, 41, 47, 53, 59];
+  const trY = trX.map((d, i) => truth(d) + noiseA[i]), teY = teX.map((d, i) => truth(d) + noiseB[i]);
+  const u = d => (d - 30) / 30;                         // scale days to [-1, 1]
+  function fit(deg, lam) {                              // polynomial least squares with ridge penalty
+    const n = deg + 1, A = Array.from({length: n}, () => Array(n + 1).fill(0));
+    trX.forEach((d, k) => { const p = Array.from({length: n}, (_, j) => u(d) ** j);
+      for (let i = 0; i < n; i++) { for (let j = 0; j < n; j++) A[i][j] += p[i] * p[j]; A[i][n] += p[i] * trY[k]; } });
+    for (let i = 1; i < n; i++) A[i][i] += lam;
+    for (let c = 0; c < n; c++) { let m = c; for (let r = c + 1; r < n; r++) if (Math.abs(A[r][c]) > Math.abs(A[m][c])) m = r;
+      [A[c], A[m]] = [A[m], A[c]]; for (let r = 0; r < n; r++) if (r !== c) { const f = A[r][c] / A[c][c]; for (let j = c; j <= n; j++) A[r][j] -= f * A[c][j]; } }
+    const w = A.map((row, i) => row[n] / row[i]);
+    return d => w.reduce((s, wi, j) => s + wi * u(d) ** j, 0);
+  }
+  const MODELS = [fit(1, 0), fit(3, 1e-6), fit(9, 1e-9)];
+  const rmse = (f, X, Y) => Math.sqrt(X.reduce((s, d, i) => s + (f(d) - Y[i]) ** 2, 0) / X.length);
+  const svg = root.querySelector('#of-svg'), NS = 'http://www.w3.org/2000/svg';
+  const el = (t, a, s) => { const e = document.createElementNS(NS, t); for (const k in a) e.setAttribute(k, a[k]); if (s != null) e.textContent = s; return e; };
+  const L = 60, R = 990, T = 10, B = 240, sx = d => L + d / 60 * (R - L), sy = g => B - (g + 10) / 130 * (B - T);
+  const cp = el('clipPath', {id: 'of-clip'}); cp.append(el('rect', {x: L, y: T, width: R - L, height: B - T})); svg.append(cp);
+  svg.append(el('line', {x1: L, y1: B, x2: R, y2: B, class: 'ax'}), el('line', {x1: L, y1: T, x2: L, y2: B, class: 'ax'}),
+    el('text', {x: R, y: B + 30, class: 'axl', 'text-anchor': 'end'}, '퇴비화 기간 (일)'), el('text', {x: L - 10, y: T + 14, class: 'axl', 'text-anchor': 'end'}, 'GI'));
+  const path = el('path', {class: 'fit', 'clip-path': 'url(#of-clip)'}); svg.append(path);
+  trX.forEach((d, i) => svg.append(el('circle', {cx: sx(d), cy: sy(trY[i]), r: 9, class: 'tr'})));
+  teX.forEach((d, i) => svg.append(el('circle', {cx: sx(d), cy: sy(teY[i]), r: 9, class: 'te'})));
+  const MSG = [
+    '<b>너무 단순(과소적합)</b>: 직선 하나로는 S자 모양을 못 따라간다. 공부한 문제도, 새 문제도 둘 다 틀린다.',
+    '<b>적당</b>: 큰 흐름만 따라간다. 공부한 문제를 조금 틀리지만 <b>새 문제를 가장 잘 맞힌다</b> = 일반화가 잘 됨.',
+    '<b>외움(과적합)</b>: 검은 점을 전부 지나가 공부한 문제는 거의 0점 틀림. 하지만 흔들림까지 외워서 <b>새 문제는 크게 틀린다</b>.'
+  ];
+  const btns = [...root.querySelectorAll('#of-m .btn')];
+  function show(m) {
+    const f = MODELS[m]; let d = '';
+    for (let x = 0; x <= 60; x += 0.25) d += (d ? 'L' : 'M') + sx(x).toFixed(1) + ' ' + Math.max(-500, Math.min(800, sy(f(x)))).toFixed(1);
+    path.setAttribute('d', d);
+    root.querySelector('#of-tr').textContent = rmse(f, trX, trY).toFixed(1);
+    root.querySelector('#of-te').textContent = rmse(f, teX, teY).toFixed(1);
+    root.querySelector('#of-msg').innerHTML = MSG[m];
+    btns.forEach(b => b.setAttribute('aria-pressed', String(+b.dataset.m === m)));
+  }
+  btns.forEach(b => b.addEventListener('click', () => show(+b.dataset.m)));
+  show(1);
+});
+</script>

@@ -1,0 +1,104 @@
+<style>
+#p-rf svg{width:100%;height:260px;display:block}
+#p-rf .tdot{fill:var(--t2);transition:cx .6s var(--ease)}
+#p-rf .tdot.one{fill:var(--white);stroke:var(--deep);stroke-width:4}
+#p-rf .avg{fill:var(--main);transition:cx .6s var(--ease)}
+#p-rf .truth{stroke:var(--note);stroke-width:2;stroke-dasharray:6 5}
+#p-rf .lab{font-size:19px;font-weight:700}
+#p-rf .tl{fill:var(--deep);font-size:18px;font-weight:700;transition:x .6s var(--ease)}
+#p-rf .swing{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+#p-rf .sw{border:1.5px solid var(--rule);padding:8px 16px;display:flex;justify-content:space-between;align-items:baseline;font-size:19px;font-weight:700;color:var(--note)}
+#p-rf .sw b{font-size:34px;color:var(--deep)}
+#p-rf .sw.f{border-color:var(--main)}
+#p-rf .sw.f b{color:var(--main)}
+</style>
+
+<section class="page" id="p-rf" data-sec="② 모델">
+  <div class="sec rv">② 모델 · 랜덤 포레스트</div>
+  <h1 class="hl rv" style="--d:80ms">랜덤 포레스트는 나무 여러 그루의 답을 평균 낸다</h1>
+  <p class="sub rv" style="--d:150ms">전문가 한 명보다 여러 명의 의견을 평균 내면 덜 흔들린다. 나무 한 그루(단일 모델)는 데이터가 조금만 달라도 답이 크게 바뀐다</p>
+
+  <div class="body">
+    <div class="left">
+      <div class="term rv" style="--d:200ms"><span class="ko">랜덤 포레스트</span><span class="en">random forest (RF)</span><span class="pr">[랜덤 포레스트]</span>
+        <span class="def">데이터를 무작위로 조금씩 다르게 뽑아 나무를 여러 그루 키우고, 그 예측을 평균(또는 다수결)하는 모델. 나무(tree)가 모인 숲(forest).</span></div>
+      <div class="box rv" style="--d:280ms">
+        <div class="row"><button class="btn" id="rf-shake">데이터 조금 바꿔서 다시 학습 ›</button><span class="msg" id="rf-round" style="min-height:0"></span></div>
+        <svg id="rf-svg" viewBox="0 0 1000 260" role="img" aria-label="나무 5그루의 예측과 평균"></svg>
+        <div class="swing"><div class="sw"><span>나무 1그루 답이 바뀐 폭</span><b id="rf-one">–</b></div><div class="sw f"><span>숲(평균) 답이 바뀐 폭</span><b id="rf-avg">–</b></div></div>
+        <div class="msg" id="rf-msg">버튼을 눌러 보자. 나무 1번(흰 점)과 숲 평균(파란 점) 중 누가 더 크게 흔들릴까?</div>
+      </div>
+    </div>
+
+    <aside class="side rv" style="--d:300ms">
+      <span class="lab">외울 한 줄</span>
+      <button class="btn more" data-drawer="detail">내역 보기 ›</button>
+      <div class="memo">RF = 조금씩 다른 나무 여러 그루의 평균. 혼자보다 덜 흔들린다(견고하다)</div>
+      <p class="p2"><b>논문에서는</b> Shi 논문에서 RF가 시험 R² 0.937로 6개 모델 중 1위. 이상한 값(이상치)에 덜 민감했다.</p>
+      <div class="insight"><span class="il">우리 캡스톤에서는</span><span class="ih">첫 번째 모델로 RF를 돌려 본다</span><ul><li>논문마다 측정법이 달라 잡음이 많은 문헌 데이터에 강하다</li><li>어떤 변수가 중요한지(변수 중요도)도 함께 알려 준다</li></ul></div>
+    </aside>
+  </div>
+
+  <div class="note">예시 데이터 · 퇴비 1개의 실제 GI 70, 나무 5그루의 예측값은 설명용 값</div>
+  <div class="foot"><span>Shi et al. (2025) 2.2.1, 3.2 · Wang et al. (2024) 2.3.2</span><span class="pn"></span></div>
+
+  <template data-tab="detail">
+    <h4>이 장의 용어</h4>
+    <table class="tb"><thead><tr><th>용어</th><th>영어 [발음]</th><th>쉬운 뜻</th></tr></thead><tbody>
+      <tr><td><b>단일 모델</b></td><td>single model [싱글 모델]</td><td>나무 1그루처럼 모델 하나만 쓰는 것</td></tr>
+      <tr><td><b>앙상블</b></td><td>ensemble [앙상블]</td><td>여러 모델을 합쳐 하나의 답을 내는 방법 (합창단처럼)</td></tr>
+      <tr><td><b>배깅</b></td><td>bagging [배깅]</td><td>데이터를 무작위로 다시 뽑아 여러 모델을 만들고 평균 (RF의 방식)</td></tr>
+      <tr><td><b>견고성</b></td><td>robustness [로버스트니스]</td><td>데이터가 조금 바뀌거나 이상한 값이 섞여도 결과가 크게 안 흔들림</td></tr>
+      <tr><td><b>안정성</b></td><td>stability [스터빌리티]</td><td>여러 번 학습해도 비슷한 결과가 나옴</td></tr>
+      <tr><td><b>변수 중요도</b></td><td>feature importance [피처 임포턴스]</td><td>어떤 변수가 예측에 많이 쓰였는지 점수</td></tr></tbody></table>
+    <h4>“통합한다”는 어떻게 하나</h4>
+    <ol><li>학습 데이터에서 무작위로 다시 뽑아(같은 것이 두 번 뽑혀도 됨) 데이터 묶음을 여러 개 만든다.</li>
+    <li>묶음마다 나무를 한 그루씩 키운다. 가지를 나눌 때도 변수 일부만 무작위로 보게 해 나무끼리 서로 다르게 만든다.</li>
+    <li>예측할 때 모든 나무의 답을 모아 평균(숫자 예측) 또는 다수결(부숙/미부숙)한다.</li></ol>
+    <h4>단일 모델은 왜 위험한가</h4>
+    <p>나무 한 그루는 데이터에 딱 맞게 질문을 이어 붙여 외우기 쉽다(과적합). 그래서 데이터가 조금만 달라져도 답이 크게 바뀐다. 여러 나무의 서로 다른 실수는 평균 내면 상쇄된다.</p>
+  </template>
+  <template data-tab="source">
+    <p><b>Wang 2024, 2.3:</b> RF는 여러 결정 트리를 통합해 단일 모델의 과적합 위험을 줄이고 안정성과 견고성을 높인다. 고차원 데이터를 효율적으로 처리하고 특성 중요도를 자동으로 계산한다.</p>
+    <p><b>Shi 2025, 2.2.1 · 3.2:</b> 나무 200그루로 설정. 시험 R² 0.937. 무작위 변수 선택으로 나무 간 상관을 낮춰 과적합을 줄이고, 이상치에 덜 민감하다.</p>
+    <p><b>예시 데이터:</b> 나무 5그루의 예측 세 세트 (58, 84, 66, 79, 63) · (80, 61, 72, 69, 77) · (62, 75, 68, 83, 60).</p>
+  </template>
+  <template data-tab="notes">
+    <ol><li>비유: 퇴비가 다 익었는지 전문가 1명에게 묻기 vs 5명에게 묻고 평균 내기.</li>
+    <li>버튼을 누를 때마다 나무 1번은 58 → 80 → 62처럼 크게 흔들리지만, 숲 평균은 70 근처에 머문다.</li>
+    <li>Q. 안정성·견고성이 낮은 것과 높은 것? → 낮음: 나무 1그루, 외운 모델. 높음: 여러 나무의 평균(RF).</li></ol>
+  </template>
+</section>
+
+<script>
+DECK.register('p-rf', root => {
+  const SETS = [[58, 84, 66, 79, 63], [80, 61, 72, 69, 77], [62, 75, 68, 83, 60]], TRUE = 70;
+  const svg = root.querySelector('#rf-svg'), NS = 'http://www.w3.org/2000/svg';
+  const el = (t, a, s) => { const e = document.createElementNS(NS, t); for (const k in a) e.setAttribute(k, a[k]); if (s != null) e.textContent = s; return e; };
+  const sx = v => 60 + (v - 40) / 60 * 900;
+  svg.append(el('line', {x1: sx(40), y1: 200, x2: sx(100), y2: 200, class: 'ax'}));
+  [40, 50, 60, 70, 80, 90, 100].forEach(v => svg.append(el('text', {x: sx(v), y: 228, class: 'axl', 'text-anchor': 'middle'}, v)));
+  svg.append(el('text', {x: sx(100), y: 254, class: 'axl', 'text-anchor': 'end'}, '예측 GI (%)'));
+  svg.append(el('line', {x1: sx(TRUE), y1: 20, x2: sx(TRUE), y2: 200, class: 'truth'}), el('text', {x: sx(TRUE) + 8, y: 34, class: 'axl'}, '실제 70'));
+  const dots = SETS[0].map((_, i) => { const c = el('circle', {cy: 80 + (i % 2) * 34, r: 13, class: 'tdot' + (i === 0 ? ' one' : '')}); svg.append(c); return c; });
+  const oneLab = el('text', {y: 64, class: 'tl', 'text-anchor': 'middle'}, '나무 1번');
+  const avg = el('circle', {cy: 170, r: 18, class: 'avg'}), avgLab = el('text', {y: 150, class: 'tl', 'text-anchor': 'middle'}, '숲 평균');
+  svg.append(oneLab, avg, avgLab);
+  let k = 0, prev = null;
+  const mean = a => a.reduce((s, v) => s + v, 0) / a.length;
+  function show() {
+    const s = SETS[k], m = mean(s);
+    dots.forEach((d, i) => d.setAttribute('cx', sx(s[i])));
+    oneLab.setAttribute('x', sx(s[0])); avg.setAttribute('cx', sx(m)); avgLab.setAttribute('x', sx(m));
+    root.querySelector('#rf-round').textContent = `${k + 1}번째 학습 · 나무 1번 ${s[0]} · 숲 평균 ${m.toFixed(1)}`;
+    if (prev) {
+      const d1 = Math.abs(s[0] - prev[0]), d2 = Math.abs(m - mean(prev));
+      root.querySelector('#rf-one').textContent = d1.toFixed(0) + '점'; root.querySelector('#rf-avg').textContent = d2.toFixed(1) + '점';
+      root.querySelector('#rf-msg').innerHTML = `나무 1그루는 <b>${d1}점</b>이나 바뀌었는데, 숲 평균은 <b>${d2.toFixed(1)}점</b>만 바뀌었다. 이것이 <b>안정성·견고성</b>이다.`;
+    }
+    prev = s;
+  }
+  root.querySelector('#rf-shake').addEventListener('click', () => { k = (k + 1) % SETS.length; show(); });
+  show();
+});
+</script>

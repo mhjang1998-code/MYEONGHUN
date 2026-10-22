@@ -1,0 +1,89 @@
+<style>
+#p-map .fam{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}
+#p-map .col{border:1.5px solid var(--rule);border-top:5px solid var(--main);padding:12px 14px;display:flex;flex-direction:column;gap:8px}
+#p-map .col h3{margin:0;font-size:21px;color:var(--deep)}
+#p-map .col .an{font-size:17px;color:var(--note);line-height:1.35;min-height:46px}
+#p-map .md{font:inherit;text-align:left;background:var(--white);border:1.5px solid var(--rule);padding:8px 10px;cursor:pointer;display:flex;flex-direction:column;gap:2px}
+#p-map .md:hover,#p-map .md[aria-pressed="true"]{border-color:var(--main)}
+#p-map .md[aria-pressed="true"]{background:var(--panel)}
+#p-map .md .n{font-size:19px;font-weight:700;color:var(--deep)}
+#p-map .md .tg{display:flex;gap:4px;flex-wrap:wrap}
+#p-map .md .tg span{font-size:14px;font-weight:700;color:var(--white);background:var(--main);padding:1px 6px}
+#p-map .md .tg span.w{background:var(--t1)}
+#p-map .md .tg span.o{background:var(--gray);color:var(--deep)}
+#p-map .info{border:1.5px solid var(--main);padding:14px 18px;font-size:21px;line-height:1.5;min-height:110px}
+#p-map .info b{color:var(--main)}
+</style>
+
+<section class="page" id="p-map" data-sec="② 모델">
+  <div class="sec rv">② 모델 · 정리 지도</div>
+  <h1 class="hl rv" style="--d:80ms">퇴비 예측에 쓰이는 모델은 크게 네 가족이다</h1>
+  <p class="sub rv" style="--d:150ms">직선 · 거리 · 나무 · 신경망. 두 논문은 나무 가족을 중심으로 비교했고, 나무 가족이 가장 잘 맞혔다</p>
+
+  <div class="body">
+    <div class="left">
+      <div class="fam rv" style="--d:220ms" id="mp-fam"></div>
+      <div class="info rv" style="--d:320ms" id="mp-info"></div>
+    </div>
+
+    <aside class="side rv" style="--d:300ms">
+      <span class="lab">외울 한 줄</span>
+      <button class="btn more" data-drawer="detail">내역 보기 ›</button>
+      <div class="memo">작은 표 데이터(수백 개)에는 나무 가족(RF·XGB)이 강하다</div>
+      <p class="p2"><b>논문에서는</b> 1위가 Shi는 RF(시험 R² 0.937), Wang은 XGB(NH₃ 0.966). 부숙 여부 판정은 Wang의 KNN(92%).</p>
+      <div class="insight"><span class="il">우리 캡스톤에서는</span><span class="ih">RF·XGB를 주력으로, 나머지는 비교용으로</span><ul><li>선형 회귀는 “최소 기준선”으로 함께 돌려 본다</li><li>신경망은 데이터가 충분히 쌓였을 때 시도한다</li></ul></div>
+    </aside>
+  </div>
+
+  <div class="note">파란 꼬리표 = Shi 2025에서 사용 · 연파랑 = Wang 2024에서 사용 · 회색 = 두 논문 서론에서 소개된 다른 퇴비 연구의 모델</div>
+  <div class="foot"><span>Shi et al. (2025) 1장 서론, 2.2 · Wang et al. (2024) 1장 서론, 2.3</span><span class="pn"></span></div>
+
+  <template data-tab="detail">
+    <h4>가족별 정리</h4>
+    <table class="tb"><thead><tr><th>가족</th><th>생각하는 방식</th><th>모델 (영어 [발음])</th></tr></thead><tbody>
+      <tr><td><b>직선</b></td><td>입력과 출력을 직선(식)으로 연결</td><td>선형 회귀 linear regression [리니어 리그레션], 서포트 벡터 회귀 SVR [에스브이알]</td></tr>
+      <tr><td><b>거리</b></td><td>비슷한 과거 데이터에게 물어봄</td><td>KNN [케이엔엔]</td></tr>
+      <tr class="k"><td>나무</td><td>질문을 이어 붙여 판단</td><td>결정 트리 decision tree, RF, 엑스트라 트리 ET [엑스트라 트리], GBDT, XGB</td></tr>
+      <tr><td><b>신경망</b></td><td>가중합과 S자 곡선을 층층이</td><td>BPNN [비피엔엔], MLP [엠엘피], CNN [씨엔엔] (사진 분석)</td></tr>
+      <tr><td><b>섞기</b></td><td>여러 모델의 답을 다시 모델에 넣음</td><td>스태킹 stacking [스태킹]</td></tr></tbody></table>
+  </template>
+  <template data-tab="source">
+    <p><b>Shi 2025 서론:</b> 퇴비 부숙도 예측에 선형회귀, KNN, 결정 트리, 서포트 벡터 회귀, RF, 스태킹 등이 높은 정확도를 보여 왔다. 본 연구는 RF·ET·XGB·GBDT·BPNN·MLP 6개를 비교.</p>
+    <p><b>Wang 2024 서론:</b> 합성곱 신경망(CNN)으로 퇴비 이미지의 색·질감을 분석한 연구, RF로 퇴비 GI를 예측한 연구가 있다. 본 연구는 XGB·RF·KNN을 사용.</p>
+  </template>
+  <template data-tab="notes">
+    <ol><li>Q. 퇴비 예측에 널리 쓰이는 머신러닝 모델은 뭐야? → 네 가족으로 묶어서 외운다.</li>
+    <li>모델 카드를 하나씩 눌러 한 줄 설명을 읽는다.</li>
+    <li>결론: 작은 표 데이터에서는 나무 가족이 강하다. 두 논문 결과도 그랬다.</li></ol>
+  </template>
+</section>
+
+<script>
+DECK.register('p-map', root => {
+  const F = [
+    ['직선 가족', '입력과 출력을 식(직선)으로 잇는다', [
+      ['선형 회귀', 'linear regression', ['o'], '가장 단순한 기준 모델. 직선 하나로 예측한다. 꺾인 관계는 못 잡는다.'],
+      ['SVR', 'support vector regression', ['o'], '허용 오차의 “띠” 안에 점들이 들어오도록 선을 긋는 모델.']]],
+    ['거리 가족', '비슷한 과거 데이터에게 묻는다', [
+      ['KNN', 'k-nearest neighbors', ['w'], '가장 가까운 이웃 k개의 다수결. Wang 논문의 부숙 판정(92%).']]],
+    ['나무 가족', '질문을 이어 붙여 판단한다', [
+      ['결정 트리', 'decision tree', ['o'], '스무고개 나무 한 그루. 혼자 쓰면 외우기 쉽다.'],
+      ['RF', 'random forest', ['s', 'w'], '나무 여러 그루의 평균. Shi 논문 1위(R² 0.937).'],
+      ['ET', 'extra trees', ['s'], 'RF와 비슷하지만 가지 나누는 기준값까지 무작위로 정한다. Shi 2위(0.904).'],
+      ['GBDT', 'gradient boosting decision tree', ['s'], '오답노트 방식의 기본형. 규제가 없다. Shi 0.777.'],
+      ['XGB', 'eXtreme gradient boosting', ['s', 'w'], 'GBDT + 과적합 벌점. Wang 논문 NH₃ 1위(0.966).']]],
+    ['신경망 가족', '가중합 + S자 곡선을 층층이', [
+      ['BPNN', 'back propagation neural network', ['s'], '오차를 거꾸로 보내며 가중치를 고치는 신경망. Shi 0.616.'],
+      ['MLP', 'multilayer perceptron', ['s'], '층을 여러 겹 쌓은 신경망. Shi 0.664.'],
+      ['CNN', 'convolutional neural network', ['o'], '사진을 보는 신경망. 퇴비 사진의 색·질감으로 분해 단계를 판정한 연구가 있다.']]]
+  ];
+  const TAG = {s: 'Shi', w: 'Wang', o: '다른 연구'};
+  const fam = root.querySelector('#mp-fam'), info = root.querySelector('#mp-info');
+  fam.innerHTML = F.map(([h, an, ms]) => `<div class="col"><h3>${h}</h3><span class="an">${an}</span>${ms.map(([n, en, tg, d]) =>
+    `<button class="md" data-d="${d}" data-n="${n}" data-en="${en}"><span class="n">${n}</span><span class="tg">${tg.map(t => `<span class="${t === 'w' ? 'w' : t === 'o' ? 'o' : ''}">${TAG[t]}</span>`).join('')}</span></button>`).join('')}</div>`).join('');
+  const btns = [...fam.querySelectorAll('.md')];
+  const pick = b => { btns.forEach(o => o.setAttribute('aria-pressed', String(o === b))); info.innerHTML = `<b>${b.dataset.n}</b> · ${b.dataset.en}<br>${b.dataset.d}`; };
+  btns.forEach(b => b.addEventListener('click', () => pick(b)));
+  pick(btns.find(b => b.dataset.n === 'RF'));
+});
+</script>

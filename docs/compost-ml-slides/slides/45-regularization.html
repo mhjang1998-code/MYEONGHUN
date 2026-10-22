@@ -1,0 +1,116 @@
+<style>
+#p-reg svg{width:100%;height:250px;display:block}
+#p-reg .tr{fill:var(--deep)}
+#p-reg .te{fill:var(--white);stroke:var(--main);stroke-width:3}
+#p-reg .fit{fill:none;stroke:var(--main);stroke-width:4}
+#p-reg .score{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+#p-reg .sc{border:1.5px solid var(--rule);padding:8px 16px;display:flex;justify-content:space-between;align-items:baseline;font-size:19px;font-weight:700;color:var(--note)}
+#p-reg .sc b{font-size:34px;color:var(--deep)}
+#p-reg .sc.t{border-color:var(--main)}
+#p-reg .sc.t b{color:var(--main)}
+#p-reg .lr{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+#p-reg .lr div{background:var(--panel);padding:10px 14px;font-size:18px;line-height:1.4}
+#p-reg .lr b{color:var(--main)}
+</style>
+
+<section class="page" id="p-reg" data-sec="② 모델">
+  <div class="sec rv">② 모델 · 규제 (L1 · L2)</div>
+  <h1 class="hl rv" style="--d:80ms">규제는 모델이 복잡해질수록 벌점을 줘서 외우기를 막는다</h1>
+  <p class="sub rv" style="--d:150ms">“답안이 길면 감점”처럼, 꼬불꼬불한 모델에 벌점을 주면 큰 흐름만 따라가는 단순한 모델이 된다</p>
+
+  <div class="body">
+    <div class="left">
+      <div class="term rv" style="--d:200ms"><span class="ko">규제</span><span class="en">regularization</span><span class="pr">[레귤러라이제이션]</span>
+        <span class="def">모델의 숫자(가중치)가 커지거나 나무가 복잡해지면 벌점을 더하는 장치. 벌점이 세면 모델이 단순해진다.</span></div>
+      <div class="box rv" style="--d:280ms">
+        <div class="ctl"><label for="reg-l">벌점(규제) 세기</label><input type="range" id="reg-l" min="0" max="100" step="1" value="0"><output id="reg-o"></output></div>
+        <svg id="reg-svg" viewBox="0 0 1000 250" role="img" aria-label="규제 세기에 따라 단순해지는 곡선"></svg>
+        <div class="score"><div class="sc"><span>● 공부한 문제 틀린 정도</span><b id="reg-tr"></b></div><div class="sc t"><span>○ 새 문제 틀린 정도</span><b id="reg-te"></b></div></div>
+        <div class="msg" id="reg-msg" style="min-height:0"></div>
+      </div>
+      <div class="lr rv" style="--d:360ms">
+        <div><b>L1 규제</b> [엘원] · 쓸모없는 변수의 영향을 <b>0으로</b> 만든다 → 변수를 버리는 효과</div>
+        <div><b>L2 규제</b> [엘투] · 모든 영향을 <b>골고루 조금씩</b> 줄인다 → 한 변수에 쏠리지 않게</div>
+      </div>
+    </div>
+
+    <aside class="side rv" style="--d:300ms">
+      <span class="lab">외울 한 줄</span>
+      <button class="btn more" data-drawer="detail">내역 보기 ›</button>
+      <div class="memo">규제 = 복잡하면 벌점. L1은 버리고, L2는 골고루 줄인다</div>
+      <p class="p2"><b>논문에서는</b> Wang: XGB에는 L1·L2 규제가 들어 있어 과적합을 막는다. 나무의 잎이 많아지거나 잎 값이 커지면 벌점을 준다.</p>
+      <div class="insight"><span class="il">우리 캡스톤에서는</span><span class="ih">데이터가 적을수록 규제를 세게 건다</span><ul><li>규제 세기도 설정값이라 교차검증으로 고른다</li><li>너무 세면 다시 “너무 단순한 모델”이 된다</li></ul></div>
+    </aside>
+  </div>
+
+  <div class="note">예시 데이터 · 앞 장과 같은 점 · 곡선은 9차 다항식에 L2 규제를 건 결과 (입력에 따른 계산)</div>
+  <div class="foot"><span>Wang et al. (2024) 2.3, 2.3.1 식 (2)–(3) · Shi et al. (2025) 2.2.4–2.2.5</span><span class="pn"></span></div>
+
+  <template data-tab="detail">
+    <h4>이 장의 용어</h4>
+    <table class="tb"><thead><tr><th>용어</th><th>영어 [발음]</th><th>쉬운 뜻</th></tr></thead><tbody>
+      <tr><td><b>규제</b></td><td>regularization [레귤러라이제이션]</td><td>복잡함에 벌점을 줘 외우기를 막는 장치</td></tr>
+      <tr><td><b>L1 규제</b></td><td>L1 / Lasso [엘원 / 라소]</td><td>가중치 크기의 합에 벌점 → 쓸모없는 것은 0이 됨</td></tr>
+      <tr><td><b>L2 규제</b></td><td>L2 / Ridge [엘투 / 릿지]</td><td>가중치 제곱의 합에 벌점 → 전부 조금씩 작아짐</td></tr>
+      <tr><td><b>가중치</b></td><td>weight [웨이트]</td><td>모델 안에서 각 입력을 얼마나 중요하게 볼지 정하는 숫자</td></tr></tbody></table>
+    <h4>왜 과적합을 막나</h4>
+    <p>외운 모델은 점 하나하나를 지나가려고 숫자(가중치)를 아주 크게 써서 꼬불꼬불해진다. 큰 숫자에 벌점을 주면 모델은 점수를 조금 덜 받더라도 단순한 쪽을 고른다. 그 결과 우연한 흔들림을 덜 따라가고 새 데이터에서 덜 틀린다.</p>
+    <h4>XGB의 벌점 (Wang 식 3)</h4>
+    <div class="eq">벌점 = γ × (잎 개수) + ½ λ × (잎 값²의 합)</div>
+    <p>잎(나무의 끝 칸)이 많을수록, 잎의 값이 클수록 벌점이 커진다. 학습은 “오차 + 벌점”을 최소로 만든다.</p>
+  </template>
+  <template data-tab="source">
+    <p><b>Wang 2024, 2.3:</b> XGB에는 L1·L2 규제가 내장되어 과적합을 막는 데 도움이 되고 일반화 성능이 향상된다.</p>
+    <p><b>Wang 2024, 식 (2)–(3):</b> 목적함수 = 손실 + Ω, Ω = γT + ½λΣw². T는 잎 개수, w는 잎 값.</p>
+    <p><b>Shi 2025:</b> BPNN·MLP도 L2 규제(강도 0.01)를 썼다.</p>
+    <p><b>예시 데이터:</b> 9차 다항식 릿지 회귀. 슬라이더 0 → 벌점 10⁻⁹, 100 → 벌점 10¹.</p>
+  </template>
+  <template data-tab="notes">
+    <ol><li>비유: 서술형 답안이 쓸데없이 길면 감점 → 핵심만 쓰게 된다.</li>
+    <li>슬라이더 왼쪽: 꼬불꼬불(외움), 새 문제 크게 틀림. 3/4 지점: 부드러운 곡선, 새 문제 가장 잘 맞힘(약 9점). 끝까지: 평평(너무 단순).</li>
+    <li>Q. L1·L2가 뭐야? → 둘 다 벌점. L1은 필요 없는 변수를 아예 0으로, L2는 모두 골고루 줄인다.</li></ol>
+  </template>
+</section>
+
+<script>
+DECK.register('p-reg', root => {
+  const truth = d => 10 + 90 / (1 + Math.exp(-(d - 25) / 6));
+  const noiseA = [6, -7, 5, -4, 8, -6, 4, -5, 7, -3], noiseB = [-5, 6, -6, 5, -4, 7, -6, 4, -5, 6];
+  const trX = [2, 8, 14, 20, 26, 32, 38, 44, 50, 56], teX = [5, 11, 17, 23, 29, 35, 41, 47, 53, 59];
+  const trY = trX.map((d, i) => truth(d) + noiseA[i]), teY = teX.map((d, i) => truth(d) + noiseB[i]);
+  const u = d => (d - 30) / 30, DEG = 9;
+  function fit(lam) {
+    const n = DEG + 1, A = Array.from({length: n}, () => Array(n + 1).fill(0));
+    trX.forEach((d, k) => { const p = Array.from({length: n}, (_, j) => u(d) ** j);
+      for (let i = 0; i < n; i++) { for (let j = 0; j < n; j++) A[i][j] += p[i] * p[j]; A[i][n] += p[i] * trY[k]; } });
+    for (let i = 1; i < n; i++) A[i][i] += lam;
+    for (let c = 0; c < n; c++) { let m = c; for (let r = c + 1; r < n; r++) if (Math.abs(A[r][c]) > Math.abs(A[m][c])) m = r;
+      [A[c], A[m]] = [A[m], A[c]]; for (let r = 0; r < n; r++) if (r !== c) { const f = A[r][c] / A[c][c]; for (let j = c; j <= n; j++) A[r][j] -= f * A[c][j]; } }
+    const w = A.map((row, i) => row[n] / row[i]);
+    return d => w.reduce((s, wi, j) => s + wi * u(d) ** j, 0);
+  }
+  const rmse = (f, X, Y) => Math.sqrt(X.reduce((s, d, i) => s + (f(d) - Y[i]) ** 2, 0) / X.length);
+  const svg = root.querySelector('#reg-svg'), NS = 'http://www.w3.org/2000/svg';
+  const el = (t, a, s) => { const e = document.createElementNS(NS, t); for (const k in a) e.setAttribute(k, a[k]); if (s != null) e.textContent = s; return e; };
+  const L = 60, R = 990, T = 10, B = 215, sx = d => L + d / 60 * (R - L), sy = g => B - (g + 10) / 130 * (B - T);
+  const cp = el('clipPath', {id: 'reg-clip'}); cp.append(el('rect', {x: L, y: T, width: R - L, height: B - T})); svg.append(cp);
+  svg.append(el('line', {x1: L, y1: B, x2: R, y2: B, class: 'ax'}), el('line', {x1: L, y1: T, x2: L, y2: B, class: 'ax'}),
+    el('text', {x: R, y: B + 30, class: 'axl', 'text-anchor': 'end'}, '퇴비화 기간 (일)'), el('text', {x: L - 10, y: T + 14, class: 'axl', 'text-anchor': 'end'}, 'GI'));
+  const path = el('path', {class: 'fit', 'clip-path': 'url(#reg-clip)'}); svg.append(path);
+  trX.forEach((d, i) => svg.append(el('circle', {cx: sx(d), cy: sy(trY[i]), r: 9, class: 'tr'})));
+  teX.forEach((d, i) => svg.append(el('circle', {cx: sx(d), cy: sy(teY[i]), r: 9, class: 'te'})));
+  const sl = root.querySelector('#reg-l');
+  function show() {
+    const v = +sl.value, lam = 10 ** (-9 + v / 10), f = fit(lam);
+    let d = ''; for (let x = 0; x <= 60; x += 0.25) d += (d ? 'L' : 'M') + sx(x).toFixed(1) + ' ' + Math.max(-500, Math.min(800, sy(f(x)))).toFixed(1);
+    path.setAttribute('d', d);
+    const a = rmse(f, trX, trY), b = rmse(f, teX, teY);
+    root.querySelector('#reg-tr').textContent = a.toFixed(1); root.querySelector('#reg-te').textContent = b.toFixed(1);
+    root.querySelector('#reg-o').textContent = v < 62 ? '약함' : v <= 87 ? '적당' : '너무 셈';
+    root.querySelector('#reg-msg').innerHTML = v < 62 ? '벌점이 약해 점을 전부 지나가려고 꼬불꼬불하다 = <b>외움</b>. 오른쪽으로 더 밀어 보자.'
+      : v <= 87 ? '벌점 덕분에 큰 흐름만 따라간다. <b>새 문제를 가장 잘 맞힌다</b>.' : '벌점이 너무 세서 평평해졌다 = <b>너무 단순</b>. 둘 다 틀린다.';
+  }
+  sl.addEventListener('input', show);
+  show();
+});
+</script>
