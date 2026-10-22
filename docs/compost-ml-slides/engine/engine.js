@@ -81,5 +81,6 @@ window.DECK = (() => {
     const m = /^#(\d+)/.exec(location.hash);
     show(m ? +m[1] - 1 : 0, false);
   }
+  addEventListener('hashchange', () => { const m = /^#(\d+)/.exec(location.hash); if (m && +m[1] - 1 !== cur) { closeAll(); show(+m[1] - 1); } });
   return { register: (id, fn) => { inits[id] = fn; }, start, show: k => show(k) };
 })();

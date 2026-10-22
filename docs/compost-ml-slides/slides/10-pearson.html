@@ -10,8 +10,8 @@
 #p-pearson .rng td:first-child{font-weight:700;color:var(--main);white-space:nowrap}
 </style>
 
-<section class="page" id="p-pearson" data-sec="데이터 전처리">
-  <div class="sec rv">데이터 전처리 · Wang 2024</div>
+<section class="page" id="p-pearson" data-sec="① 전처리">
+  <div class="sec rv">① 전처리 · 변수 고르기 · Wang 2024</div>
   <h1 class="hl rv" style="--d:80ms">변수끼리 같은 정보가 겹치는지 r로 먼저 확인한다</h1>
   <p class="sub rv" style="--d:150ms">피어슨 상관계수 r: 두 값이 직선으로 같이 움직이는 정도를 −1 ~ +1로 나타낸 값</p>
 
@@ -37,15 +37,9 @@
       <span class="lab">Wang 논문: 입력 변수끼리의 상관</span>
       <div class="big">0.2~0.4<small>|r|</small></div>
       <p>입력끼리 약하게만 얽혀 있다. <b>각 변수가 서로 다른 정보</b>를 가져오므로 모두 넣어도 된다.</p>
-      <table class="tb rng">
-        <tbody>
-          <tr><td>|r| &lt; 0.4</td><td>약함 · 중복 걱정 없음</td></tr>
-          <tr><td>0.4 ~ 0.7</td><td>중간</td></tr>
-          <tr class="k"><td>|r| &gt; 0.8</td><td>거의 같은 정보 · 중복 의심</td></tr>
-        </tbody>
-      </table>
-      <div class="callout"><b>r의 한계.</b> 직선 관계만 잡는다. “곡선 관계 보기”처럼 관계가 뚜렷해도 r ≈ 0이 나올 수 있어, 최종 중요도는 SHAP으로 다시 본다.</div>
       <button class="btn more" data-drawer="detail">내역 보기 ›</button>
+      <div class="callout"><b>r의 한계.</b> 직선 관계만 잡는다. 관계가 뚜렷해도 곡선이면 r ≈ 0이 나온다.</div>
+      <div class="insight"><span class="il">캡스톤 인사이트 · 우리 데이터 설계에서는</span><span class="ih">상관은 “버릴 변수”가 아니라 “중복 쌍”을 찾는 데 쓴다</span><ul><li>입력끼리 |r| &gt; 0.8이면 측정·추출이 쉬운 쪽 하나만 남긴다</li><li>출력과 r이 낮아도 바로 버리지 않는다. 통기량처럼 곡선일 수 있다</li></ul></div>
     </aside>
   </div>
 
@@ -57,6 +51,8 @@
     <table class="tb"><thead><tr><th>비교</th><th>목적</th><th>바라는 결과</th></tr></thead><tbody>
       <tr><td>입력 ↔ 출력 (예: 온도 ↔ NH₃)</td><td>예측에 쓸모 있는 변수인가</td><td>어느 정도 관계 있음</td></tr>
       <tr class="k"><td>입력 ↔ 입력 (예: C/N ↔ 함수율)</td><td>같은 정보가 겹치는가 (다중공선성)</td><td>관계가 약해야 좋음</td></tr></tbody></table>
+    <h4>|r| 크기 읽는 기준</h4>
+    <table class="tb"><tbody><tr><td>|r| &lt; 0.4</td><td>약함 · 중복 걱정 없음</td></tr><tr><td>0.4 ~ 0.7</td><td>중간</td></tr><tr class="k"><td>|r| &gt; 0.8</td><td>거의 같은 정보 · 중복 의심</td></tr></tbody></table>
     <h4>비유: 키와 몸무게</h4>
     <p>키와 몸무게는 거의 같이 움직인다(r ≈ 0.9). 둘 다 넣어도 정보는 사실상 하나라서, 모델이 “진짜 원인이 뭐지?” 하고 헷갈린다.</p>
     <h4>예외: 시간</h4>
@@ -70,7 +66,7 @@
   <template data-tab="notes">
     <ol><li>Q. “PCC 절댓값 0.2~0.4라서 중복이 없다”가 무슨 뜻? → 입력 변수끼리 서로 닮지 않았다. 겹치는 정보가 없으니 모두 넣어도 된다.</li>
     <li>문장은 “입력↔출력 관계 파악”으로 시작하지만 결론은 입력↔입력 중복 이야기다. 두 목적을 나눠서 말한다.</li>
-    <li>“곡선 관계 보기”로 r의 한계를 보여 주고 SHAP 장(7장)으로 연결한다.</li></ol>
+    <li>“곡선 관계 보기”로 r의 한계를 보여 주고 SHAP 장(9장)으로 연결한다.</li></ol>
   </template>
 </section>
 

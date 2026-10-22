@@ -15,8 +15,8 @@
 #p-r2 .cmp td:first-child{font-weight:700;white-space:nowrap}
 </style>
 
-<section class="page" id="p-r2" data-sec="정확도 평가">
-  <div class="sec rv">정확도 평가 · Shi 2025 · Wang 2024</div>
+<section class="page" id="p-r2" data-sec="③ 평가">
+  <div class="sec rv">③ 평가 · 결정계수 R² · Shi 2025 · Wang 2024</div>
   <h1 class="hl rv" style="--d:80ms">r은 같이 움직이는지, R²는 실제로 맞혔는지 본다</h1>
   <p class="sub rv" style="--d:150ms">결정계수 R²: 모델 예측값이 실제값을 얼마나 설명하는가. 예측이 치우치면 r은 그대로, R²만 떨어진다</p>
 
@@ -36,26 +36,19 @@
         <label for="r2-b">치우침</label><input type="range" id="r2-b" min="0" max="40" step="1" value="0"><output id="r2-bo">+0</output>
       </div>
       <div class="row rv" style="--d:480ms" id="r2-chips">
-        <button class="btn" data-n="9" data-b="0" aria-pressed="true">Shi RF 시험 수준</button>
-        <button class="btn" data-n="20" data-b="0">BPNN처럼 흩어짐</button>
-        <button class="btn" data-n="3" data-b="25">항상 +25 높게 예측</button>
+        <button class="btn" data-n="9" data-b="0" data-c="rf" aria-pressed="true">① 잘 맞는 예측</button>
+        <button class="btn" data-n="20" data-b="0" data-c="bp">② 넓게 흩어진 예측</button>
+        <button class="btn" data-n="3" data-b="25" data-c="bias">③ 한쪽으로 치우친 예측</button>
       </div>
+      <div class="callout rv" id="r2-cap" style="--d:520ms;background:var(--panel)"></div>
     </div>
 
     <aside class="side rv" style="--d:300ms">
       <span class="lab">Shi 논문 RF 모델 · 시험 데이터</span>
       <div class="big">0.937<small>R²</small></div>
-      <p>발아지수(GI) 변동의 <b>93.7%</b>를 모델이 설명했다. RMSE 7.261 = 평균 약 7%p 틀림.</p>
-      <table class="tb cmp">
-        <thead><tr><th></th><th>피어슨 r</th><th>결정계수 R²</th></tr></thead>
-        <tbody>
-          <tr><td>비교</td><td>변수 ↔ 변수</td><td>예측 ↔ 실제</td></tr>
-          <tr><td>범위</td><td>−1 ~ +1</td><td>보통 0 ~ 1</td></tr>
-          <tr><td>시점</td><td>모델 만들기 전</td><td>모델 만든 후</td></tr>
-          <tr class="k"><td>치우친 예측</td><td>그대로 높음</td><td>크게 떨어짐</td></tr>
-        </tbody>
-      </table>
+      <p>발아지수(GI) 변동의 <b>93.7%</b>를 모델이 설명했다. 같은 데이터에서 신경망 BPNN은 0.616.</p>
       <button class="btn more" data-drawer="detail">내역 보기 ›</button>
+      <div class="insight"><span class="il">캡스톤 인사이트 · 우리 데이터 설계에서는</span><span class="ih">성적은 시험 데이터 R²로만, RMSE와 함께 말한다</span><ul><li>같은 논문(실험)의 날짜별 데이터가 학습·시험에 섞이면 성적이 부풀려진다 → 논문 단위로 나눈다</li><li>R²는 설명 비율일 뿐, 실제 몇 g 틀렸는지는 RMSE로 본다</li></ul></div>
     </aside>
   </div>
 
@@ -63,6 +56,10 @@
   <div class="foot"><span>Shi et al. (2025) 2.3, 3.2 · Wang et al. (2024) 2.4, Table 1</span><span class="pn"></span></div>
 
   <template data-tab="detail">
+    <h4>한눈에 비교</h4>
+    <table class="tb"><thead><tr><th></th><th>피어슨 r</th><th>결정계수 R²</th></tr></thead><tbody>
+      <tr><td>비교</td><td>변수 ↔ 변수</td><td>예측 ↔ 실제</td></tr><tr><td>범위</td><td>−1 ~ +1</td><td>보통 0 ~ 1</td></tr>
+      <tr><td>시점</td><td>모델 만들기 전</td><td>모델 만든 후</td></tr><tr class="k"><td>치우친 예측</td><td>그대로 높음</td><td>크게 떨어짐</td></tr></tbody></table>
     <h4>R²가 실제로 계산하는 것</h4>
     <div class="eq">R² = 1 − (예측 오차²의 합) ÷ (평균에서 벗어난 정도²의 합)</div>
     <p>“그냥 평균값만 찍었을 때”보다 오차를 얼마나 줄였는가를 본다.</p>
@@ -79,7 +76,8 @@
   </template>
   <template data-tab="notes">
     <ol><li>Q. 피어슨 상관계수 값이 R² 값인가? → 아니다. r은 변수끼리의 관계(전처리), R²는 모델 성적(평가).</li>
-    <li>“항상 +25 높게 예측” 시연: r은 거의 1인데 R²는 크게 떨어진다.</li>
+    <li>“③ 한쪽으로 치우친 예측” 시연: r은 거의 1인데 R²는 크게 떨어진다.</li>
+    <li>Q. “BPNN처럼 흩어짐”이 뭐야? → BPNN(역전파 신경망)은 Shi 논문이 비교한 모델 중 하나. 시험 R² 0.616으로 예측이 넓게 흩어졌다. 그 정도의 흩어짐을 재현한 버튼.</li>
     <li>R² = r²는 변수 하나로 직선 회귀할 때만 성립.</li></ol>
   </template>
 </section>
@@ -116,8 +114,16 @@ DECK.register('p-r2', root => {
   [nz, bs].forEach(i => i.addEventListener('input', () => { chips.forEach(c => c.setAttribute('aria-pressed', 'false')); update(); }));
   chips.forEach(c => c.addEventListener('click', () => {
     chips.forEach(o => o.setAttribute('aria-pressed', String(o === c)));
-    nz.value = c.dataset.n; bs.value = c.dataset.b; update();
+    nz.value = c.dataset.n; bs.value = c.dataset.b; update(); caption(c.dataset.c);
   }));
-  update();
+  const CAP = {
+    rf: '<b>① 잘 맞는 예측.</b> Shi 논문 RF(랜덤 포레스트) 수준. 점이 대각선 가까이 모여 R² ≈ 0.94.',
+    bp: '<b>② 넓게 흩어진 예측.</b> BPNN(역전파 신경망) 수준. Shi 논문 6개 모델 중 하나로, 시험 R² 0.616. 방향은 맞지만 점이 대각선 위아래로 넓게 퍼진다.',
+    bias: '<b>③ 한쪽으로 치우친 예측.</b> 실제보다 항상 25만큼 높게 예측. 같이 움직이니 r은 거의 1이지만, 실제로는 틀렸으니 R²는 크게 떨어진다.',
+    none: '슬라이더로 직접 바꾸는 중. <b>흩어짐</b>은 예측이 들쭉날쭉한 정도, <b>치우침</b>은 한쪽으로 쏠린 정도다.'
+  };
+  const capEl = root.querySelector('#r2-cap'), caption = k => { capEl.innerHTML = CAP[k]; };
+  [nz, bs].forEach(i => i.addEventListener('input', () => caption('none')));
+  update(); caption('rf');
 });
 </script>

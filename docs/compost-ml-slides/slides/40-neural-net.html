@@ -1,0 +1,150 @@
+<style>
+#p-nn svg{width:100%;height:330px;display:block}
+#p-nn .node{fill:var(--white);stroke:var(--main);stroke-width:3}
+#p-nn .node.sum{fill:var(--panel)}
+#p-nn .node.act{fill:var(--main)}
+#p-nn .nt{fill:var(--deep);font-size:20px;font-weight:700}
+#p-nn .nt.w{fill:var(--white)}
+#p-nn .nv{fill:var(--ink);font-size:18px}
+#p-nn .edge{stroke:var(--t2);stroke-width:3}
+#p-nn .wl{fill:var(--t1);font-size:17px;font-weight:700}
+#p-nn .curve{fill:none;stroke:var(--deep);stroke-width:3}
+#p-nn .flat{fill:var(--g0)}
+#p-nn .probe{fill:var(--main)}
+#p-nn .probe.sat{fill:var(--note)}
+#p-nn .tan{stroke:var(--main);stroke-width:3}
+#p-nn .tan.sat{stroke:var(--note)}
+#p-nn .lb{fill:var(--note);font-size:16px}
+#p-nn .lb.b{fill:var(--deep);font-weight:700;font-size:17px}
+#p-nn .ro{width:100%;font-size:19px}
+#p-nn .ro td{text-align:center;font-weight:700;color:var(--deep)}
+#p-nn .ro th{text-align:center}
+#p-nn .sep{width:1.5px;height:30px;background:var(--rule)}
+#p-nn .msg{font-size:20px;font-weight:700;color:var(--main)}
+</style>
+
+<section class="page" id="p-nn" data-sec="② 모델">
+  <div class="sec rv">② 모델 선택 · 신경망과 활성화 함수 · Shi 2025 · Wang 2024</div>
+  <h1 class="hl rv" style="--d:80ms">신경망은 가중합을 활성화 함수에 통과시키며 학습한다</h1>
+  <p class="sub rv" style="--d:150ms">활성화 함수: 뉴런이 받은 값을 다음으로 보낼 신호(0~1)로 바꾸는 S자 곡선. 곡선이 평평하면 학습이 멈춘다</p>
+
+  <div class="body">
+    <div class="left">
+      <div class="panel rv" style="--d:250ms">
+        <h3>앞 장의 퇴비 A를 뉴런 하나에 넣어 보기 · 정답은 “미부숙 = 0”</h3>
+        <svg id="nn-svg" viewBox="0 0 1010 330" role="img" aria-label="뉴런 구조와 활성화 함수 곡선"></svg>
+        <div class="row">
+          <div class="row" id="nn-in"><button class="btn" data-m="raw" aria-pressed="true">원래 값 넣기</button><button class="btn" data-m="z" aria-pressed="false">표준화 값 넣기</button></div>
+          <span class="sep" aria-hidden="true"></span>
+          <button class="btn" id="nn-step">학습 1회 ›</button><button class="btn" id="nn-reset">처음으로</button>
+          <span class="msg" id="nn-msg"></span>
+        </div>
+        <table class="tb ro"><thead><tr><th>학습 횟수</th><th>가중합 z</th><th>출력 y</th><th>기울기 (학습 신호)</th><th>방금 가중치 변화</th></tr></thead>
+          <tbody><tr><td id="nn-n"></td><td id="nn-z"></td><td id="nn-y"></td><td id="nn-g"></td><td id="nn-dw"></td></tr></tbody></table>
+      </div>
+      <div class="callout rv" style="--d:380ms;background:var(--panel)"><b>학습 = 가중치 고치기(역전파).</b> 출력과 정답의 차이 × 곡선의 기울기만큼 가중치를 조금씩 고친다. 원래 값(NH₄⁺ 1,200)을 넣으면 z가 수백이 되어 곡선의 평평한 끝에 붙고, 기울기가 0이라 <b>몇 번을 반복해도 가중치가 안 바뀐다</b>. 이것이 “조기 포화”다.</div>
+    </div>
+
+    <aside class="side rv" style="--d:300ms">
+      <span class="lab">Shi 논문의 신경망 · 시험 R²</span>
+      <button class="btn more" data-drawer="detail">내역 보기 ›</button>
+      <div class="big">0.616<small>BPNN</small></div>
+      <p>MLP는 0.664. 같은 데이터 184개에서 RF(0.937)보다 낮았다. 배울 가중치는 많은데 데이터가 적었다.</p>
+      <table class="tb"><tbody>
+        <tr><td><b>가중치 w</b></td><td>입력을 얼마나 중요하게 볼지. 학습으로 고쳐짐</td></tr>
+        <tr class="k"><td>활성화 함수</td><td>가중합 z를 0~1 신호로 바꾸는 곡선</td></tr>
+        <tr><td><b>역전파</b></td><td>오차 × 기울기만큼 가중치를 고치는 학습</td></tr></tbody></table>
+      <div class="insight"><span class="il">캡스톤 인사이트 · 우리 데이터 설계에서는</span><span class="ih">신경망을 비교 모델로 쓰려면 표준화는 필수다</span><ul><li>원래 값 그대로 넣으면 포화되어 학습이 멈춘다</li><li>문헌 데이터 수백 개 규모에선 신경망이 불리 → 트리를 기본, 신경망은 비교용</li></ul></div>
+    </aside>
+  </div>
+
+  <div class="note">뉴런 1개, 가중치 시작값 0.40·0.30, 학습률 2는 예시 데이터 · 입력에 따른 계산 · 퇴비 A 값은 앞 장과 같음</div>
+  <div class="foot"><span>Shi et al. (2025) 2.2.5–2.2.6 BPNN·MLP, 3.2 · Wang et al. (2024) 2.2</span><span class="pn"></span></div>
+
+  <template data-tab="detail">
+    <h4>용어</h4>
+    <table class="tb"><tbody>
+      <tr><td><b>뉴런</b></td><td>입력에 가중치를 곱해 더한 뒤(가중합 z) 활성화 함수에 넣는 계산 단위</td></tr>
+      <tr><td><b>가중치 w</b></td><td>각 입력을 얼마나 중요하게 볼지 정하는 숫자. 학습으로 고쳐진다</td></tr>
+      <tr class="k"><td>활성화 함수</td><td>가중합을 신호로 바꾸는 함수. S자(시그모이드) σ(z) = 1 ÷ (1 + e<sup>−z</sup>)는 0~1로 눌러 준다. 곡선이 있어야 직선이 아닌 관계를 배운다</td></tr>
+      <tr><td><b>포화</b></td><td>z가 너무 크거나 작아 곡선의 평평한 끝에 붙은 상태. 기울기 ≈ 0</td></tr>
+      <tr><td><b>역전파 (BPNN의 BP)</b></td><td>출력 쪽 오차를 거꾸로 전달하며 기울기만큼 가중치를 고치는 학습법</td></tr>
+      <tr><td><b>MLP</b></td><td>뉴런을 여러 층으로 쌓은 신경망 (은닉층 여러 개)</td></tr></tbody></table>
+    <h4>계산 (이 장의 뉴런)</h4>
+    <div class="eq">z = w₁·pH + w₂·NH₄⁺ → y = σ(z) → Δwᵢ = 학습률 × (정답 − y) × y(1 − y) × 입력ᵢ</div>
+    <p>원래 값: z = 0.40×6.0 + 0.30×1,200 = 362.4 → y = 1.000, 기울기 ≈ 0 → Δw ≈ 0.</p>
+    <p>표준화 값: z = 0.40×(−1.25) + 0.30×(−0.27) = −0.58 → y = 0.36, 기울기 0.23 → 가중치가 정답 쪽으로 움직인다.</p>
+    <h4>다른 활성화 함수</h4>
+    <p>Shi 논문 BPNN은 relu(0보다 작으면 0, 크면 그대로)를 골랐다. relu는 양수 쪽이 평평해지지 않아 포화가 덜하지만, 입력 크기가 제각각이면 큰 변수가 결과를 독차지하는 문제는 그대로다.</p>
+  </template>
+  <template data-tab="source">
+    <p><b>Shi 2025 2.2.5:</b> BPNN은 가중치와 편향을 기울기에 따라 반복 갱신해 출력 오차를 줄인다. 은닉층 뉴런 20개, 활성화 함수 relu, Adam 최적화, 500회 반복, L2 정규화 0.01. 시험 R² 0.616.</p>
+    <p><b>Shi 2025 2.2.6:</b> MLP 은닉층 3개(10·15·20 뉴런), lbfgs, 200회 반복. 시험 R² 0.664.</p>
+    <p><b>Wang 2024 2.2:</b> 활성화 함수의 조기 포화가 수렴을 늦추므로 표준화를 했다.</p>
+    <p><b>예시 데이터:</b> 뉴런 1개, 시그모이드, 가중치 시작값, 학습률 2, 정답 0은 원리 설명용이다.</p>
+  </template>
+  <template data-tab="notes">
+    <ol><li>Q. 신경망 곡선, 활성화 함수가 뭐야? 위(표준화) 데이터를 그대로 쓰는 건가? → 그렇다. 앞 장 퇴비 A의 pH 6.0, NH₄⁺ 1,200을 그대로 넣는다.</li>
+    <li>시연: “원래 값 넣기” → “학습 1회”를 여러 번 눌러도 출력 1.000, 가중치 변화 0. “표준화 값 넣기” → 누를 때마다 출력이 0 쪽으로 내려간다.</li>
+    <li>메시지: 표준화를 안 하면 신경망은 아예 배우지 못할 수 있다.</li></ol>
+  </template>
+</section>
+
+<script>
+DECK.register('p-nn', root => {
+  const RAW = [6.0, 1200], Z = [(6.0 - 7.5) / 1.2, (1200 - 2000) / 3000], W0 = [0.40, 0.30], LR = 2, TARGET = 0;
+  const $ = id => root.querySelector('#' + id);
+  const svg = $('nn-svg'), NS = 'http://www.w3.org/2000/svg';
+  const el = (t, a, txt) => { const e = document.createElementNS(NS, t); for (const k in a) e.setAttribute(k, a[k]); if (txt != null) e.textContent = txt; return e; };
+  const sig = v => 1 / (1 + Math.exp(-v));
+  let mode = 'raw', w = [...W0], n = 0, lastDw = null;
+  const f2 = v => Math.abs(v) >= 100 ? v.toLocaleString(undefined, {maximumFractionDigits: 1}) : (v < 0 ? '−' : '') + Math.abs(v).toFixed(2);
+  function draw() {
+    const x = mode === 'raw' ? RAW : Z, z = w[0] * x[0] + w[1] * x[1], y = sig(z), g = y * (1 - y), sat = g < 0.01;
+    svg.replaceChildren();
+    // neuron
+    svg.append(el('line', {x1: 110, y1: 90, x2: 290, y2: 160, class: 'edge'}), el('line', {x1: 110, y1: 240, x2: 290, y2: 160, class: 'edge'}),
+      el('line', {x1: 380, y1: 160, x2: 436, y2: 160, class: 'edge'}), el('line', {x1: 524, y1: 160, x2: 580, y2: 160, class: 'edge'}));
+    svg.append(el('text', {x: 190, y: 105, class: 'wl', 'text-anchor': 'middle'}, `w₁ = ${w[0].toFixed(2)}`),
+      el('text', {x: 190, y: 228, class: 'wl', 'text-anchor': 'middle'}, `w₂ = ${w[1].toFixed(2)}`));
+    [[70, 90, 'pH', x[0]], [70, 240, 'NH₄⁺', x[1]]].forEach(([cx, cy, nm, v]) => {
+      svg.append(el('circle', {cx, cy, r: 42, class: 'node'}), el('text', {x: cx, y: cy - 2, class: 'nt', 'text-anchor': 'middle'}, nm),
+        el('text', {x: cx, y: cy + 22, class: 'nv', 'text-anchor': 'middle'}, mode === 'raw' ? v.toLocaleString() : f2(v)));
+    });
+    svg.append(el('circle', {cx: 335, cy: 160, r: 46, class: 'node sum'}), el('text', {x: 335, y: 158, class: 'nt', 'text-anchor': 'middle'}, 'Σ 가중합'),
+      el('text', {x: 335, y: 182, class: 'nv', 'text-anchor': 'middle'}, 'z = ' + f2(z)));
+    svg.append(el('circle', {cx: 480, cy: 160, r: 44, class: 'node act'}), el('text', {x: 480, y: 158, class: 'nt w', 'text-anchor': 'middle'}, 'σ'),
+      el('text', {x: 480, y: 180, class: 'nt w', 'text-anchor': 'middle', style: 'font-size:15px'}, '활성화 함수'));
+    svg.append(el('text', {x: 586, y: 150, class: 'lb b'}, '출력 y'), el('text', {x: 586, y: 176, class: 'nt'}, y.toFixed(3)));
+    svg.append(el('text', {x: 70, y: 310, class: 'lb', 'text-anchor': 'middle'}, '입력'), el('text', {x: 335, y: 310, class: 'lb', 'text-anchor': 'middle'}, '① 입력 × 가중치를 더함'),
+      el('text', {x: 480, y: 268, class: 'lb', 'text-anchor': 'middle'}, '② 신호로 바꿈'));
+    // sigmoid plot
+    const L = 680, R = 1000, T = 30, B = 270, XR = 8, sx = v => L + (Math.max(-XR, Math.min(XR, v)) + XR) / (2 * XR) * (R - L), sy = v => B - v * (B - T);
+    svg.append(el('rect', {x: L, y: T, width: sx(-4) - L, height: B - T, class: 'flat'}), el('rect', {x: sx(4), y: T, width: R - sx(4), height: B - T, class: 'flat'}));
+    let d = ''; for (let v = -XR; v <= XR + 1e-9; v += 0.1) d += (d ? 'L' : 'M') + sx(v).toFixed(1) + ' ' + sy(sig(v)).toFixed(1);
+    svg.append(el('path', {d, class: 'curve'}), el('line', {x1: L, y1: B, x2: R, y2: B, class: 'ax'}));
+    svg.append(el('text', {x: L, y: B + 22, class: 'lb'}, '평평'), el('text', {x: (L + R) / 2, y: B + 22, class: 'lb', 'text-anchor': 'middle'}, 'z = 0'),
+      el('text', {x: R, y: B + 22, class: 'lb', 'text-anchor': 'end'}, '평평'), el('text', {x: (L + R) / 2, y: B + 46, class: 'lb b', 'text-anchor': 'middle'}, 'σ(z): S자 활성화 함수'));
+    const px = sx(z), py = sy(y), slope = g * (2 * XR / (R - L)) * (B - T);
+    const dx = 60 / Math.sqrt(1 + slope * slope);
+    svg.append(el('line', {x1: px - dx, y1: py + dx * slope, x2: px + dx, y2: py - dx * slope, class: 'tan' + (sat ? ' sat' : '')}),
+      el('circle', {cx: px, cy: py, r: 10, class: 'probe' + (sat ? ' sat' : '')}));
+    if (Math.abs(z) > XR) svg.append(el('text', {x: (L + R) / 2, y: T - 10, class: 'lb b', 'text-anchor': 'middle'}, `z = ${f2(z)} → 곡선 끝, 완전히 평평`));
+    $('nn-n').textContent = n + '회'; $('nn-z').textContent = f2(z); $('nn-y').textContent = y.toFixed(3);
+    $('nn-g').textContent = g < 0.0001 ? '≈ 0' : g.toFixed(3);
+    $('nn-dw').textContent = lastDw == null ? '–' : (Math.abs(lastDw) < 0.0001 ? '≈ 0' : (lastDw > 0 ? '+' : '−') + Math.abs(lastDw).toFixed(3));
+    $('nn-msg').textContent = n === 0 ? '' : sat ? '포화: 가중치가 안 바뀜' : (y < 0.2 ? '정답(0)에 가까워짐' : '정답 쪽으로 이동 중');
+    root.querySelectorAll('#nn-in .btn').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.m === mode)));
+  }
+  function step() {
+    const x = mode === 'raw' ? RAW : Z, y = sig(w[0] * x[0] + w[1] * x[1]), g = y * (1 - y);
+    const dw = x.map(xi => LR * (TARGET - y) * g * xi);
+    w = w.map((wi, i) => wi + dw[i]); lastDw = dw[0] + dw[1]; n++; draw();
+  }
+  const reset = () => { w = [...W0]; n = 0; lastDw = null; draw(); };
+  root.querySelectorAll('#nn-in .btn').forEach(b => b.addEventListener('click', () => { mode = b.dataset.m; reset(); }));
+  $('nn-step').addEventListener('click', step);
+  $('nn-reset').addEventListener('click', reset);
+  draw();
+});
+</script>

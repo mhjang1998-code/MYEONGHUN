@@ -13,8 +13,8 @@
 #p-cm .lgd .g{width:220px;height:14px;background:linear-gradient(90deg,var(--note),var(--white),var(--main));border:1px solid var(--rule)}
 </style>
 
-<section class="page" id="p-cm" data-sec="데이터 전처리">
-  <div class="sec rv">데이터 전처리 · Shi 2025 Fig. 1 · Wang 2024 Fig. 1a</div>
+<section class="page" id="p-cm" data-sec="① 전처리">
+  <div class="sec rv">① 전처리 · 중복 확인 · Shi 2025 Fig. 1</div>
   <h1 class="hl rv" style="--d:80ms">상관행렬은 입력↔출력, 입력↔입력 칸을 나눠 읽는다</h1>
   <p class="sub rv" style="--d:150ms">출력(GI)과 엮인 칸은 높을수록 예측에 쓸모 있고, 입력끼리 엮인 칸은 낮을수록 중복이 없다</p>
 
@@ -31,15 +31,9 @@
       <span class="lab">입력끼리 가장 큰 상관 (NH₄⁺ ↔ NO₃⁻)</span>
       <div class="big">0.47<small>r</small></div>
       <p>중복을 의심하는 기준(|r| &gt; 0.8)보다 훨씬 낮다. <b>다중공선성 걱정은 작다.</b></p>
-      <table class="tb">
-        <thead><tr><th>칸</th><th>묻는 것</th><th>바라는 값</th></tr></thead>
-        <tbody>
-          <tr><td>입력↔출력</td><td>예측에 쓸모 있나?</td><td>높을수록 좋음</td></tr>
-          <tr class="k"><td>입력↔입력</td><td>같은 정보를 두 번 넣나?</td><td>낮을수록 좋음</td></tr>
-        </tbody>
-      </table>
-      <div class="callout"><b>Wang 문장 읽기.</b> “0.2~0.4라서 중복 없음”은 <b>입력↔입력 칸</b>에 대한 판단이다. 입력↔출력 이야기와 나눠 읽는다.</div>
       <button class="btn more" data-drawer="detail">내역 보기 ›</button>
+      <div class="callout"><b>Wang 문장 읽기.</b> “0.2~0.4라서 중복 없음”은 <b>입력↔입력 칸</b>에 대한 판단이다.</div>
+      <div class="insight"><span class="il">캡스톤 인사이트 · 우리 데이터 설계에서는</span><span class="ih">변수 후보표를 만들면 상관행렬부터 그린다</span><ul><li>입력↔입력 칸에서 |r| 큰 쌍을 표시하고 둘 중 하나를 고른다</li><li>입력↔출력 칸은 참고만 한다. 최종 중요도는 모델을 만든 뒤 SHAP으로</li></ul></div>
     </aside>
   </div>
 
@@ -47,6 +41,10 @@
   <div class="foot"><span>Shi et al. (2025) 3.1 Fig. 1 · Wang et al. (2024) 2.2, 3.1 Fig. 1a</span><span class="pn"></span></div>
 
   <template data-tab="detail">
+    <h4>두 종류의 칸</h4>
+    <table class="tb"><thead><tr><th>칸</th><th>묻는 것</th><th>바라는 값</th></tr></thead><tbody>
+      <tr><td>입력↔출력</td><td>예측에 쓸모 있나?</td><td>높을수록 좋음</td></tr>
+      <tr class="k"><td>입력↔입력</td><td>같은 정보를 두 번 넣나?</td><td>낮을수록 좋음</td></tr></tbody></table>
     <h4>용어</h4>
     <table class="tb"><tbody>
       <tr><td><b>상관행렬</b></td><td>모든 변수 쌍의 r을 표 하나에 모은 것. 대각선은 자기 자신이라 1</td></tr>

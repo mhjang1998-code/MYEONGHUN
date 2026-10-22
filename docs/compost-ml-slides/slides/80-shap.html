@@ -11,15 +11,15 @@
 #p-shap .sum{background:var(--panel);padding:10px 16px;font-size:21px;font-weight:700;color:var(--deep)}
 #p-shap .lg{display:flex;gap:18px;font-size:16px;color:var(--note)}
 #p-shap .lg i{display:inline-block;width:14px;height:14px;margin-right:6px;vertical-align:-2px}
-#p-shap .bars{display:grid;grid-template-columns:96px 1fr 70px;gap:8px 12px;align-items:center;font-size:19px}
-#p-shap .bars .b{height:22px;background:var(--main)}
+#p-shap .bars{display:grid;grid-template-columns:96px 1fr 70px;gap:4px 12px;align-items:center;font-size:19px}
+#p-shap .bars .b{height:16px;background:var(--main)}
 #p-shap .bars .b.s{background:var(--t1)}
 #p-shap .bars .b.t{background:var(--t2)}
 #p-shap .bars .val{text-align:right;font-weight:700}
 </style>
 
-<section class="page" id="p-shap" data-sec="모델 해석">
-  <div class="sec rv">모델 해석 · Shi 2025 · Wang 2024</div>
+<section class="page" id="p-shap" data-sec="④ 해석">
+  <div class="sec rv">④ 해석 · 변수 중요도 · Shi 2025 · Wang 2024</div>
   <h1 class="hl rv" style="--d:80ms">SHAP은 예측값을 변수별 몫으로 공정하게 나눈다</h1>
   <p class="sub rv" style="--d:150ms">예측값 = 기준값(평균 예측) + 변수마다의 몫. 팀 점수를 기여도대로 나누는 게임 이론 방법</p>
 
@@ -41,14 +41,15 @@
         <button class="btn" data-d="36" data-e="2.2" data-n="3.3">36일차 (후숙)</button>
       </div>
       <div class="sum rv" id="sh-sum" style="--d:450ms"></div>
+      <div class="callout rv" style="--d:500ms;background:var(--panel)"><b>같은 변수, 다른 방향.</b> Shi Fig. 6 실제 예측: 1일차 17.0 → 36일차 81.1 (기준값 57.9). 기간이 초기엔 끌어내리고 후숙기엔 끌어올린다.</div>
     </div>
 
     <aside class="side rv" style="--d:300ms">
       <span class="lab">Shi RF 모델 · 전역 중요도 1위</span>
       <div class="big">46.2<small>% 기간</small></div>
       <div class="bars" id="sh-bars"></div>
-      <div class="callout"><b>같은 변수, 다른 방향.</b> Shi Fig. 6에서 1일차 예측 17.0, 36일차 81.1. 기간이 초기엔 끌어내리고 후숙기엔 끌어올린다.</div>
       <button class="btn more" data-drawer="detail">내역 보기 ›</button>
+      <div class="insight"><span class="il">캡스톤 인사이트 · 우리 데이터 설계에서는</span><span class="ih">SHAP 결과가 퇴비화 원리와 맞는지로 모델을 검증한다</span><ul><li>Wang: NH₃에 통기량·C/N이 중요 = 원리와 일치 → 믿을 만하다</li><li>원리와 반대 방향이 나오면 그래프 추출·단위 오류부터 의심한다</li></ul></div>
     </aside>
   </div>
 

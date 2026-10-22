@@ -11,22 +11,22 @@
 #p-cover .kpi .v small{font-size:22px;color:var(--ink);margin-left:4px}
 #p-cover .kpi .k{font-size:17px;color:var(--note);margin-top:4px}
 #p-cover .toc{list-style:none;margin:0;padding:0;display:flex;flex-direction:column}
-#p-cover .toc button{font:inherit;width:100%;display:flex;gap:14px;align-items:baseline;background:none;border:0;border-bottom:1px solid var(--rule);padding:9px 0;cursor:pointer;text-align:left;font-size:21px;color:var(--ink)}
+#p-cover .toc button{font:inherit;width:100%;display:flex;gap:10px;align-items:baseline;background:none;border:0;border-bottom:1px solid var(--rule);padding:5px 0;cursor:pointer;text-align:left;font-size:21px;color:var(--ink)}
 #p-cover .toc button:hover{color:var(--main)}
-#p-cover .toc .no{font-weight:700;color:var(--main);width:1.4em}
+#p-cover .toc .stg{font-weight:700;color:var(--main);width:5.2em;flex:none;font-size:18px}
 </style>
 
 <section class="page" id="p-cover" data-sec="표지" data-title="퇴비가 다 익었는지, 머신러닝이 어떻게 맞히는가">
   <div class="sec rv">학부생 세미나 · 10분</div>
   <h1 class="ttl rv" style="--d:100ms">퇴비가 다 익었는지, <em>머신러닝</em>이<br>어떻게 맞히는가</h1>
-  <p class="st rv" style="--d:250ms">논문 두 편으로 읽는 머신러닝 용어 · 퇴비화 공정 데이터 기반 예측</p>
+  <p class="st rv" style="--d:250ms">선행연구 두 편으로 배우는 용어 · 각 장 오른쪽 아래 「캡스톤 인사이트」에서 우리 데이터 설계로 연결</p>
 
   <div class="cards">
     <div class="card rv" style="--d:400ms">
       <span class="who">Shi et al. (2025) · Bioresource Technology 419</span>
       <span class="q">가축분뇨 퇴비의 발아지수(GI)를 공정 데이터로 예측</span>
       <div class="kpis">
-        <div class="kpi"><div class="v">184<small>개</small></div><div class="k">문헌 70편에서 모은 데이터</div></div>
+        <div class="kpi"><div class="v">184<small>개</small></div><div class="k">70편 1,997개 중 결측 없는 9%</div></div>
         <div class="kpi"><div class="v">0.937</div><div class="k">RF 시험 R²</div></div>
       </div>
     </div>
@@ -39,14 +39,16 @@
       </div>
     </div>
     <div class="card rv" style="--d:520ms">
-      <span class="who">오늘 배울 용어</span>
+      <span class="who">캡스톤 파이프라인 순서로 보는 용어</span>
       <ul class="toc">
-        <li><button data-goto="2"><span class="no">2</span>피어슨 상관계수 r</button></li>
-        <li><button data-goto="3"><span class="no">3</span>결정계수 R²</button></li>
-        <li><button data-goto="4"><span class="no">4</span>표준화 (Z 점수)</button></li>
-        <li><button data-goto="5"><span class="no">5</span>트리 모델과 신경망</button></li>
-        <li><button data-goto="6"><span class="no">6</span>상관행렬과 다중공선성</button></li>
-        <li><button data-goto="7"><span class="no">7</span>SHAP 기여도</button></li>
+        <li><button data-goto="2"><span class="stg">① 전처리</span>피어슨 상관계수 r</button></li>
+        <li><button data-goto="3"><span class="stg"></span>상관행렬 · 다중공선성</button></li>
+        <li><button data-goto="4"><span class="stg"></span>표준화 (Z 점수)</button></li>
+        <li><button data-goto="5"><span class="stg">② 모델</span>신경망 · 활성화 함수</button></li>
+        <li><button data-goto="6"><span class="stg"></span>트리 모델 vs 신경망</button></li>
+        <li><button data-goto="7"><span class="stg">③ 평가</span>결정계수 R²</button></li>
+        <li><button data-goto="8"><span class="stg"></span>RMSE</button></li>
+        <li><button data-goto="9"><span class="stg">④ 해석</span>SHAP 기여도</button></li>
       </ul>
     </div>
   </div>
@@ -73,6 +75,7 @@
   <template data-tab="notes">
     <ol><li>오늘은 논문 결과보다 <b>용어</b>를 이해하는 게 목표라고 먼저 말한다.</li>
     <li>두 논문 모두 “측정이 느리고 비싼 값을 쉽게 재는 값으로 예측한다”는 같은 발상.</li>
-    <li>오른쪽 목차 카드는 클릭하면 해당 장으로 이동한다.</li></ol>
+    <li>오른쪽 목차 카드는 클릭하면 해당 장으로 이동한다. 순서는 우리 캡스톤 작업 순서(전처리 → 모델 → 평가 → 해석)와 같다.</li>
+    <li>캡스톤 인사이트: Shi는 70편에서 1,997개를 뽑았지만 7개 변수가 모두 있는 데이터는 184개(9%)뿐. 변수를 많이 요구할수록 쓸 수 있는 데이터가 급감한다.</li></ol>
   </template>
 </section>
