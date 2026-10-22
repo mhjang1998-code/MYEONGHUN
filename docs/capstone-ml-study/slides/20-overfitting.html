@@ -1,0 +1,97 @@
+<style>
+#c-over .bars{display:grid;grid-template-columns:230px 1fr;gap:16px 18px;align-items:center}
+#c-over .bars .k{font-size:20px;font-weight:700;color:var(--deep)}
+#c-over .bars .k small{display:block;font-size:16px;font-weight:500;color:var(--note)}
+#c-over .tr{position:relative;height:44px;background:var(--g0)}
+#c-over .tr .zero{position:absolute;top:-4px;bottom:-4px;width:2px;background:var(--ink)}
+#c-over .tr .b{position:absolute;top:0;bottom:0;transition:left .5s var(--ease),width .5s var(--ease)}
+#c-over .b.p{background:var(--main)}
+#c-over .b.n{background:var(--gray)}
+#c-over .tr .v{position:absolute;top:50%;transform:translateY(-50%);font-size:22px;font-weight:700;color:var(--deep);transition:left .5s var(--ease)}
+#c-over .scale{display:grid;grid-template-columns:230px 1fr;gap:18px;font-size:15px;color:var(--note)}
+#c-over .scale div{display:flex;justify-content:space-between}
+</style>
+
+<section class="page" id="c-over" data-sec="2 과적합">
+  <div class="sec rv">2 · 과적합</div>
+  <h1 class="hl rv" style="--d:80ms">데이터가 적으면 같은 논문의 비슷한 점을 외워 점수가 부풀려진다</h1>
+  <p class="sub rv" style="--d:150ms">같은 논문·같은 처리구의 Day 10과 Day 11은 거의 같은 값이다. 하나는 학습, 하나는 시험에 들어가면 외운 답으로 시험을 본다</p>
+
+  <div class="body">
+    <div class="left">
+      <div class="term rv" style="--d:200ms"><span class="ko">과적합</span><span class="en">overfitting</span><span class="pr">[오버피팅]</span>
+        <span class="def">학습 데이터의 우연한 특징(이 논문만의 측정 방식, 이 처리구만의 곡선)까지 외워서, 처음 보는 논문에서는 틀리는 상태. 논문 수가 적을수록 잘 생긴다.</span></div>
+      <div class="box rv" style="--d:280ms">
+        <div class="row" id="ov-t"></div>
+        <div class="bars" id="ov-b"></div>
+        <div class="scale"><span></span><div><span>−1</span><span>0 (평균만 찍은 수준)</span><span>+1</span></div></div>
+        <div class="msg" id="ov-msg" style="min-height:0"></div>
+      </div>
+    </div>
+
+    <aside class="side rv" style="--d:300ms">
+      <span class="lab">외울 한 줄</span>
+      <button class="btn more" data-drawer="detail">내역 보기 ›</button>
+      <div class="memo">점수는 “처음 보는 논문”으로 매겨야 진짜 실력이다</div>
+      <p class="p2"><b>우리 데이터에서는</b> 퇴적식 온도 모델을 논문 하나씩 빼며 검증하니 R² 0.06 (27편, 1,989행). 42편으로 늘리자 0.13. 행 수보다 <b>논문 수</b>가 점수를 바꾼다.</p>
+      <div class="insight"><span class="il">우리 캡스톤에서는</span><span class="ih">논문 단위로 나눠 검증한다 (GroupKFold)</span><ul><li>무작위 행 분할 점수는 보고하지 않는다 (부풀려짐)</li><li>논문 수 늘리기 · 얕은 나무 · 규제로 외우기를 줄인다</li></ul></div>
+    </aside>
+  </div>
+
+  <div class="note">실제 데이터 · 연구실 인베슬 데이터의 분할 방식별 시험 R² (inv_split) · 같은 데이터·같은 모델, 나누는 방법만 다르다</div>
+  <div class="foot"><span>연구실 인베슬 분석(inv_split) · 캡스톤 모델기록 v001 · 작업일지 2026-10-20 · 회의 2026-10-14</span><span class="pn"></span></div>
+
+  <template data-tab="detail">
+    <h4>손으로 계산해 보기 (C/N 모델)</h4>
+    <table class="tb"><thead><tr><th>나누는 방법</th><th>시험에 들어가는 것</th><th>시험 R²</th><th>해석</th></tr></thead><tbody>
+      <tr><td>무작위 행</td><td>아무 행이나 20%</td><td>0.89</td><td>같은 처리구의 옆 날짜가 학습에 있음 → 외운 답</td></tr>
+      <tr><td>처리구 단위</td><td>처리구 통째로</td><td>0.86</td><td>같은 논문의 다른 처리구가 학습에 있음</td></tr>
+      <tr class="k"><td>논문 단위</td><td>논문 통째로</td><td>−0.75</td><td>처음 보는 논문 → 평균만 찍는 것보다 못함</td></tr></tbody></table>
+    <p>0.89 − (−0.75) = <b>1.64</b>만큼 부풀려져 있었다. 논문 9편으로는 “논문마다 다른 특징”을 일반화하지 못한다.</p>
+    <h4>우리 퇴적식 온도 모델</h4>
+    <p>논문 하나씩 빼기(LOPO) 검증: R² 0.063, RMSE 15.6℃, MAE 11.8℃ (27편). 평균 온도로만 찍는 것과 거의 같다. 42편으로 늘리자 0.13.</p>
+    <h4>이 장의 용어</h4>
+    <table class="tb"><thead><tr><th>용어</th><th>영어 [발음]</th><th>쉬운 뜻</th></tr></thead><tbody>
+      <tr><td><b>과적합</b></td><td>overfitting [오버피팅]</td><td>외워서 새 데이터를 틀림</td></tr>
+      <tr><td><b>데이터 누수</b></td><td>data leakage [데이터 리키지]</td><td>시험에 나올 정보가 학습에 섞임</td></tr>
+      <tr><td><b>논문 단위 검증</b></td><td>GroupKFold / LOPO [그룹 케이폴드 / 리브 원 페이퍼 아웃]</td><td>논문을 통째로 시험용으로 빼서 채점</td></tr></tbody></table>
+  </template>
+  <template data-tab="source">
+    <p><b>inv_split (연구실 인베슬 데이터):</b> 목표별 논문 수와 시험 R²를 무작위 행 / 처리구 단위 / 논문 단위로 비교. 같은 논문 평균곡선 기준값도 함께 있음.</p>
+    <p><b>캡스톤 모델기록 v001 (2026-10-16):</b> 예측 대상 temp, 랜덤포레스트, 검증 lopo, 학습 논문 27, 행 1,989, 검증 R² 0.0634, RMSE 15.581, MAE 11.773.</p>
+    <p><b>작업일지 2026-10-20:</b> 42편으로 재학습, 온도 R² 0.08 → 0.13, C/N 0.72 → 0.76.</p>
+    <p><b>회의 2026-10-14 조사결과:</b> GroupShuffleSplit → GroupKFold 교체, 논문 단위로 정직 R² 다시 계산.</p>
+  </template>
+  <template data-tab="notes">
+    <ol><li>(30초) 과적합 = 외워서 새 문제를 틀림. 데이터가 적을수록 잘 생김.</li>
+    <li>(1분 30초) C/N 버튼: 무작위 0.89 → 처리구 0.86 → 논문 −0.75. 같은 모델인데 나누는 방법만 바꿨다. GI·TN도 눌러 같은 패턴 확인.</li>
+    <li>(1분) 우리 퇴적식 온도 모델은 논문 단위로 0.06 → 0.13. 낮지만 정직한 점수. 논문 수를 늘리는 게 가장 큰 처방.</li></ol>
+  </template>
+</section>
+
+<script>
+DECK.register('c-over', root => {
+  const D = {
+    'C/N': [9, 0.89, 0.86, -0.75], 'GI': [9, 0.72, 0.6, -0.02], 'TN': [10, 0.81, 0.73, -0.18], 'NO₃⁻-N': [8, 0.64, 0.55, -0.35],
+    'NH₃ 패턴': [6, 0.65, 0.58, -0.06], 'N₂O 패턴': [5, 0.43, 0.33, -0.33]
+  };
+  const L = [['무작위 행', '아무 행이나 시험으로'], ['처리구 단위', '처리구 통째로 시험'], ['논문 단위', '논문 통째로 시험 (진짜 실력)']];
+  const tb = root.querySelector('#ov-t'), bx = root.querySelector('#ov-b');
+  tb.innerHTML = Object.keys(D).map((k, i) => `<button class="btn" data-k="${k}" aria-pressed="${i === 0}">${k}</button>`).join('');
+  bx.innerHTML = L.map(([k, s]) => `<span class="k">${k}<small>${s}</small></span><div class="tr"><div class="zero" style="left:50%"></div><div class="b"></div><span class="v"></span></div>`).join('');
+  const bars = [...bx.querySelectorAll('.b')], vals = [...bx.querySelectorAll('.v')];
+  function show(k) {
+    const d = D[k];
+    [1, 2, 3].forEach((j, i) => {
+      const v = d[j], w = Math.min(1, Math.abs(v)) * 50;
+      bars[i].className = 'b ' + (v >= 0 ? 'p' : 'n'); bars[i].style.left = (v >= 0 ? 50 : 50 - w) + '%'; bars[i].style.width = w + '%';
+      vals[i].textContent = (v >= 0 ? '' : '−') + Math.abs(v).toFixed(2);
+      vals[i].style.left = v >= 0 ? `calc(${50 + w}% + 10px)` : `calc(${50 - w}% - 70px)`;
+    });
+    root.querySelector('#ov-msg').innerHTML = `논문 ${d[0]}편 · 같은 모델인데 나누는 방법만 바꿨다. 무작위 <b>${d[1].toFixed(2)}</b> → 논문 단위 <b>${d[3].toFixed(2)}</b>. 처음 보는 논문에서는 ${d[3] < 0 ? '평균만 찍는 것보다 못하다' : '점수가 크게 떨어진다'}.`;
+    tb.querySelectorAll('.btn').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.k === k)));
+  }
+  tb.querySelectorAll('.btn').forEach(b => b.addEventListener('click', () => show(b.dataset.k)));
+  show('C/N');
+});
+</script>

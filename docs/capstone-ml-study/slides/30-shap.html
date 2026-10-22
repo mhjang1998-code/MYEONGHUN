@@ -1,0 +1,88 @@
+<style>
+#c-shap .bars{display:grid;grid-template-columns:200px 1fr 90px;gap:7px 14px;align-items:center;font-size:19px}
+#c-shap .bars .k{font-weight:700;color:var(--deep)}
+#c-shap .bars .k i{font-style:normal;font-size:14px;font-weight:700;color:var(--white);background:var(--note);padding:1px 6px;margin-left:6px;vertical-align:2px}
+#c-shap .bars .tr{height:22px;background:var(--g0)}
+#c-shap .bars .b{height:100%;background:var(--main);transition:width .5s var(--ease)}
+#c-shap .bars .b.t{background:var(--t2)}
+#c-shap .bars .v{text-align:right;font-weight:700}
+</style>
+
+<section class="page" id="c-shap" data-sec="3 SHAP">
+  <div class="sec rv">3 · 변수 중요도 · SHAP</div>
+  <h1 class="hl rv" style="--d:80ms">SHAP으로 모델이 무엇을 보고 예측했는지 확인한다</h1>
+  <p class="sub rv" style="--d:150ms">예측값을 변수별 몫으로 나눠, 그 몫의 크기를 평균 낸 것이 중요도다. 퇴비화 원리와 맞으면 믿고, 어긋나면 데이터를 의심한다</p>
+
+  <div class="body">
+    <div class="left">
+      <div class="term rv" style="--d:200ms"><span class="ko">SHAP · 변수 중요도</span><span class="en">SHapley Additive exPlanations · feature importance</span><span class="pr">[샙 · 피처 임포턴스]</span>
+        <span class="def">예측값 = 평균 + 변수마다의 몫. 몫의 절댓값 평균(mean |SHAP|)이 클수록 그 변수를 많이 보고 예측했다는 뜻.</span></div>
+      <div class="box rv" style="--d:280ms">
+        <div class="row" id="sh-g"><button class="btn" data-g="NH3" aria-pressed="true">NH₃ 모델 (LightGBM)</button><button class="btn" data-g="N2O">N₂O 모델 (XGBoost)</button><span class="cap">막대 = 전체 몫 중 비율 · <i style="font-style:normal;background:var(--note);color:var(--white);padding:0 5px;font-weight:700">당일</i> = 같은 날 측정값</span></div>
+        <div class="bars" id="sh-b"></div>
+        <div class="msg" id="sh-msg" style="min-height:0"></div>
+      </div>
+    </div>
+
+    <aside class="side rv" style="--d:300ms">
+      <span class="lab">외울 한 줄</span>
+      <button class="btn more" data-drawer="detail">내역 보기 ›</button>
+      <div class="memo">중요도는 “얼마나 많이 봤나”, SHAP은 “올렸나 내렸나”까지 알려 준다</div>
+      <p class="p2"><b>우리 데이터에서는</b> NH₃는 Day(기간)와 온도가, N₂O는 통기량(Aeration)이 1위. 논문 출처(source) 변수의 몫은 최하위라 출처 편향은 크지 않다.</p>
+      <div class="insight"><span class="il">우리 캡스톤에서는</span><span class="ih">SHAP 순위를 퇴비화 원리와 대조한다</span><ul><li>NH₄⁺·NO₃⁻·pH처럼 같은 날 재는 값은 예측 시점에 모른다 → 초기값 모델과 비교</li><li>원리와 반대 방향이면 단위·추출 오류부터 확인</li></ul></div>
+    </aside>
+  </div>
+
+  <div class="note">실제 데이터 · 연구실 대시보드 가스 모델의 mean |SHAP| 요약 (shap) · 비율 = 각 변수 몫 ÷ 전체 합</div>
+  <div class="foot"><span>대시보드 SHAP 요약 · 회의 2026-10-14 조사결과 (같은 날 측정값 누설)</span><span class="pn"></span></div>
+
+  <template data-tab="detail">
+    <h4>손으로 계산해 보기 (NH₃ 모델의 비율)</h4>
+    <table class="tb"><thead><tr><th>변수</th><th>mean |SHAP|</th><th>비율 = 값 ÷ 합 0.1667</th></tr></thead><tbody>
+      <tr class="k"><td>Day</td><td>0.0485</td><td>29.1%</td></tr>
+      <tr><td>T_daily (일 온도)</td><td>0.0187</td><td>11.2%</td></tr>
+      <tr><td>Tmax (최고 온도)</td><td>0.0155</td><td>9.3%</td></tr>
+      <tr><td>C/N</td><td>0.0141</td><td>8.4%</td></tr>
+      <tr><td>…</td><td>…</td><td>…</td></tr>
+      <tr><td>source (논문 출처)</td><td>0.0035</td><td>2.1%</td></tr></tbody></table>
+    <p>온도 두 변수(T_daily + Tmax)를 합치면 20.5%. 고온기에 NH₃가 휘산된다는 원리와 맞다.</p>
+    <h4>변수 중요도 vs SHAP</h4>
+    <table class="tb"><tbody>
+      <tr><td><b>변수 중요도</b> (나무 모델 기본)</td><td>나무가 그 변수로 오차를 얼마나 줄였나. 크기만, 방향 없음</td></tr>
+      <tr class="k"><td>SHAP</td><td>데이터 한 점마다 그 변수가 예측을 얼마나 올렸나/내렸나. 크기 + 방향 + 개별 설명</td></tr></tbody></table>
+    <h4>이 장의 용어</h4>
+    <table class="tb"><tbody>
+      <tr><td><b>전역 / 국소 해석</b></td><td>global / local [글로벌 / 로컬]</td><td>전체 평균 중요도 / 한 점의 이유</td></tr>
+      <tr><td><b>누설 변수</b></td><td>leaky feature [리키 피처]</td><td>예측하려는 날에 아직 알 수 없는 값</td></tr></tbody></table>
+  </template>
+  <template data-tab="source">
+    <p><b>대시보드 SHAP 요약:</b> NH₃ · LGBM: Day 0.0485, T_daily 0.0187, Tmax 0.0155, C_N 0.0141, pH 0.0141, Aeration_DM 0.0137, NH4_N 0.0087, MC 0.0077, EC 0.0075, TC 0.0062, NO3_N 0.0046, TN 0.0041, source 0.0035. N₂O · XGB: Aeration_DM 0.0094, Day 0.0064, MC 0.0029, C_N 0.0028, T_daily 0.0025, EC 0.0018, TC 0.0013, Tmax 0.0012, TN 0.0011, NO3_N 0.0009, NH4_N 0.0006, pH 0.0006, source 0.0004.</p>
+    <p><b>회의 2026-10-14 조사결과:</b> 같은 날 측정한 NH₄⁺·NO₃⁻·pH·온도를 입력으로 쓰면 예측 시점에 알 수 없는 값이라 성능이 과대평가될 수 있음. 초기 조건만 쓰는 모델과 성능 비교 필요.</p>
+  </template>
+  <template data-tab="notes">
+    <ol><li>(30초) SHAP = 예측값을 변수별 몫으로 나누기. 몫이 크면 중요한 변수.</li>
+    <li>(1분 30초) NH₃: Day 29%, 온도 두 개 합쳐 21% → 고온기 휘산과 맞다. N₂O 버튼: 통기량 1위 → 산소 조건이 질산화·탈질을 좌우한다는 원리와 맞다.</li>
+    <li>(1분) “당일” 표시 변수는 예측 시점에 모를 수 있다. 회의에서 나온 누설 문제. 초기값만 쓴 모델과 SHAP을 비교한다.</li></ol>
+  </template>
+</section>
+
+<script>
+DECK.register('c-shap', root => {
+  const S = {
+    NH3: [['Day', .0485], ['T_daily', .0187, 1], ['Tmax', .0155, 1], ['C/N', .0141], ['pH', .0141, 1], ['Aeration', .0137], ['NH₄⁺-N', .0087, 1], ['MC (수분)', .0077], ['EC', .0075, 1], ['TC', .0062], ['NO₃⁻-N', .0046, 1], ['TN', .0041], ['source', .0035]],
+    N2O: [['Aeration', .0094], ['Day', .0064], ['MC (수분)', .0029], ['C/N', .0028], ['T_daily', .0025, 1], ['EC', .0018, 1], ['TC', .0013], ['Tmax', .0012, 1], ['TN', .0011], ['NO₃⁻-N', .0009, 1], ['NH₄⁺-N', .0006, 1], ['pH', .0006, 1], ['source', .0004]]
+  };
+  const MSG = {
+    NH3: '<b>Day</b>가 29%로 1위, 온도(T_daily + Tmax)가 합쳐 21%. 고온기에 암모니아가 날아간다는 원리와 맞다.',
+    N2O: '<b>통기량(Aeration)</b>이 29%로 1위. 산소가 질산화·탈질(N₂O가 생기는 반응)을 좌우한다는 원리와 맞다. 그다음이 Day와 수분.'
+  };
+  function show(g) {
+    const s = S[g], tot = s.reduce((a, b) => a + b[1], 0), mx = s[0][1] / tot;
+    root.querySelector('#sh-b').innerHTML = s.map(([k, v, day], i) => `<span class="k">${k}${day ? '<i>당일</i>' : ''}</span><div class="tr"><div class="b ${i < 3 ? '' : 't'}" style="width:${v / tot / mx * 100}%"></div></div><span class="v">${(v / tot * 100).toFixed(1)}%</span>`).join('');
+    root.querySelector('#sh-msg').innerHTML = MSG[g];
+    root.querySelectorAll('#sh-g .btn').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.g === g)));
+  }
+  root.querySelectorAll('#sh-g .btn').forEach(b => b.addEventListener('click', () => show(b.dataset.g)));
+  show('NH3');
+});
+</script>

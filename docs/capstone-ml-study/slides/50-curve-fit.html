@@ -1,0 +1,113 @@
+<style>
+#c-curve svg{width:100%;height:280px;display:block}
+#c-curve .pt{fill:var(--deep)}
+#c-curve .fo{fill:none;stroke:var(--gray);stroke-width:4}
+#c-curve .gp{fill:none;stroke:var(--main);stroke-width:4;stroke-dasharray:12 6}
+#c-curve .lam{stroke:var(--acc);stroke-width:2;stroke-dasharray:4 4}
+#c-curve .lgd{display:flex;gap:22px;font-size:17px;color:var(--note);flex-wrap:wrap}
+#c-curve .lgd i{display:inline-block;width:26px;height:4px;margin-right:6px;vertical-align:4px}
+#c-curve .pr{width:100%;font-size:18px}
+#c-curve .pr td,#c-curve .pr th{padding:6px 8px}
+#c-curve .pr tr.win td{background:var(--t3);font-weight:700}
+</style>
+
+<section class="page" id="c-curve" data-sec="5 곡선 맞추기">
+  <div class="sec rv">5 · 곡선 맞추기 (1차 반응식 · Gompertz) (김현우)</div>
+  <h1 class="hl rv" style="--d:80ms">누적 배출 곡선을 숫자 2~3개로 요약하면 논문끼리 비교가 쉽다</h1>
+  <p class="sub rv" style="--d:150ms">처음부터 빠르게 오르면 1차 반응식, 며칠 늦게 시작해 S자로 오르면 Gompertz가 잘 맞는다</p>
+
+  <div class="body">
+    <div class="left">
+      <div class="term rv" style="--d:200ms"><span class="ko">1차 반응식 · Gompertz 식</span><span class="en">first-order kinetics · Gompertz model</span><span class="pr">[퍼스트 오더 카이네틱스 · 곰퍼츠]</span>
+        <span class="def">1차: C(t) = C∞(1 − e<sup>−kt</sup>) → 최종량 C∞, 속도 k. Gompertz: 최종량 A, 최대 속도 μ, 늦게 시작하는 지연 시간 λ (일).</span></div>
+      <div class="box rv" style="--d:280ms">
+        <div class="row"><div class="row" id="cv-g"><button class="btn" data-g="NH3" aria-pressed="true">누적 NH₃</button><button class="btn" data-g="CO2">누적 CO₂</button></div><span class="cap">|</span>
+          <div class="row" id="cv-t"><button class="btn" data-t="B">처리구 B</button><button class="btn" data-t="F" aria-pressed="true">처리구 F</button><button class="btn" data-t="G">처리구 G</button></div></div>
+        <svg id="cv-svg" viewBox="0 0 1000 280" role="img" aria-label="누적 배출량과 1차 반응식, Gompertz 곡선"></svg>
+        <div class="lgd"><span><i style="background:var(--deep);height:12px;width:12px;border-radius:50%;vertical-align:-1px"></i>실제 누적값</span><span><i style="background:var(--gray)"></i>1차 반응식</span><span><i style="background:var(--main)"></i>Gompertz</span><span><i style="background:var(--acc);height:2px"></i>지연 시간 λ</span></div>
+        <table class="tb pr" id="cv-p"></table>
+      </div>
+    </div>
+
+    <aside class="side rv" style="--d:300ms">
+      <span class="lab">외울 한 줄</span>
+      <button class="btn more" data-drawer="detail">내역 보기 ›</button>
+      <div class="memo">1차 = 바로 시작해 빠르게, Gompertz = 늦게 시작해 S자 (지연 λ)</div>
+      <p class="p2"><b>우리 데이터에서는</b> 처리구 F의 NH₃는 처음 2일이 조용하다(λ = 2.1일). 1차 R² 0.930 → Gompertz 0.996. 지연이 없는 B는 1차가 더 잘 맞는다 (0.995 vs 0.980).</p>
+      <div class="insight"><span class="il">우리 캡스톤에서는</span><span class="ih">곡선의 숫자(C∞, k, λ)를 예측 목표 후보로 쓴다</span><ul><li>논문마다 잰 날짜가 달라도 곡선 숫자로는 비교된다</li><li>온도 곡선은 최고 온도·도달일·55℃ 이상 일수로 요약한다</li></ul></div>
+    </aside>
+  </div>
+
+  <div class="note">실제 데이터 · Oudart (2015) 일일 발생량을 Day 0부터 더해 누적값을 만들고 두 식을 최소제곱으로 맞춤 (scipy curve_fit, 입력에 따른 계산)</div>
+  <div class="foot"><span>캡스톤 학습 시트(cap_train) · 일정 2단계: 단위 g kg⁻¹ DM 통일</span><span class="pn"></span></div>
+
+  <template data-tab="detail">
+    <h4>손으로 계산해 보기</h4>
+    <p><b>처리구 B, NH₃ (지연 없음)</b> · 1차: C∞ = 5.518, k = 0.4285</p>
+    <div class="eq">Day 5: 5.518 × (1 − e<sup>−0.4285×5</sup>) = 5.518 × (1 − 0.117) = 4.87 · 실제 누적 4.80</div>
+    <p><b>처리구 F, NH₃ (지연 있음)</b> · 실제 누적: Day 0~5 = 0, 0.19, 0.45, 1.92, 5.22, 8.02</p>
+    <table class="tb"><thead><tr><th></th><th>Day 2 예측</th><th>Day 5 예측</th><th>R²</th></tr></thead><tbody>
+      <tr><td>1차 (C∞ 13.37, k 0.167)</td><td>3.79 (실제 0.45, 너무 일찍 오름)</td><td>7.57</td><td>0.930</td></tr>
+      <tr class="k"><td>Gompertz (A 12.64, μ 2.63, λ 2.11)</td><td>0.70 (지연 반영)</td><td>7.44</td><td>0.996</td></tr></tbody></table>
+    <p>1차 식은 t = 0부터 바로 오르는 모양밖에 못 그린다. 시작이 늦으면 λ가 있는 Gompertz가 맞다.</p>
+    <h4>숫자의 뜻</h4>
+    <table class="tb"><tbody>
+      <tr><td><b>C∞ · A</b></td><td>끝까지 갔을 때의 총 배출량 (평평해지는 높이)</td></tr>
+      <tr><td><b>k</b></td><td>1차 속도 상수. 클수록 빨리 평평해짐 (반감 시간 = 0.693 ÷ k, B는 1.6일)</td></tr>
+      <tr><td><b>μ</b></td><td>Gompertz 최대 배출 속도 (하루 최대 증가량)</td></tr>
+      <tr class="k"><td>λ</td><td>지연 시간. 배출이 본격적으로 시작되기까지 걸린 날</td></tr></tbody></table>
+  </template>
+  <template data-tab="source">
+    <p><b>데이터:</b> 캡스톤 학습 시트 Oudart (2015) 처리구 B·F·G, NH₃·CO₂ 일일 발생량 Day 0~30 (Fig.2 판독). 누적 = Day 0부터 일일 값을 더한 것.</p>
+    <p><b>맞춘 결과:</b> NH₃ B 1차 R² 0.995 · Gompertz 0.980 / F 0.930 · 0.996 / G 0.973 · 0.988. CO₂ B 0.993 · 0.983 / F 0.992 · 0.985 / G 0.993 · 0.987.</p>
+    <p><b>온도 요약:</b> 최고 온도 B 70.6℃(8일) · F 73.3℃(13일) · G 69.9℃(6일), 55℃ 이상 일수 B 28 · F 27 · G 20일.</p>
+  </template>
+  <template data-tab="notes">
+    <ol><li>(30초) 곡선 맞추기 = 30개 점을 숫자 2~3개로 요약. 1차와 Gompertz 두 가지.</li>
+    <li>(1분 30초) NH₃ · F: 회색(1차)은 Day 0부터 바로 올라 처음 3일을 틀린다. 파란 점선(Gompertz)은 λ = 2.1일 지연을 잡아 R² 0.996. B로 바꾸면 지연이 없어 1차가 더 잘 맞는다.</li>
+    <li>(1분) 캡스톤: 곡선 숫자(C∞, k, λ)를 예측 목표로 쓰면 측정 날짜가 제각각인 문헌도 비교할 수 있다. 온도는 최고·도달일·55℃ 이상 일수.</li></ol>
+  </template>
+</section>
+
+<script>
+DECK.register('c-curve', root => {
+  const DAILY = {
+    NH3: {B: [0.0891,1.8262,1.3949,0.8238,0.4359,0.2272,0.1561,0.1311,0.0987,0.0973,0.0598,0.0447,0.0355,0.0267,0.0207,0.0171,0.0137,0.0115,0.0101,0.0094,0.0094,0.0094,0.0106,0.011,0.011,0.0101,0.0082,0.0084,0.0074,0.0072,0.007],
+          F: [0.0007,0.1934,0.2565,1.4666,3.3043,2.7952,1.4666,0.9927,0.6531,0.4551,0.2229,0.2125,0.1516,0.1049,0.0865,0.0742,0.0641,0.0445,0.0514,0.0526,0.0769,0.0361,0.0489,0.016,0.0172,0.0172,0.0172,0.0184,0.0184,0.0184,0.0197],
+          G: [0.0004,0.0803,0.8549,1.5211,1.1537,0.6221,0.637,0.3782,0.2077,0.1899,0.131,0.1192,0.1053,0.0923,0.0811,0.0799,0.0689,0.0621,0.0449,0.0408,0.0445,0.036,0.0217,0.0004,0,0.0012,0.0025,0.0043,0.0056,0.0068,0.0081]},
+    CO2: {B: [6.7305,43.0609,59.9235,36.9817,27.7906,25.1852,24.751,28.4419,32.0605,32.7842,24.751,22.4351,19.4679,13.9677,13.3887,11.1452,10.6386,10.7833,9.9149,7.4542,9.1188,15.1256,18.0205,17.152,14.619,14.1848,12.5202,11.4347,9.3359,8.1056,6.9476],
+          F: [3.2579,3.8502,9.1072,48.6457,62.3435,48.0533,31.9122,31.3939,26.2109,23.3973,18.3624,21.6203,20.2875,18.2884,17.1778,15.9931,14.4382,12.6612,15.4008,15.1786,14.5123,12.5131,11.4025,9.0331,9.0331,9.0331,9.0331,9.0331,9.0331,9.0331,9.0331],
+          G: [4.5513,9.352,75.0653,83.0457,72.4468,61.6608,53.9298,46.0742,33.6048,27.8689,24.9386,23.5047,19.7015,19.0157,16.7712,14.4021,12.9681,13.4669,12.2823,11.4094,10.8483,9.352,6.7334,5.9853,5.8606,5.7359,5.6112,5.4242,5.2995,5.1748,5.0501]}
+  };
+  const P = {"NH3B": {"fo": [5.518, 0.4285], "gp": [5.477, 1.3429, -0.292]}, "NH3F": {"fo": [13.366, 0.167], "gp": [12.635, 2.6314, 2.112]}, "NH3G": {"fo": [6.695, 0.1851], "gp": [6.427, 1.0127, 0.818]},
+    "CO2B": {"fo": [662.301, 0.0694], "gp": [599.965, 27.6641, -1.791]}, "CO2F": {"fo": [693.582, 0.0568], "gp": [557.582, 30.9405, 0.297]}, "CO2G": {"fo": [734.253, 0.1071], "gp": [679.005, 54.1532, -0.036]}};
+  const fo = (t, C, k) => C * (1 - Math.exp(-k * t)), gp = (t, A, mu, lam) => A * Math.exp(-Math.exp(mu * Math.E / A * (lam - t) + 1));
+  const svg = root.querySelector('#cv-svg'), NS = 'http://www.w3.org/2000/svg';
+  const el = (t, a, s) => { const e = document.createElementNS(NS, t); for (const k in a) e.setAttribute(k, a[k]); if (s != null) e.textContent = s; return e; };
+  let gas = 'NH3', tr = 'F';
+  function draw() {
+    let c = 0; const y = DAILY[gas][tr].map(v => (c += v)), p = P[gas + tr];
+    const ym = Math.max(...y, p.fo[0], p.gp[0]) * 1.08, L = 70, R = 990, T = 10, B = 240;
+    const sx = t => L + t / 30 * (R - L), sy = v => B - v / ym * (B - T);
+    const r2 = f => { const m = y.reduce((a, b) => a + b, 0) / y.length; return 1 - y.reduce((s, v, i) => s + (v - f(i)) ** 2, 0) / y.reduce((s, v) => s + (v - m) ** 2, 0); };
+    const f1 = t => fo(t, ...p.fo), f2 = t => gp(t, ...p.gp);
+    svg.replaceChildren();
+    svg.append(el('line', {x1: L, y1: B, x2: R, y2: B, class: 'ax'}), el('line', {x1: L, y1: T, x2: L, y2: B, class: 'ax'}));
+    [0, 10, 20, 30].forEach(d => svg.append(el('text', {x: sx(d), y: B + 24, class: 'axl', 'text-anchor': 'middle'}, `Day ${d}`)));
+    svg.append(el('text', {x: L - 8, y: T + 14, class: 'axl', 'text-anchor': 'end'}, '누적'), el('text', {x: L - 8, y: B, class: 'axl', 'text-anchor': 'end'}, '0'));
+    const path = f => { let d = ''; for (let t = 0; t <= 30.001; t += 0.25) d += (d ? 'L' : 'M') + sx(t).toFixed(1) + ' ' + sy(f(t)).toFixed(1); return d; };
+    if (p.gp[2] > 0.2) svg.append(el('line', {x1: sx(p.gp[2]), y1: T, x2: sx(p.gp[2]), y2: B, class: 'lam'}), el('text', {x: sx(p.gp[2]) + 8, y: T + 18, class: 'axl'}, `λ = ${p.gp[2].toFixed(1)}일`));
+    svg.append(el('path', {d: path(f1), class: 'fo'}), el('path', {d: path(f2), class: 'gp'}));
+    y.forEach((v, i) => svg.append(el('circle', {cx: sx(i), cy: sy(v), r: 6, class: 'pt'})));
+    const a = r2(f1), b = r2(f2), u = gas === 'NH3' ? 2 : 0;
+    root.querySelector('#cv-p').innerHTML = `<thead><tr><th>식</th><th>숫자 (요약)</th><th>R²</th></tr></thead><tbody>
+      <tr class="${a >= b ? 'win' : ''}"><td>1차 반응식</td><td>최종량 C∞ ${p.fo[0].toFixed(u)} · 속도 k ${p.fo[1].toFixed(3)}/일</td><td>${a.toFixed(3)}</td></tr>
+      <tr class="${b > a ? 'win' : ''}"><td>Gompertz</td><td>최종량 A ${p.gp[0].toFixed(u)} · 최대 속도 μ ${p.gp[1].toFixed(2)}/일 · 지연 λ ${p.gp[2].toFixed(1)}일</td><td>${b.toFixed(3)}</td></tr></tbody>`;
+    root.querySelectorAll('#cv-g .btn').forEach(x => x.setAttribute('aria-pressed', String(x.dataset.g === gas)));
+    root.querySelectorAll('#cv-t .btn').forEach(x => x.setAttribute('aria-pressed', String(x.dataset.t === tr)));
+  }
+  root.querySelectorAll('#cv-g .btn').forEach(x => x.addEventListener('click', () => { gas = x.dataset.g; draw(); }));
+  root.querySelectorAll('#cv-t .btn').forEach(x => x.addEventListener('click', () => { tr = x.dataset.t; draw(); }));
+  draw();
+});
+</script>

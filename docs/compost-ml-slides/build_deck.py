@@ -5,13 +5,16 @@ Each slide fragment holds its own <style>, one <section class="page">, and a
 (engine/engine.css, engine/engine.js) and embeds a Pretendard subset that holds
 only the glyphs the deck uses, so the file works offline.
 
-Usage: python3 build_deck.py        (needs: pip install fonttools brotli)
+Usage: python3 build_deck.py                       (this folder: slides/ → deck.html)
+       python3 build_deck.py SLIDES_DIR OUT.html "제목"  (another deck, same engine)
+(needs: pip install fonttools brotli)
 """
 import base64
 import glob
 import io
 import os
 import re
+import sys
 
 from fontTools import subset
 from fontTools.ttLib import TTFont
@@ -71,8 +74,8 @@ CHROME = """
 """
 
 
-def main():
-    files = sorted(glob.glob(os.path.join(HERE, "slides", "[0-9][0-9]*.html")))
+def main(slides_dir=os.path.join(HERE, "slides"), out_path=os.path.join(HERE, "deck.html"), title="퇴비화 머신러닝 발표"):
+    files = sorted(glob.glob(os.path.join(slides_dir, "[0-9][0-9]*.html")))
     styles, markup, scripts = [], [], []
     for f in files:
         s, m, j = split_fragment(open(f, encoding="utf-8").read())
@@ -80,8 +83,7 @@ def main():
 
     body_text = "\n".join(markup + scripts)
     out = "\n".join([
-        "<title>퇴비화 머신러닝 발표</title>",
-        '<meta name="description" content="Shi 2025 · Wang 2024 퇴비화 머신러닝 논문 용어 발표">',
+        f"<title>{title}</title>",
         f"<style>\n{font_faces(body_text + CHROME)}\n{read('engine', 'engine.css')}\n" + "\n".join(styles) + "\n</style>",
         '<div id="stage">',
         *markup,
@@ -89,9 +91,9 @@ def main():
         "</div>",
         f"<script>\n{read('engine', 'engine.js')}\n" + "\n".join(scripts) + "\nDECK.start();\n</script>",
     ])
-    open(os.path.join(HERE, "deck.html"), "w", encoding="utf-8").write(out)
-    print(f"deck.html: {len(files)} pages, {len(out) / 1024:.0f} KB")
+    open(out_path, "w", encoding="utf-8").write(out)
+    print(f"{os.path.basename(out_path)}: {len(files)} pages, {len(out) / 1024:.0f} KB")
 
 
 if __name__ == "__main__":
-    main()
+    main(*sys.argv[1:4])

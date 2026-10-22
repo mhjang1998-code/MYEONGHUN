@@ -1,0 +1,113 @@
+<style>
+#c-miss svg{width:100%;height:300px;display:block}
+#c-miss .truth{fill:none;stroke:var(--gray);stroke-width:2.5}
+#c-miss .kn{fill:var(--deep)}
+#c-miss .fl{fill:var(--white);stroke:var(--main);stroke-width:3}
+#c-miss .gap{stroke:var(--t2);stroke-width:2;stroke-dasharray:4 4}
+#c-miss .lgd{display:flex;gap:22px;font-size:17px;color:var(--note);flex-wrap:wrap}
+#c-miss .lgd i{display:inline-block;width:14px;height:14px;border-radius:50%;margin-right:6px;vertical-align:-2px}
+#c-miss .res{display:flex;gap:16px;align-items:baseline;flex-wrap:wrap}
+#c-miss .res .v{font-size:44px;font-weight:700;color:var(--main);line-height:1}
+#c-miss .res .t{font-size:20px;line-height:1.45}
+#c-miss .res .t b{color:var(--main)}
+</style>
+
+<section class="page" id="c-miss" data-sec="1 결측값">
+  <div class="sec rv">1 · 결측값 처리</div>
+  <h1 class="hl rv" style="--d:80ms">빈칸은 데이터 모양을 보고 비우기·평균·보간 중에 고른다</h1>
+  <p class="sub rv" style="--d:150ms">논문은 3~7일 간격으로만 잰다. 그 사이 빈 날을 어떻게 채우느냐에 따라 학습 데이터가 달라진다</p>
+
+  <div class="body">
+    <div class="left">
+      <div class="term rv" style="--d:200ms"><span class="ko">결측값</span><span class="en">missing value</span><span class="pr">[미싱 밸류]</span>
+        <span class="def">재지 않았거나 보고되지 않아 비어 있는 칸. 비워두기(삭제), 평균으로 채우기, 보간(interpolation [인터폴레이션]: 앞뒤 측정값을 직선으로 이어 채우기)으로 다룬다.</span></div>
+      <div class="box rv" style="--d:280ms">
+        <div class="row"><div class="row" id="ms-t"><button class="btn" data-t="F" aria-pressed="true">처리구 F</button><button class="btn" data-t="B">처리구 B</button></div>
+          <span class="cap">|</span>
+          <div class="row" id="ms-m"><button class="btn" data-m="drop">비워두기</button><button class="btn" data-m="mean">평균으로 채우기</button><button class="btn" data-m="interp" aria-pressed="true">선형 보간</button></div></div>
+        <svg id="ms-svg" viewBox="0 0 1000 300" role="img" aria-label="Oudart 2015 일별 온도와 결측 채우기 결과"></svg>
+        <div class="lgd"><span><i style="background:var(--gray)"></i>실제 일별 온도 (정답)</span><span><i style="background:var(--deep)"></i>3일마다 잰 값 (남긴 값)</span><span><i style="border:3px solid var(--main)"></i>채운 값</span></div>
+        <div class="res"><span class="v" id="ms-v"></span><span class="t" id="ms-msg"></span></div>
+      </div>
+    </div>
+
+    <aside class="side rv" style="--d:300ms">
+      <span class="lab">외울 한 줄</span>
+      <button class="btn more" data-drawer="detail">내역 보기 ›</button>
+      <div class="memo">비우기는 안전, 평균은 모양을 지움, 보간은 사이가 부드러울 때만</div>
+      <p class="p2"><b>우리 데이터에서는</b> Oudart 학습 시트 93행 중 TN은 Day 0의 3행에만 있다. 연구실 인베슬 데이터(42편)는 일별 행 중 실측 7,108개, 보간 26,355개로 보간이 3.7배다.</p>
+      <div class="insight"><span class="il">우리 캡스톤에서는</span><span class="ih">“측정 / 보간 / 빈칸”을 열로 구분해 둔다</span><ul><li>교반 직후·초기 급상승 구간은 보간하지 않는다 (Xu 2007 93~147일 빈칸 유지)</li><li>한 번만 잰 TN·C/N은 보간 대신 초기 조건 변수(tn0, cn0)로 쓴다</li></ul></div>
+    </aside>
+  </div>
+
+  <div class="note">실제 데이터 · Oudart (2015) 처리구 F·B 일별 온도 31일 · 3일마다 남기고(11점) 나머지 20일을 지운 뒤 채워서 실제 값과 비교 (입력에 따른 계산)</div>
+  <div class="foot"><span>캡스톤 학습 시트(cap_train) · 연구실 인베슬 인벤토리(inv_status) · 데이터코멘트 Xu 2007</span><span class="pn"></span></div>
+
+  <template data-tab="detail">
+    <h4>손으로 계산해 보기 (처리구 F)</h4>
+    <p>남긴 값: Day 0, 3, 6, …, 30 (11개). 평균 = 58.6℃.</p>
+    <table class="tb"><thead><tr><th>지운 날</th><th>실제</th><th>평균으로 채움</th><th>보간으로 채움</th></tr></thead><tbody>
+      <tr><td>Day 4</td><td>60.3</td><td>58.6 (오차 1.7)</td><td>14.9 + (70.7 − 14.9) × 1/3 = 33.5 (오차 26.8)</td></tr>
+      <tr><td>Day 8</td><td>71.6</td><td>58.6 (오차 13.0)</td><td>70.7 + (71.7 − 70.7) × 2/3 = 71.3 (오차 0.3)</td></tr>
+      <tr class="k"><td>20일 전체 RMSE</td><td></td><td>19.7℃</td><td>7.4℃</td></tr></tbody></table>
+    <p>처리구 B에서는 반대: 평균 7.2℃, 보간 9.0℃. B는 Day 0 → 1에 14.9 → 67.7℃로 하루 만에 뛰는데, 보간은 Day 0~3을 직선으로 이어 Day 1을 32.8℃로 채웠다 (오차 34.9).</p>
+    <p>그래서: <b>사이가 부드러운 구간</b>에서는 보간이 좋고, <b>급변 구간</b>(초기 상승, 교반 직후)에서는 보간이 크게 틀린다.</p>
+    <h4>이 장의 용어</h4>
+    <table class="tb"><thead><tr><th>용어</th><th>영어 [발음]</th><th>쉬운 뜻</th></tr></thead><tbody>
+      <tr><td><b>결측값</b></td><td>missing value [미싱 밸류]</td><td>비어 있는 칸</td></tr>
+      <tr><td><b>삭제</b></td><td>listwise deletion [리스트와이즈 딜리션]</td><td>빈칸 있는 행을 학습에서 빼기</td></tr>
+      <tr><td><b>평균 대체</b></td><td>mean imputation [민 임퓨테이션]</td><td>빈칸을 그 열의 평균으로 채우기</td></tr>
+      <tr><td><b>선형 보간</b></td><td>linear interpolation [리니어 인터폴레이션]</td><td>앞뒤 측정값을 직선으로 이어 채우기</td></tr>
+      <tr><td><b>N/A (해당 없음)</b></td><td>not applicable [낫 어플리커블]</td><td>원래 없는 값 (예: 교반 안 하는 정치식의 교반 간격). 결측과 다르다</td></tr></tbody></table>
+  </template>
+  <template data-tab="source">
+    <p><b>학습 시트(cap_train):</b> Oudart (2015) 처리구 B·F·G, Day 0~30 일별 온도·NH₃·CO₂ (Fig.2 판독). TN·TC·C/N·NH₄⁺-N·수분은 Day 0에만 (Table 1).</p>
+    <p><b>연구실 인베슬(반응조) 데이터 인벤토리(inv_status):</b> 논문 42편, 곡선 972개, 일별 행 50,363개 중 원문 숫자 7,108 · 보간 26,355 · 기타 결측 2,150.</p>
+    <p><b>데이터코멘트(Xu 2007):</b> 93~147일 샘플러 고장으로 온도 없음 → 빈칸 유지, 보간하지 않음 (교반 직후 변화가 사라지므로).</p>
+  </template>
+  <template data-tab="notes">
+    <ol><li>(30초) 논문은 매일 재지 않는다. 빈 날을 어떻게 할지가 결측값 처리.</li>
+    <li>(1분 30초) F에서 평균 → 보간 순서로 누른다: 평균 19.7 → 보간 7.4. 그다음 B로 바꾸면 보간이 9.0으로 오히려 나쁘다. Day 1 급상승을 직선이 못 따라가서.</li>
+    <li>(1분) 연구실 인베슬 데이터는 보간 값이 실측의 3.7배였다. 우리 퇴적식도 같은 위험. 모델이 “직선”을 배우지 않게 측정/보간 표시 열을 두고, 급변 구간은 비우고, 한 번만 잰 값은 초기 조건으로 쓴다.</li></ol>
+  </template>
+</section>
+
+<script>
+DECK.register('c-miss', root => {
+  const T = {
+    F: [4.32,4.73,6.41,14.89,60.31,70.34,70.69,71.5,71.6,71.65,71.76,72.14,73.1,73.25,72.71,72.14,71.65,71.01,70.57,69.98,68.11,69.56,67.48,66.22,67.22,67.56,67.03,66.24,65.61,64.89,64.27],
+    B: [14.86,67.74,70.51,68.78,66.79,66.67,66.02,66.3,70.64,69.87,67.8,66.22,64.83,63.43,62.47,60.85,58.65,56.73,55.55,55.71,57.0,59.85,63.59,64.79,63.2,61.09,59.14,57.47,56.04,54.39,52.5]
+  };
+  const svg = root.querySelector('#ms-svg'), NS = 'http://www.w3.org/2000/svg';
+  const el = (t, a, s) => { const e = document.createElementNS(NS, t); for (const k in a) e.setAttribute(k, a[k]); if (s != null) e.textContent = s; return e; };
+  const L = 60, R = 990, Tp = 10, B = 255, sx = d => L + d / 30 * (R - L), sy = v => B - v / 80 * (B - Tp);
+  let tr = 'F', m = 'interp';
+  function draw() {
+    const y = T[tr], days = y.map((_, i) => i), known = days.filter(d => d % 3 === 0), kv = known.map(d => y[d]);
+    const mean = kv.reduce((a, b) => a + b, 0) / kv.length;
+    const interp = d => { let i = known.findIndex(k => k > d); const a = known[i - 1], b = known[i]; return y[a] + (y[b] - y[a]) * (d - a) / (b - a); };
+    const hidden = days.filter(d => d % 3 !== 0), fill = d => m === 'mean' ? mean : interp(d);
+    svg.replaceChildren();
+    svg.append(el('line', {x1: L, y1: B, x2: R, y2: B, class: 'ax'}), el('line', {x1: L, y1: Tp, x2: L, y2: B, class: 'ax'}));
+    [0, 10, 20, 30].forEach(d => svg.append(el('text', {x: sx(d), y: B + 24, class: 'axl', 'text-anchor': 'middle'}, `Day ${d}`)));
+    [20, 40, 60, 80].forEach(v => svg.append(el('text', {x: L - 8, y: sy(v) + 5, class: 'axl', 'text-anchor': 'end'}, v + '℃')));
+    svg.append(el('path', {class: 'truth', d: y.map((v, i) => (i ? 'L' : 'M') + sx(i) + ' ' + sy(v)).join('')}));
+    if (m !== 'drop') hidden.forEach(d => { svg.append(el('line', {x1: sx(d), y1: sy(y[d]), x2: sx(d), y2: sy(fill(d)), class: 'gap'}), el('circle', {cx: sx(d), cy: sy(fill(d)), r: 7, class: 'fl'})); });
+    known.forEach(d => svg.append(el('circle', {cx: sx(d), cy: sy(y[d]), r: 8, class: 'kn'})));
+    const v = root.querySelector('#ms-v'), msg = root.querySelector('#ms-msg');
+    if (m === 'drop') { v.textContent = '11 / 31행'; msg.innerHTML = '지운 20일은 <b>학습에서 빠진다</b>. 틀린 값은 안 들어가지만 데이터가 1/3로 줄어든다.'; }
+    else {
+      const rm = Math.sqrt(hidden.reduce((s, d) => s + (fill(d) - y[d]) ** 2, 0) / hidden.length);
+      v.textContent = rm.toFixed(1) + '℃';
+      msg.innerHTML = m === 'mean' ? `지운 20일의 RMSE. 평균(${mean.toFixed(1)}℃) 하나로 채워 <b>오르내림이 사라졌다</b>.`
+        : tr === 'F' ? '지운 20일의 RMSE. 사이가 부드러워 <b>보간이 잘 맞는다</b>. 다만 Day 3→4 급상승은 놓쳤다.'
+        : '지운 20일의 RMSE. Day 0→1 급상승을 직선이 못 따라가 <b>보간이 평균보다 나쁘다</b>.';
+    }
+    root.querySelectorAll('#ms-t .btn').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.t === tr)));
+    root.querySelectorAll('#ms-m .btn').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.m === m)));
+  }
+  root.querySelectorAll('#ms-t .btn').forEach(b => b.addEventListener('click', () => { tr = b.dataset.t; draw(); }));
+  root.querySelectorAll('#ms-m .btn').forEach(b => b.addEventListener('click', () => { m = b.dataset.m; draw(); }));
+  draw();
+});
+</script>

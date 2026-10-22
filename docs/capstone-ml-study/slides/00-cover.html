@@ -1,0 +1,40 @@
+<style>
+#c-cover .ttl{position:absolute;left:86px;right:86px;top:170px;margin:0;font-size:76px;font-weight:700;line-height:1.15;letter-spacing:-.025em;color:var(--deep)}
+#c-cover .ttl em{font-style:normal;color:var(--main)}
+#c-cover .st{position:absolute;left:86px;right:86px;top:370px;margin:0;font-size:26px;font-weight:700;color:var(--ink)}
+#c-cover .grid6{position:absolute;left:86px;right:86px;top:450px;display:grid;grid-template-columns:repeat(3,1fr);gap:20px}
+#c-cover .it{font:inherit;text-align:left;background:var(--white);border:1.5px solid var(--rule);border-top:5px solid var(--main);padding:16px 20px;cursor:pointer;display:flex;flex-direction:column;gap:6px}
+#c-cover .it:hover{border-color:var(--main)}
+#c-cover .it .n{font-size:18px;font-weight:700;color:var(--main)}
+#c-cover .it .t{font-size:26px;font-weight:700;color:var(--deep)}
+#c-cover .it .d{font-size:18px;color:var(--ink);line-height:1.4}
+#c-cover .src{position:absolute;left:86px;right:86px;bottom:110px;background:var(--panel);padding:14px 20px;font-size:18px;line-height:1.5}
+#c-cover .src b{color:var(--deep)}
+</style>
+
+<section class="page" id="c-cover" data-sec="표지" data-title="우리 캡스톤 데이터로 보는 머신러닝 6가지">
+  <div class="sec rv">부숙부숙 캡스톤 · 머신러닝 스터디</div>
+  <h1 class="ttl rv" style="--d:100ms">우리 <em>캡스톤 데이터</em>로 보는<br>머신러닝 6가지</h1>
+  <p class="st rv" style="--d:200ms">문헌데이터 기반 가축분뇨 퇴적식 퇴비화 공정 예측 모델 · 항목당 3분</p>
+  <div class="grid6 rv" style="--d:300ms">
+    <button class="it" data-goto-id="c-miss"><span class="n">1</span><span class="t">결측값 처리</span><span class="d">비워두기 · 평균 · 보간, 우리 온도 데이터로 비교</span></button>
+    <button class="it" data-goto-id="c-over"><span class="n">2</span><span class="t">과적합</span><span class="d">데이터가 적을 때 점수가 부풀려지는 이유</span></button>
+    <button class="it" data-goto-id="c-shap"><span class="n">3</span><span class="t">변수 중요도 · SHAP</span><span class="d">우리 NH₃·N₂O 모델은 무엇을 봤나</span></button>
+    <button class="it" data-goto-id="c-ridge"><span class="n">4</span><span class="t">선형 회귀 + Ridge/Lasso</span><span class="d">닮은 초기 조건 변수를 벌점으로 정리</span></button>
+    <button class="it" data-goto-id="c-curve"><span class="n">5</span><span class="t">곡선 맞추기</span><span class="d">1차 반응식 · Gompertz로 배출 곡선을 숫자 3개로</span></button>
+    <button class="it" data-goto-id="c-lstm"><span class="n">6</span><span class="t">딥러닝 시계열 LSTM</span><span class="d">우리 데이터 규모에서 써도 될까?</span></button>
+  </div>
+  <div class="src rv" style="--d:400ms"><b>데이터 출처</b> 부숙부숙 캡스톤 프로젝트 보드 (Google 시트) · 학습 시트(Oudart 2015, 처리구 B·F·G, 93행) · 연구실 인베슬 인벤토리(논문 42편, 곡선 972개) · 모델 기록 · 2026-10-14 회의 조사결과</div>
+  <div class="foot"><span>2026-10-22 기준 시트 값 · 항목 1~3 · 4~6(김현우) 공통 준비 자료</span><span class="pn"></span></div>
+
+  <template data-tab="detail">
+    <h4>모든 장의 구성</h4>
+    <ol><li>왼쪽: 용어 카드 + 우리 데이터로 직접 눌러 보는 시연</li><li>오른쪽: 외울 한 줄 → 우리 데이터 숫자 → 캡스톤 적용</li><li>내역 보기: 손으로 계산해 보기 + 용어표</li><li>발표 메모: 3분 대본</li></ol>
+  </template>
+  <template data-tab="source">
+    <p>Google 시트 “부숙부숙 캡스톤 프로젝트 보드 (일정·회의·의견)”의 학습 데이터(cap_train), 연구실 인베슬 인벤토리(inv_status, inv_split · 캡스톤 퇴적식 데이터와 별개), 모델 기록(모델기록 탭, metrics_v3), SHAP 요약, 회의기록 탭을 2026-10-22에 읽어 계산했다.</p>
+  </template>
+  <template data-tab="notes">
+    <ol><li>오늘은 이론보다 “우리 데이터에서 실제로 무슨 일이 일어나는지”를 본다.</li><li>항목마다 3분: 용어 30초 → 우리 데이터 시연 1분 30초 → 캡스톤에 어떻게 쓸지 1분.</li></ol>
+  </template>
+</section>

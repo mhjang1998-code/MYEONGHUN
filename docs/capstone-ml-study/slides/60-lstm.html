@@ -1,0 +1,124 @@
+<style>
+#c-lstm svg{width:100%;height:270px;display:block}
+#c-lstm .cell{fill:var(--panel);stroke:var(--main);stroke-width:3}
+#c-lstm .mem{fill:var(--main)}
+#c-lstm .ct{fill:var(--deep);font-size:18px;font-weight:700}
+#c-lstm .cw{fill:var(--white);font-size:15px;font-weight:700}
+#c-lstm .ar{stroke:var(--t1);stroke-width:3}
+#c-lstm .truth{fill:none;stroke:var(--gray);stroke-width:2.5}
+#c-lstm .kn{fill:var(--deep)}
+#c-lstm .fl{fill:var(--white);stroke:var(--main);stroke-width:3}
+#c-lstm .pm{fill:none;stroke:var(--main);stroke-width:4;stroke-dasharray:10 6}
+#c-lstm .stats{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
+#c-lstm .st{border:1.5px solid var(--rule);padding:8px 12px}
+#c-lstm .st b{display:block;font-size:30px;color:var(--main);line-height:1.1}
+#c-lstm .st span{font-size:16px;color:var(--note)}
+</style>
+
+<section class="page" id="c-lstm" data-sec="6 LSTM">
+  <div class="sec rv">6 · 딥러닝 시계열 LSTM (김현우)</div>
+  <h1 class="hl rv" style="--d:80ms">LSTM은 길고 많은 실측 시계열이 있을 때 쓴다. 지금은 비교용이다</h1>
+  <p class="sub rv" style="--d:150ms">LSTM은 어제까지의 흐름을 기억해 오늘을 맞힌다. 그런데 우리 곡선은 실제로 잰 점이 곡선당 6개 정도라 기억할 흐름이 짧다</p>
+
+  <div class="body">
+    <div class="left">
+      <div class="term rv" style="--d:200ms"><span class="ko">LSTM</span><span class="en">Long Short-Term Memory</span><span class="pr">[롱 쇼트텀 메모리]</span>
+        <span class="def">시간 순서대로 하루씩 읽으며 “기억”을 들고 다니는 신경망. 오래 기억할 것과 잊을 것을 스스로 고른다. 문장·주가·센서 시계열에 쓴다.</span></div>
+      <div class="box rv" style="--d:280ms">
+        <div class="row" id="ls-m"><button class="btn" data-m="how" aria-pressed="true">① LSTM은 이렇게 읽는다</button><button class="btn" data-m="ours">② 우리 곡선 하나를 보면</button><button class="btn" data-m="alt">③ 대안: 과거 요약 변수</button></div>
+        <svg id="ls-svg" viewBox="0 0 1000 300" role="img" aria-label="LSTM 원리와 우리 데이터"></svg>
+        <div class="msg" id="ls-msg" style="min-height:0"></div>
+      </div>
+      <div class="stats rv" style="--d:360ms">
+        <div class="st"><b>42편</b><span>논문 (인베슬)</span></div>
+        <div class="st"><b>972개</b><span>곡선 (처리구×변수)</span></div>
+        <div class="st"><b>7,108개</b><span>실제로 잰 점</span></div>
+        <div class="st"><b>6점</b><span>곡선당 실측 (중앙값)</span></div>
+      </div>
+    </div>
+
+    <aside class="side rv" style="--d:300ms">
+      <span class="lab">외울 한 줄</span>
+      <button class="btn more" data-drawer="detail">내역 보기 ›</button>
+      <div class="memo">LSTM = 순서를 기억하는 신경망. 길고 많은 실측 시계열이 있어야 한다</div>
+      <p class="p2"><b>우리 데이터에서는</b> 일별 행 대부분이 보간으로 만든 직선이다. LSTM은 그 직선을 “기억”으로 배우게 된다. 퇴적식 온도 모델도 27편, 1,989행 규모다.</p>
+      <div class="insight"><span class="il">우리 캡스톤에서는</span><span class="ih">나무 모델 + 과거 요약 변수가 먼저다</span><ul><li>LSTM의 기억 대신 “그날까지 평균 온도(temp_mean_prior)”를 변수로 넣는다 (v001에 이미 있음)</li><li>청양 실측 등 센서 시계열이 쌓이면 LSTM을 비교 모델로 시도</li></ul></div>
+    </aside>
+  </div>
+
+  <div class="note">실제 데이터 · ②③은 Oudart (2015) 처리구 F 일별 온도 (5일마다 잰 것으로 가정해 비교) · 아래 숫자는 연구실 인베슬 인벤토리 (inv_status)</div>
+  <div class="foot"><span>인벤토리(inv_status) · 캡스톤 모델기록 v001 (feat: temp_mean_prior) · 일정 4단계 (청양 실측 비교)</span><span class="pn"></span></div>
+
+  <template data-tab="detail">
+    <h4>손으로 계산해 보기 ① LSTM의 숫자(파라미터) 개수</h4>
+    <p>입력 변수 8개, 기억 칸 32개짜리 LSTM 한 층:</p>
+    <div class="eq">4 × (32 × (32 + 8) + 32) = 4 × 1,312 = 5,248개</div>
+    <p>배울 숫자가 5,248개인데 실제로 잰 점은 7,108개. 숫자 하나당 데이터 1.4개꼴이라 외우기 쉽다(과적합). 나무 모델은 얕게 두면 이보다 훨씬 적은 규칙으로 배운다.</p>
+    <h4>손으로 계산해 보기 ② 과거 요약 변수</h4>
+    <p>처리구 F, Day 5의 “그날 전까지 평균 온도”:</p>
+    <div class="eq">(4.3 + 4.7 + 6.4 + 14.9 + 60.3) ÷ 5 = 90.7 ÷ 5 = 18.1℃</div>
+    <p>Day 5 당일 온도는 70.3℃지만, 과거 평균 18.1℃는 “아직 막 데워진 더미”라는 흐름 정보를 담는다. LSTM의 기억을 변수 하나로 손수 만든 셈이다.</p>
+    <h4>이 장의 용어</h4>
+    <table class="tb"><tbody>
+      <tr><td><b>시계열</b></td><td>time series [타임 시리즈]</td><td>날짜 순서대로 쌓인 값</td></tr>
+      <tr><td><b>순환 신경망</b></td><td>RNN [알엔엔]</td><td>이전 결과를 다음 계산에 다시 넣는 신경망. LSTM은 그 개선형</td></tr>
+      <tr><td><b>파라미터</b></td><td>parameter [파라미터]</td><td>모델이 배우는 숫자</td></tr>
+      <tr><td><b>특성 공학</b></td><td>feature engineering [피처 엔지니어링]</td><td>과거 평균처럼 의미 있는 변수를 손으로 만드는 일</td></tr></tbody></table>
+  </template>
+  <template data-tab="source">
+    <p><b>인벤토리(inv_status, 연구실 인베슬 데이터):</b> 논문 42편, 곡선 972개, 원문 숫자 7,108개, 보간 26,355개. 곡선당 실측 중앙값 6.1개 (평균 8.7개).</p>
+    <p><b>캡스톤 모델기록 v001:</b> 입력에 temp_mean_prior 포함, 27편 1,989행.</p>
+    <p><b>일정 탭 4단계:</b> 청양 동물자원연구센터 실측 비교 예정.</p>
+    <p><b>파라미터 식:</b> LSTM 한 층 = 4 × (h × (h + x) + h), h = 기억 칸 수, x = 입력 수 (일반 지식).</p>
+  </template>
+  <template data-tab="notes">
+    <ol><li>(30초) LSTM = 하루씩 읽으며 기억을 들고 다니는 신경망 (① 버튼).</li>
+    <li>(1분 30초) ② 버튼: 31일 중 실제로 잰 날은 7일, 나머지는 직선. 우리 데이터 전체도 곡선당 실측 6점, 보간이 실측의 3.7배. LSTM이 배울 “흐름”이 대부분 우리가 그은 직선이다.</li>
+    <li>(1분) ③ 버튼: 대신 과거 평균 온도를 변수로 넣는다. 우리 v001 모델이 이미 쓰는 방식. LSTM은 실측 센서 시계열이 쌓이면 비교용으로.</li></ol>
+  </template>
+</section>
+
+<script>
+DECK.register('c-lstm', root => {
+  const F = [4.32,4.73,6.41,14.89,60.31,70.34,70.69,71.5,71.6,71.65,71.76,72.14,73.1,73.25,72.71,72.14,71.65,71.01,70.57,69.98,68.11,69.56,67.48,66.22,67.22,67.56,67.03,66.24,65.61,64.89,64.27];
+  const svg = root.querySelector('#ls-svg'), NS = 'http://www.w3.org/2000/svg';
+  const el = (t, a, s) => { const e = document.createElementNS(NS, t); for (const k in a) e.setAttribute(k, a[k]); if (s != null) e.textContent = s; return e; };
+  const MSG = {
+    how: 'Day 1을 읽고 기억(파란 띠)을 넘기고, Day 2를 읽고 기억을 고쳐 넘기고… 마지막 기억으로 다음 날을 맞힌다. 기억할 흐름이 <b>길고 실제여야</b> 의미가 있다.',
+    ours: '31일 중 <b>실제로 잰 날은 7일</b>(검은 점), 나머지 24일은 앞뒤를 이은 직선(빈 점). LSTM이 이 31행을 읽으면 대부분 우리가 그은 직선을 기억하게 된다.',
+    alt: '파란 점선 = <b>그날 전까지의 평균 온도</b>. 오늘 온도(회색)만이 아니라 지금까지의 흐름을 숫자 하나로 담는다. 나무 모델에 넣으면 LSTM의 기억 역할을 대신한다.'
+  };
+  function draw(m) {
+    svg.replaceChildren();
+    if (m === 'how') {
+      for (let i = 0; i < 6; i++) {
+        const x = 40 + i * 160;
+        svg.append(el('rect', {x, y: 90, width: 120, height: 90, class: 'cell'}), el('text', {x: x + 60, y: 142, class: 'ct', 'text-anchor': 'middle'}, `Day ${i + 1}`));
+        svg.append(el('line', {x1: x + 60, y1: 260, x2: x + 60, y2: 184, class: 'ar'}), el('text', {x: x + 60, y: 284, class: 'axl', 'text-anchor': 'middle'}, '그날 입력'));
+        svg.append(el('line', {x1: x + 60, y1: 86, x2: x + 60, y2: 40, class: 'ar'}), el('text', {x: x + 60, y: 28, class: 'axl', 'text-anchor': 'middle'}, '예측'));
+        if (i < 5) svg.append(el('rect', {x: x + 120, y: 120, width: 40, height: 30, class: 'mem'}), el('text', {x: x + 140, y: 141, class: 'cw', 'text-anchor': 'middle'}, '기억'));
+      }
+    } else {
+      const L = 60, R = 990, T = 10, B = 255, sx = d => L + d / 30 * (R - L), sy = v => B - v / 80 * (B - T);
+      svg.append(el('line', {x1: L, y1: B, x2: R, y2: B, class: 'ax'}), el('line', {x1: L, y1: T, x2: L, y2: B, class: 'ax'}));
+      [0, 10, 20, 30].forEach(d => svg.append(el('text', {x: sx(d), y: B + 24, class: 'axl', 'text-anchor': 'middle'}, `Day ${d}`)));
+      [20, 40, 60, 80].forEach(v => svg.append(el('text', {x: L - 8, y: sy(v) + 5, class: 'axl', 'text-anchor': 'end'}, v + '℃')));
+      svg.append(el('path', {class: 'truth', d: F.map((v, i) => (i ? 'L' : 'M') + sx(i) + ' ' + sy(v)).join('')}));
+      if (m === 'ours') {
+        const known = [0, 5, 10, 15, 20, 25, 30];
+        const ip = d => { const i = known.findIndex(k => k >= d); if (known[i] === d) return F[d]; const a = known[i - 1], b = known[i]; return F[a] + (F[b] - F[a]) * (d - a) / (b - a); };
+        F.forEach((_, d) => { if (!known.includes(d)) svg.append(el('circle', {cx: sx(d), cy: sy(ip(d)), r: 6, class: 'fl'})); });
+        known.forEach(d => svg.append(el('circle', {cx: sx(d), cy: sy(F[d]), r: 8, class: 'kn'})));
+      } else {
+        const pm = F.map((_, d) => d === 0 ? null : F.slice(0, d).reduce((a, b) => a + b, 0) / d);
+        svg.append(el('path', {class: 'pm', d: pm.map((v, d) => v == null ? '' : (d === 1 ? 'M' : 'L') + sx(d) + ' ' + sy(v)).join('')}));
+        svg.append(el('text', {x: sx(30) - 4, y: sy(pm[30]) + 26, class: 'axl', 'text-anchor': 'end'}, `과거 평균 ${pm[30].toFixed(1)}℃`));
+      }
+    }
+    root.querySelector('#ls-msg').innerHTML = MSG[m];
+    root.querySelectorAll('#ls-m .btn').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.m === m)));
+  }
+  root.querySelectorAll('#ls-m .btn').forEach(b => b.addEventListener('click', () => draw(b.dataset.m)));
+  draw('how');
+});
+</script>
