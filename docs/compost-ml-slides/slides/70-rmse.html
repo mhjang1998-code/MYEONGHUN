@@ -1,126 +1,110 @@
 <style>
-#p-rmse svg{width:100%;height:200px;display:block}
-#p-rmse .sq{fill:var(--t2);stroke:var(--main);stroke-width:2;transition:all .5s var(--ease)}
-#p-rmse .sq.big{fill:var(--main)}
-#p-rmse .sl{fill:var(--deep);font-size:17px;font-weight:700}
-#p-rmse .ct{width:100%;font-size:18px}
-#p-rmse .ct td,#p-rmse .ct th{text-align:center;padding:6px 6px}
-#p-rmse .ct th:first-child,#p-rmse .ct td:first-child{text-align:left;font-weight:700;color:var(--deep);white-space:nowrap}
-#p-rmse .ct td.hot{background:var(--t3);font-weight:700}
-#p-rmse .flow{display:flex;align-items:center;gap:10px;flex-wrap:wrap;font-size:19px}
-#p-rmse .flow span{border:1.5px solid var(--rule);padding:6px 12px}
-#p-rmse .flow span.res{border-color:var(--main);color:var(--main);font-weight:700}
-#p-rmse .flow i{font-style:normal;color:var(--note)}
-#p-rmse .duo{display:grid;grid-template-columns:1fr 1fr;gap:14px}
-#p-rmse .st{border:1.5px solid var(--rule);padding:10px 16px;display:flex;justify-content:space-between;align-items:baseline}
-#p-rmse .st.m{border-color:var(--main)}
-#p-rmse .st .k{font-size:18px;font-weight:700;color:var(--note)}
-#p-rmse .st .v{font-size:44px;font-weight:700;color:var(--deep);line-height:1}
-#p-rmse .st.m .v{color:var(--main)}
+#p-rmse .say{font-size:26px;font-weight:700;color:var(--deep);line-height:1.4}
+#p-rmse .say b{color:var(--main)}
+#p-rmse .chart{border:1.5px solid var(--rule);padding:20px 26px;display:flex;flex-direction:column;gap:14px}
+#p-rmse svg{width:100%;height:270px;display:block}
+#p-rmse .rl{fill:var(--deep);font-size:22px;font-weight:700}
+#p-rmse .gap{stroke:var(--t2);stroke-width:6;transition:all .5s var(--ease)}
+#p-rmse .gap.bad{stroke:var(--main)}
+#p-rmse .real{fill:var(--deep)}
+#p-rmse .pred{fill:var(--white);stroke:var(--main);stroke-width:4;transition:cx .5s var(--ease)}
+#p-rmse .gl{fill:var(--main);font-size:20px;font-weight:700;transition:x .5s var(--ease)}
+#p-rmse .lg{display:flex;gap:26px;font-size:19px;color:var(--note)}
+#p-rmse .lg i{display:inline-block;width:16px;height:16px;border-radius:50%;margin-right:8px;vertical-align:-2px}
+#p-rmse .res{display:flex;align-items:baseline;gap:18px}
+#p-rmse .res .v{font-size:64px;font-weight:700;color:var(--main);line-height:1}
+#p-rmse .res .t{font-size:24px;line-height:1.45}
+#p-rmse .res .t b{color:var(--main)}
+#p-rmse .big2{font-size:26px;font-weight:700;color:var(--deep);line-height:1.45}
+#p-rmse .side p{font-size:22px}
 </style>
 
 <section class="page" id="p-rmse" data-sec="③ 평가">
-  <div class="sec rv">③ 평가 · 평균제곱근오차 RMSE · Shi 2025 · Wang 2024</div>
-  <h1 class="hl rv" style="--d:80ms">RMSE는 예측이 평균 몇 단위 틀렸는지 원래 단위로 보여 준다</h1>
-  <p class="sub rv" style="--d:150ms">정의: 오차를 제곱해 평균 낸 뒤 루트를 씌운 값. 큰 오차를 더 무겁게 벌주고, 단위(GI %, NH₃ g/kg)가 그대로 남는다</p>
+  <div class="sec rv">③ 평가 · RMSE</div>
+  <h1 class="hl rv" style="--d:80ms">RMSE는 “평균적으로 몇 점 틀렸나”를 알려 준다</h1>
+  <p class="sub rv" style="--d:150ms">숫자가 작을수록 잘 맞힌 모델. 단위는 맞히려는 값과 같다 (발아지수면 %p, NH₃면 g/kg)</p>
 
   <div class="body">
     <div class="left">
-      <div class="panel rv" style="--d:250ms">
-        <h3>퇴비 6개로 RMSE 계산 따라가기 · 정사각형 넓이 = 오차²</h3>
-        <svg id="rm-svg" viewBox="0 0 1010 200" role="img" aria-label="시료별 오차 제곱을 정사각형으로 나타낸 그림"></svg>
-        <table class="tb ct"><tbody id="rm-tb"></tbody></table>
-        <div class="flow" id="rm-flow"></div>
-      </div>
-      <div class="row rv" style="--d:340ms" id="rm-chips">
-        <button class="btn" data-k="1" data-o="0" aria-pressed="true">오차 작은 모델</button>
-        <button class="btn" data-k="2" data-o="0">오차 큰 모델</button>
-        <button class="btn" data-k="1" data-o="1">작은 모델 + 큰 오차 1개</button>
-      </div>
-      <div class="duo rv" style="--d:400ms">
-        <div class="st"><span class="k">MAE 평균절대오차</span><span class="v" id="rm-mae"></span></div>
-        <div class="st m"><span class="k">RMSE 평균제곱근오차</span><span class="v" id="rm-rmse"></span></div>
+      <div class="term rv" style="--d:200ms"><span class="ko">평균제곱근오차</span><span class="en">RMSE · Root Mean Squared Error</span><span class="pr">[루트 민 스퀘어드 에러]</span>
+        <span class="def">예측이 평균적으로 얼마나 빗나갔는지. 일기예보가 “평균 2℃ 틀린다”와 같은 말.</span></div>
+      <div class="say rv" style="--d:240ms">퇴비 5개의 발아지수(GI)를 모델이 맞혀 봤다.</div>
+      <div class="chart rv" style="--d:300ms">
+        <div class="row" id="rm-mode"><button class="btn" data-m="good" aria-pressed="true">골고루 조금씩 틀린 모델</button><button class="btn" data-m="one" aria-pressed="false">하나를 크게 틀린 모델</button></div>
+        <svg id="rm-svg" viewBox="0 0 1000 290" role="img" aria-label="퇴비 5개의 실제 발아지수와 예측값의 차이"></svg>
+        <div class="lg"><span><i style="background:var(--deep)"></i>실제 값</span><span><i style="border:3px solid var(--main);background:var(--white)"></i>모델 예측</span><span>선 길이 = 틀린 만큼</span></div>
+        <div class="res"><span class="v" id="rm-v"></span><span class="t" id="rm-t"></span></div>
       </div>
     </div>
 
     <aside class="side rv" style="--d:300ms">
-      <span class="lab">Shi 논문 RF 모델 · 시험 데이터</span>
+      <span class="lab">논문에서는</span>
       <button class="btn more" data-drawer="detail">내역 보기 ›</button>
-      <div class="big">7.26<small>%p RMSE</small></div>
-      <p>GI를 평균 약 7%p 틀린다 (MAE 5.69). 부숙 기준이 GI 80%라서, 경계 근처에선 7%p 오차로 판정이 바뀔 수 있다.</p>
-      <table class="tb"><thead><tr><th>모델 · 목표</th><th>시험 RMSE</th></tr></thead><tbody>
-        <tr class="k"><td>Shi RF · GI</td><td>7.261 %p</td></tr><tr><td>Shi ET · GI</td><td>8.930 %p</td></tr><tr><td>Wang XGB · NH₃</td><td>0.26 g/kg</td></tr></tbody></table>
-      <div class="insight"><span class="il">캡스톤 인사이트 · 우리 데이터 설계에서는</span><span class="ih">예측 목표의 단위로 “허용 오차”를 먼저 정한다</span><ul><li>NH₃라면 g/kg DM 단위 RMSE가 현장에서 의미 있는 크기인지 본다 (Wang XGB 시험 0.26 g/kg)</li><li>RMSE가 MAE보다 훨씬 크면 큰 오차가 숨어 있다 → 그래프 추출 실수·단위 오류부터 점검</li></ul></div>
+      <div class="big">7.3<small>%p</small></div>
+      <p class="big2">Shi 논문 최고 모델(RF)은 발아지수를 평균 7점 정도 틀렸다.</p>
+      <div class="insight"><span class="il">우리 캡스톤에서는</span><span class="ih">“몇 g 틀리는지”로 성능을 말한다</span><ul><li>RMSE가 갑자기 크면 데이터에 큰 실수가 섞였는지 먼저 본다</li><li>논문 그래프에서 숫자를 잘못 읽는 실수가 대표적이다</li></ul></div>
     </aside>
   </div>
 
-  <div class="note">퇴비 6개의 실측·예측 GI는 예시 데이터 · 입력에 따른 계산 · Shi RF 값과 Wang NH₃ 값은 논문 실제 값</div>
-  <div class="foot"><span>Shi et al. (2025) 2.3, 3.2 · Wang et al. (2024) 2.4, 3.3 Fig. 2a</span><span class="pn"></span></div>
+  <div class="note">예시 데이터 · 퇴비 5개의 실제·예측 발아지수는 설명용 값 · 7.3은 Shi 2025 RF 시험 RMSE 7.261</div>
+  <div class="foot"><span>Shi et al. (2025) 2.3, 3.2 · Wang et al. (2024) 2.4</span><span class="pn"></span></div>
 
   <template data-tab="detail">
-    <h4>정의와 계산 순서</h4>
-    <div class="eq">RMSE = √( Σ(실측 − 예측)² ÷ n )</div>
-    <ol><li><b>오차</b>: 실측 − 예측 (잔차라고도 한다)</li><li><b>제곱</b>: 부호를 없애고, 큰 오차를 더 크게 만든다</li>
-    <li><b>평균</b>: 제곱 오차의 평균 = MSE</li><li><b>루트</b>: 원래 단위로 되돌린다 = RMSE</li></ol>
-    <h4>오차 지표 비교 (Shi 논문이 쓴 5가지)</h4>
-    <table class="tb"><thead><tr><th>지표</th><th>뜻</th><th>단위</th></tr></thead><tbody>
-      <tr><td>MAE</td><td>|오차|의 평균. 평균 몇 점 틀렸나</td><td>원래 단위</td></tr>
-      <tr><td>MSE</td><td>오차²의 평균</td><td>단위²</td></tr>
-      <tr class="k"><td>RMSE</td><td>√MSE. 큰 오차에 민감</td><td>원래 단위</td></tr>
-      <tr><td>MRE</td><td>|오차| ÷ 실측의 평균(%). 실측이 0 근처면 커진다</td><td>%</td></tr>
-      <tr><td>R²</td><td>변동을 몇 % 설명했나</td><td>없음</td></tr></tbody></table>
-    <h4>어떻게 활용하나</h4>
-    <ul><li>같은 데이터에서 모델끼리 비교: 작을수록 좋다 (RF 7.261 &lt; ET 8.930).</li>
-    <li>RMSE ≫ MAE면 소수의 큰 오차가 있다는 신호.</li>
-    <li>다른 목표(GI vs NH₃)끼리는 단위가 달라 RMSE를 직접 비교하지 않는다. 그럴 땐 R²나 MRE를 쓴다.</li></ul>
+    <h4>계산 순서</h4>
+    <ol><li>틀린 만큼(오차) = 실제 − 예측</li><li>오차를 제곱한다 (부호가 사라지고 큰 오차가 더 커진다)</li><li>평균을 낸다</li><li>루트를 씌워 원래 단위로 되돌린다</li></ol>
+    <div class="eq">RMSE = √( (오차₁² + 오차₂² + … ) ÷ 개수 )</div>
+    <h4>왜 큰 실수에 엄격한가</h4>
+    <p>오차 2는 제곱하면 4, 오차 20은 400. 제곱 때문에 큰 오차 하나가 평균을 크게 끌어올린다.</p>
+    <h4>비슷한 지표</h4>
+    <table class="tb"><tbody>
+      <tr><td><b>MAE</b></td><td>틀린 만큼의 단순 평균. 큰 실수에 덜 민감</td></tr>
+      <tr><td><b>R²</b></td><td>전체 변화를 몇 % 설명했나 (0~1)</td></tr></tbody></table>
+    <h4>논문 값</h4>
+    <p>Shi RF 7.261 · ET 8.930 (발아지수 %p). Wang XGB NH₃ 0.26 g/kg.</p>
   </template>
   <template data-tab="source">
-    <p><b>Shi 2025 RF 시험:</b> MAE 5.685, MRE 15.283%, MSE 52.727, RMSE 7.261 (√52.727 ≈ 7.261). ET RMSE 8.930.</p>
-    <p><b>Shi 2025 현장 검증:</b> 실제 우분 퇴비화 실험 데이터에서 RF MRE 33.84% (전체 데이터로 학습 시 32.43%). 문헌 시험 데이터(15.28%)보다 오차가 두 배 가까이 컸다.</p>
-    <p><b>Wang 2024:</b> NH₃ XGB 시험 RMSE 0.26 g/kg (Fig. 2a). ⚠ Table 1은 일부 RMSE가 MAE보다 작게 적혀 있어 열이 뒤바뀐 오기로 보인다 (RMSE ≥ MAE가 항상 성립).</p>
-    <p><b>부숙 기준:</b> Wang 3.3절은 GI &gt; 80%를 부숙으로 판정했다.</p>
-    <p><b>예시 데이터:</b> 실측 GI 22·41·58·73·88·121, 오차 패턴 +3·−5·+4·−2·+6·−4 (큰 오차 모델은 2배, 큰 오차 1개는 4번째 시료 +30).</p>
+    <p><b>Shi 2025:</b> RF 시험 RMSE 7.261, MAE 5.685. 부숙 기준 GI 80% 근처에서는 7%p 오차가 판정을 바꿀 수 있다.</p>
+    <p><b>Wang 2024 Fig. 2a:</b> NH₃ XGB 시험 RMSE 0.26 g/kg. (Table 1에는 일부 RMSE·MAE 값이 뒤바뀐 것으로 보이는 오기가 있다.)</p>
+    <p><b>예시 데이터:</b> 실제 GI 30·45·60·75·90, 오차 +3·−4·+2·−3·+4 / 큰 실수 모델은 세 번째 퇴비 +25.</p>
   </template>
   <template data-tab="notes">
-    <ol><li>Q. RMSE의 정의, 원리, 활용은? → 오차 → 제곱 → 평균 → 루트. 원래 단위로 “평균 몇 단위 틀렸나”.</li>
-    <li>시연: “작은 모델 + 큰 오차 1개” → 정사각형 하나가 압도적으로 커지고, RMSE가 MAE보다 훨씬 크게 뛴다. 제곱이 큰 오차를 벌주는 원리.</li>
-    <li>캡스톤 연결: 문헌 그래프에서 숫자를 뽑다 실수하면 큰 오차 1개가 생긴다. RMSE와 MAE 차이로 찾아낼 수 있다.</li>
-    <li>Shi 현장 검증에서 MRE 15% → 33%. 문헌으로 학습한 모델은 새 현장에서 오차가 커질 수 있다.</li></ol>
+    <ol><li>비유: 일기예보 “평균 2℃ 틀림”. RMSE도 원래 단위로 “평균 몇 점 틀림”.</li>
+    <li>버튼 전환: 나머지 4개는 똑같이 잘 맞혔는데, 하나를 크게 틀리자 RMSE가 약 3 → 약 11로 뛴다. 큰 실수에 엄격한 점수.</li>
+    <li>캡스톤: 문헌 그래프에서 숫자를 뽑다 실수하면 이런 큰 오차가 생긴다.</li></ol>
   </template>
 </section>
 
 <script>
 DECK.register('p-rmse', root => {
-  const ACT = [22, 41, 58, 73, 88, 121], BASE = [3, -5, 4, -2, 6, -4];
-  const $ = id => root.querySelector('#' + id);
-  const svg = $('rm-svg'), NS = 'http://www.w3.org/2000/svg';
-  const el = (t, a, txt) => { const e = document.createElementNS(NS, t); for (const k in a) e.setAttribute(k, a[k]); if (txt != null) e.textContent = txt; return e; };
-  const sq = ACT.map((_, i) => { const r = el('rect', {class: 'sq'}), t = el('text', {class: 'sl', 'text-anchor': 'middle'}); svg.append(r, t); return [r, t]; });
-  const sgn = v => (v > 0 ? '+' : v < 0 ? '−' : '') + Math.abs(v);
-  const chips = [...root.querySelectorAll('#rm-chips .btn')];
-  function render(k, o) {
-    const err = BASE.map((e, i) => (o && i === 3) ? 30 : e * k), pred = ACT.map((a, i) => a - err[i]);
-    const sq2 = err.map(e => e * e), mse = sq2.reduce((a, b) => a + b, 0) / 6, rmse = Math.sqrt(mse);
-    const mae = err.reduce((a, b) => a + Math.abs(b), 0) / 6;
-    const S = 150 / 30;     // px per error unit; error 30 → 150 px square
-    err.forEach((e, i) => {
-      const side = Math.max(2, Math.abs(e) * S), cx = 90 + i * 166, y = 185 - side;
-      sq[i][0].setAttribute('x', cx - side / 2); sq[i][0].setAttribute('y', y); sq[i][0].setAttribute('width', side); sq[i][0].setAttribute('height', side);
-      sq[i][0].classList.toggle('big', Math.abs(e) >= 20);
-      const inside = side > 60; sq[i][1].setAttribute('x', cx); sq[i][1].setAttribute('y', inside ? y + side / 2 + 6 : y - 8); sq[i][1].style.fill = inside ? 'var(--white)' : ''; sq[i][1].textContent = `${sgn(e)}² = ${e * e}`;
+  const REAL = [30, 45, 60, 75, 90], ERR = {good: [3, -4, 2, -3, 4], one: [3, -4, 25, -3, 4]};
+  const svg = root.querySelector('#rm-svg'), NS = 'http://www.w3.org/2000/svg';
+  const el = (t, a, s) => { const e = document.createElementNS(NS, t); for (const k in a) e.setAttribute(k, a[k]); if (s != null) e.textContent = s; return e; };
+  const sx = v => 160 + v / 120 * 800;
+  const rows = REAL.map((r, i) => {
+    const y = 34 + i * 58;
+    svg.append(el('text', {x: 0, y: y + 8, class: 'rl'}, `퇴비 ${i + 1}`));
+    const g = el('line', {y1: y, y2: y, class: 'gap'}), real = el('circle', {cx: sx(r), cy: y, r: 13, class: 'real'}),
+      pred = el('circle', {cy: y, r: 13, class: 'pred'}), lab = el('text', {y: y - 18, class: 'gl', 'text-anchor': 'middle'});
+    svg.append(g, real, pred, lab);
+    return {g, pred, lab, r};
+  });
+  const btns = [...root.querySelectorAll('#rm-mode .btn')];
+  function render(m) {
+    const e = ERR[m];
+    rows.forEach((o, i) => {
+      const p = o.r + e[i];
+      o.pred.setAttribute('cx', sx(p)); o.g.setAttribute('x1', sx(o.r)); o.g.setAttribute('x2', sx(p));
+      o.g.classList.toggle('bad', Math.abs(e[i]) > 10);
+      o.lab.setAttribute('x', (sx(o.r) + sx(p)) / 2); o.lab.textContent = Math.abs(e[i]) + '점';
     });
-    const hot = i => (o && i === 3) ? ' class="hot"' : '';
-    $('rm-tb').innerHTML = `<tr><th>퇴비</th>${ACT.map((_, i) => `<th>${i + 1}</th>`).join('')}<th>평균</th></tr>
-      <tr><td>실측 GI</td>${ACT.map(v => `<td>${v}</td>`).join('')}<td></td></tr>
-      <tr><td>예측 GI</td>${pred.map((v, i) => `<td${hot(i)}>${v}</td>`).join('')}<td></td></tr>
-      <tr><td>① 오차</td>${err.map((v, i) => `<td${hot(i)}>${sgn(v)}</td>`).join('')}<td>|오차| ${mae.toFixed(2)}</td></tr>
-      <tr><td>② 오차²</td>${sq2.map((v, i) => `<td${hot(i)}>${v}</td>`).join('')}<td>${mse.toFixed(1)}</td></tr>`;
-    $('rm-flow').innerHTML = `<span>① 오차</span><i>→</i><span>② 제곱</span><i>→</i><span>③ 평균 = ${mse.toFixed(1)}</span><i>→</i><span>④ 루트 √${mse.toFixed(1)}</span><i>=</i><span class="res">RMSE ${rmse.toFixed(2)} %p</span>`;
-    $('rm-mae').textContent = mae.toFixed(2); $('rm-rmse').textContent = rmse.toFixed(2);
+    const rmse = Math.sqrt(e.reduce((a, b) => a + b * b, 0) / e.length);
+    root.querySelector('#rm-v').textContent = rmse.toFixed(1);
+    root.querySelector('#rm-t').innerHTML = m === 'good'
+      ? 'RMSE. 평균 약 3점 틀렸다. <b>좋은 모델</b>.'
+      : 'RMSE. 하나만 크게 틀렸는데 <b>점수가 확 나빠졌다</b>. 큰 실수에 엄격한 점수다.';
+    btns.forEach(b => b.setAttribute('aria-pressed', String(b.dataset.m === m)));
   }
-  chips.forEach(c => c.addEventListener('click', () => {
-    chips.forEach(o => o.setAttribute('aria-pressed', String(o === c))); render(+c.dataset.k, +c.dataset.o);
-  }));
-  render(1, 0);
+  btns.forEach(b => b.addEventListener('click', () => render(b.dataset.m)));
+  render('good');
 });
 </script>

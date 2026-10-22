@@ -111,3 +111,10 @@ html.still .page.on .rv{opacity:1;transform:none}
 #ovgrid .n{font-size:16px;color:var(--note);font-weight:700}
 #ovgrid .s{font-size:16px;color:var(--main);font-weight:700}
 #ovgrid .t{font-size:21px;font-weight:700;color:var(--deep);line-height:1.35}
+
+/* term card: Korean term + English [pronunciation] + one plain sentence */
+.term{display:flex;align-items:baseline;gap:14px;flex-wrap:wrap;background:var(--panel);border-left:5px solid var(--main);padding:12px 18px}
+.term .ko{font-size:26px;font-weight:700;color:var(--deep)}
+.term .en{font-size:20px;font-weight:700;color:var(--main)}
+.term .pr{font-size:18px;color:var(--note)}
+.term .def{flex-basis:100%;font-size:21px;line-height:1.45;color:var(--ink)}

@@ -1,129 +1,108 @@
 <style>
-#p-std .ph{display:flex;justify-content:space-between;align-items:center;gap:12px}
-#p-std svg{width:100%;height:330px;display:block}
-#p-std .pA{fill:var(--main)}
-#p-std .pO{fill:var(--white);stroke:var(--main);stroke-width:3}
-#p-std .plab{fill:var(--deep);font-size:22px;font-weight:700}
-#p-std .lnB{stroke:var(--t2);stroke-width:4}
-#p-std .lnC{stroke:var(--deep);stroke-width:4;stroke-dasharray:10 6}
-#p-std .dl{font-size:18px;font-weight:700}
-#p-std .dlB{fill:var(--t1)}
-#p-std .dlC{fill:var(--deep)}
-#p-std .pt,#p-std .plab,#p-std line.mv,#p-std .dl{transition:all .6s var(--ease)}
-#p-std .grid3{display:grid;grid-template-columns:330px 1fr;gap:24px;align-items:start}
-#p-std .mini{font-size:18px}
-#p-std .mini td,#p-std .mini th{padding:5px 12px}
-#p-std .ans{font-size:20px;font-weight:700;color:var(--deep);line-height:1.45}
-#p-std .ans b{color:var(--main)}
-#p-std .eqbig{font-size:40px;font-weight:700;color:var(--deep);letter-spacing:-.01em}
+#p-std .say{font-size:26px;font-weight:700;color:var(--deep);line-height:1.4}
+#p-std .say b{color:var(--main)}
+#p-std .chart{border:1.5px solid var(--rule);padding:22px 26px;display:flex;flex-direction:column;gap:18px}
+#p-std .bars{display:grid;grid-template-columns:150px 1fr;gap:16px 18px;align-items:center;font-size:24px;font-weight:700;color:var(--deep)}
+#p-std .track{position:relative;height:46px;background:var(--g0)}
+#p-std .mid{position:absolute;top:-6px;bottom:-6px;width:2px;background:var(--note);left:50%;opacity:0;transition:opacity .4s}
+#p-std.zmode .mid{opacity:1}
+#p-std .bar{position:absolute;top:0;bottom:0;background:var(--main);transition:left .6s var(--ease),width .6s var(--ease)}
+#p-std .val{position:absolute;top:50%;transform:translateY(-50%);font-size:22px;font-weight:700;color:var(--deep);transition:left .6s var(--ease);white-space:nowrap}
+#p-std .msg{font-size:24px;line-height:1.5;color:var(--ink);min-height:72px}
+#p-std .msg b{color:var(--main)}
+#p-std .big2{font-size:26px;font-weight:700;color:var(--deep);line-height:1.45}
+#p-std .side p{font-size:22px}
 </style>
 
 <section class="page" id="p-std" data-sec="① 전처리">
-  <div class="sec rv">① 전처리 · 단위 맞추기 · Wang 2024</div>
-  <h1 class="hl rv" style="--d:80ms">표준화하면 단위가 다른 데이터도 한 모델 학습에 쓸 수 있다</h1>
-  <p class="sub rv" style="--d:150ms">pH(4~10)와 NH₄⁺(0~16,000 mg/kg)처럼 크기가 다른 값을 “평균에서 몇 칸 떨어졌나”라는 같은 잣대로 바꾼다</p>
+  <div class="sec rv">① 전처리 · 표준화</div>
+  <h1 class="hl rv" style="--d:80ms">단위가 다른 숫자는 같은 기준으로 바꿔야 공평하다</h1>
+  <p class="sub rv" style="--d:150ms">표준화 = 모든 값을 “평균보다 얼마나 높은가, 낮은가”로 바꾸는 것</p>
 
   <div class="body">
     <div class="left">
-      <div class="panel rv" style="--d:250ms">
-        <div class="ph"><h3>퇴비 A와 더 비슷한 퇴비는 B일까, C일까? · pH × NH₄⁺ 지도</h3>
-          <div class="row" id="std-mode"><button class="btn" data-m="raw" aria-pressed="true">원래 값</button><button class="btn" data-m="z" aria-pressed="false">표준화 후</button></div></div>
-        <svg id="std-map" viewBox="0 0 1010 330" role="img" aria-label="pH와 NH4 축 위의 퇴비 A, B, C와 거리"></svg>
-        <div class="grid3">
-          <table class="tb mini"><thead><tr><th>퇴비</th><th>pH</th><th>NH₄⁺-N</th></tr></thead><tbody id="std-rows"></tbody></table>
-          <div class="ans" id="std-ans"></div>
-        </div>
+      <div class="term rv" style="--d:200ms"><span class="ko">표준화</span><span class="en">standardization</span><span class="pr">[스탠더다이제이션]</span>
+        <span class="def">숫자들을 “평균보다 얼마나 높은가·낮은가”라는 같은 기준으로 바꾸는 것. 수능 표준점수와 같은 원리.</span></div>
+      <div class="say rv" style="--d:240ms">퇴비 하나를 잰 값 세 개. 컴퓨터는 <b>숫자가 크면 중요하다</b>고 착각한다.</div>
+      <div class="chart rv" style="--d:300ms">
+        <div class="row" id="std-mode"><button class="btn" data-m="raw" aria-pressed="true">원래 숫자로 보기</button><button class="btn" data-m="z" aria-pressed="false">표준화해서 보기</button></div>
+        <div class="bars" id="std-bars"></div>
+        <div class="msg" id="std-msg"></div>
       </div>
-      <div class="callout rv" style="--d:380ms;background:var(--panel)"><b>“비슷하다” = 지도 위에서 가깝다.</b> 두 <b>퇴비</b>의 측정값이 얼마나 비슷한지를 거리로 잰다. 두 <b>변수</b>가 같이 움직이는지를 보는 상관계수와는 다른 이야기다. Wang 논문의 KNN은 이 거리로 “가장 비슷한 과거 퇴비”를 찾아 부숙 여부를 판정했다.</div>
     </div>
 
     <aside class="side rv" style="--d:300ms">
-      <span class="lab">표준화 식 (Wang 식 1)</span>
+      <span class="lab">논문에서는</span>
       <button class="btn more" data-drawer="detail">내역 보기 ›</button>
-      <div class="eqbig">Z = (X − μ) ÷ σ</div>
-      <p>μ 평균, σ 표준편차. 단위가 사라지고 “평균에서 표준편차 몇 칸”만 남는다. <b>수능 표준점수와 같은 원리</b>.</p>
-      <span class="lab">예: 평균 50℃, 표준편차 10℃일 때 65℃는</span>
-      <div class="big">1.5<small>Z</small></div>
-      <div class="insight"><span class="il">캡스톤 인사이트 · 우리 데이터 설계에서는</span><span class="ih">단위 통일 → 학습/시험 분할 → 표준화 순서로 가공한다</span><ul><li>문헌마다 mg/kg·%·건물/습물 기준이 달라 먼저 같은 단위로 바꾼다</li><li>μ, σ는 학습 데이터로만 구한다 (scaler.fit은 학습 데이터에만)</li></ul></div>
+      <p class="big2">Wang 논문은 모델에 넣기 전에 모든 변수를 표준화했다.</p>
+      <p>pH는 4~10, NH₄⁺는 0~16,000처럼 숫자 크기가 너무 달랐기 때문이다.</p>
+      <div class="insight"><span class="il">우리 캡스톤에서는</span><span class="ih">① 단위부터 통일하고 ② 표준화한다</span><ul><li>논문마다 mg/kg, % 등 단위가 다르니 먼저 맞춘다</li><li>평균은 학습용 데이터로만 계산한다</li></ul></div>
     </aside>
   </div>
 
-  <div class="note">퇴비 A·B·C와 μ·σ는 예시 데이터 · 지도는 가로·세로 1칸을 같은 길이로 그렸다 · pH·NH₄⁺ 범위는 Shi 2025 데이터</div>
-  <div class="foot"><span>Wang et al. (2024) 2.2 데이터 전처리, 식 (1), 2.3.3 KNN · Shi et al. (2025) 3.1</span><span class="pn"></span></div>
+  <div class="note">예시 데이터 · 퇴비 1개의 측정값과 평균·흩어진 정도는 설명용으로 정한 값</div>
+  <div class="foot"><span>Wang et al. (2024) 2.2 데이터 전처리</span><span class="pn"></span></div>
 
   <template data-tab="detail">
-    <h4>거리는 이렇게 잰다 (Wang 식 7, 유클리드 거리)</h4>
-    <div class="eq">거리 = √( (pH 차이)² + (NH₄⁺ 차이)² )</div>
-    <p>원래 값: A↔B = √(3.0² + 100²) ≈ 100, A↔C = √(0.1² + 1,300²) ≈ 1,300. pH 차이 3은 숫자가 작아 거의 사라진다.</p>
-    <p>표준화 후: A↔B = √(2.50² + 0.03²) ≈ 2.50, A↔C = √(0.08² + 0.43²) ≈ 0.44. pH 6 vs 9라는 큰 차이가 제대로 드러난다.</p>
-    <h4>문단 속 용어</h4>
-    <table class="tb"><tbody>
-      <tr><td><b>척도(scale)</b></td><td>숫자의 단위와 크기. 온도 20~70℃, 통기량 0.1~1 L/min/kg, NO₃⁻ 수십~수천 mg/kg</td></tr>
-      <tr><td><b>StandardScaler</b></td><td>평균 0, 분산 1로 바꿔 주는 scikit-learn 도구</td></tr>
-      <tr class="k"><td>데이터 누수</td><td>시험 데이터의 평균까지 섞어 계산하면 시험지를 엿본 셈이 되어 성능이 부풀려진다</td></tr></tbody></table>
-    <h4>코드 순서</h4>
-    <div class="eq">scaler.fit(X_train) → transform(X_train), transform(X_test)</div>
-    <h4>⚠ 확인 필요</h4>
-    <p>Wang 논문은 표준화 이유로 “활성화 함수의 조기 포화”를 들었는데, 이는 신경망에 해당한다(다음 장). 실제로 쓴 XGB·RF는 트리라 영향이 거의 없고, 표준화가 결과를 바꾸는 모델은 거리를 재는 KNN이다.</p>
+    <h4>계산 방법</h4>
+    <div class="eq">표준화 값 = (내 값 − 평균) ÷ 표준편차</div>
+    <p>표준편차는 “값들이 평균에서 보통 얼마나 떨어져 있나”. 결과가 +1.5면 “평균보다 1.5칸 높다”.</p>
+    <p>예: 온도 평균 50℃, 표준편차 10℃일 때 65℃ → (65 − 50) ÷ 10 = <b>+1.5</b></p>
+    <h4>이 장의 예시 값</h4>
+    <table class="tb"><thead><tr><th>변수</th><th>퇴비 값</th><th>평균</th><th>표준편차</th><th>표준화 값</th></tr></thead><tbody>
+      <tr><td>온도</td><td>65℃</td><td>50</td><td>10</td><td>+1.50</td></tr>
+      <tr><td>pH</td><td>9.0</td><td>7.5</td><td>1.2</td><td>+1.25</td></tr>
+      <tr><td>NH₄⁺-N</td><td>1,200 mg/kg</td><td>2,000</td><td>3,000</td><td>−0.27</td></tr></tbody></table>
+    <h4>어떤 모델에 필요한가</h4>
+    <p>거리로 비슷한 퇴비를 찾는 KNN, 곱셈과 곡선으로 계산하는 신경망에는 꼭 필요하다. RF·XGB 같은 트리 모델은 영향이 거의 없다.</p>
+    <h4>이 장의 용어</h4>
+    <table class="tb"><thead><tr><th>용어</th><th>영어 [발음]</th><th>쉬운 뜻</th></tr></thead><tbody>
+      <tr><td><b>표준화</b></td><td>standardization [스탠더다이제이션]</td><td>숫자를 “평균보다 얼마나 높은가·낮은가”로 바꾸기</td></tr>
+      <tr><td><b>사이킷런</b></td><td>scikit-learn [사이킷런]</td><td>머신러닝 <b>공구함</b>. RF·KNN·표준화 같은 도구를 무료로 꺼내 쓰는 파이썬 패키지</td></tr>
+      <tr><td><b>표준화 도구</b></td><td>StandardScaler [스탠더드 스케일러]</td><td>그 공구함 안의 <b>표준화 기계</b>. 데이터를 넣으면 자동으로 표준화해 준다</td></tr>
+      <tr><td><b>Z 점수</b></td><td>Z-score [지 스코어]</td><td>표준화한 결과 값. +1.5 = 평균보다 1.5칸 높음</td></tr>
+      <tr><td><b>표준화된 값</b></td><td>normalized value [노멀라이즈드 밸류]</td><td>기준을 맞추려고 바꾼 값. 원래는 <b>표준화</b>(평균 기준, Z 점수)와 <b>정규화</b>(0~1로 줄이기, normalization)가 다르지만 논문에선 섞어 쓰기도 한다</td></tr>
+      <tr><td><b>데이터 누수</b></td><td>data leakage [데이터 리키지]</td><td>기말고사 문제를 미리 보고 공부한 것처럼, 시험용 데이터 정보가 학습에 섞여 점수가 실제보다 좋게 나오는 실수. 평균은 학습용 데이터로만 계산한다</td></tr></tbody></table>
   </template>
   <template data-tab="source">
-    <p><b>원문 (Wang 2024, 2.2):</b> 값 차이가 매우 커서 평균-분산 표준화(StandardScaler)를 수행했다. Z = (X − μ)/σ, μ와 σ는 학습 데이터의 평균과 표준편차.</p>
-    <p><b>KNN (Wang 2.3.3):</b> 유클리드 거리로 가장 가까운 k개 이웃을 찾아 다수결. 부숙 판정 정확도 92%.</p>
-    <p><b>예시 데이터:</b> 퇴비 A(pH 6.0, NH₄⁺ 1,200), B(9.0, 1,300), C(6.1, 2,500), μ(7.5, 2,000), σ(1.2, 3,000).</p>
+    <p><b>Wang 2024, 2.2:</b> 퇴비화 데이터는 값 차이가 매우 커서 StandardScaler로 평균 0, 분산 1이 되도록 표준화했다. 평균과 표준편차는 학습 데이터로 계산했다.</p>
+    <p><b>예시 데이터:</b> 온도 65℃, pH 9.0, NH₄⁺-N 1,200 mg/kg과 평균·표준편차는 설명용 값이다. pH·NH₄⁺ 범위(4.09–9.59, 0–16,358)는 Shi 2025 데이터.</p>
   </template>
   <template data-tab="notes">
-    <ol><li>Q. A와 B, C가 닮았다는 게 무슨 소리? 상관계수 이야기인가? → 아니다. 두 퇴비의 측정값이 비슷한 정도 = 지도 위 거리.</li>
-    <li>시연: “원래 값”에서는 NH₄⁺ 축이 너무 길어 모든 점이 세로 한 줄에 붙는다 → B가 가까워 보임. “표준화 후”를 누르면 pH 차이가 펼쳐지며 C가 더 가까워진다.</li>
-    <li>메시지: 표준화를 해야 단위가 다른 변수들이 공평하게 모델에 반영된다.</li>
-    <li>다음 장(신경망)에서 같은 퇴비 A의 값을 그대로 쓴다.</li></ol>
+    <ol><li>“원래 숫자로 보기”: NH₄⁺ 막대만 길고 온도·pH는 거의 안 보인다. 컴퓨터도 이렇게 본다.</li>
+    <li>“표준화해서 보기”: 세 막대가 비슷한 크기가 된다. 가운데 선이 평균. 오른쪽은 평균보다 높음, 왼쪽은 낮음.</li>
+    <li>반전 포인트: 원래 숫자로는 NH₄⁺가 제일 커 보였지만, 실제로는 평균보다 <b>낮은</b> 값이었다.</li>
+    <li>비유: 수능 표준점수. 만점이 다른 과목도 같은 기준으로 비교한다.</li></ol>
   </template>
 </section>
 
 <script>
 DECK.register('p-std', root => {
-  const MU = {ph: 7.5, nh: 2000}, SD = {ph: 1.2, nh: 3000};
-  const S = {A: {ph: 6.0, nh: 1200}, B: {ph: 9.0, nh: 1300}, C: {ph: 6.1, nh: 2500}};
-  const z = (v, k) => (v - MU[k]) / SD[k];
-  const $ = id => root.querySelector('#' + id);
-  const svg = $('std-map'), NS = 'http://www.w3.org/2000/svg';
-  const el = (t, a) => { const e = document.createElementNS(NS, t); for (const k in a) e.setAttribute(k, a[k]); return e; };
-  const W = 1010, H = 330, L = 70, B = 290, T = 20;
-  svg.append(el('line', {x1: L, y1: B, x2: W - 10, y2: B, class: 'ax'}), el('line', {x1: L, y1: T, x2: L, y2: B, class: 'ax'}));
-  const xl = el('text', {x: W - 10, y: B + 30, class: 'axl', 'text-anchor': 'end'}), yl = el('text', {x: 20, y: T, class: 'axl', transform: `rotate(-90 20 ${T})`, 'text-anchor': 'end'});
-  svg.append(xl, yl);
-  const lnB = el('line', {class: 'lnB mv'}), lnC = el('line', {class: 'lnC mv'});
-  const dB = el('text', {class: 'dl dlB'}), dC = el('text', {class: 'dl dlC'});
-  svg.append(lnB, lnC, dB, dC);
-  const pts = {}, labs = {};
-  ['A', 'B', 'C'].forEach(k => { pts[k] = el('circle', {r: 14, class: 'pt ' + (k === 'A' ? 'pA' : 'pO')}); labs[k] = el('text', {class: 'plab'}); labs[k].textContent = k; svg.append(pts[k], labs[k]); });
-  const modeBtns = [...root.querySelectorAll('#std-mode .btn')];
+  const V = [['온도', 65, '℃', 50, 10], ['pH', 9.0, '', 7.5, 1.2], ['NH₄⁺', 1200, ' mg/kg', 2000, 3000]];
+  const box = root.querySelector('#std-bars'), msg = root.querySelector('#std-msg');
+  box.innerHTML = V.map(([n]) => `<span>${n}</span><div class="track"><div class="mid"></div><div class="bar"></div><span class="val"></span></div>`).join('');
+  const bars = [...box.querySelectorAll('.bar')], vals = [...box.querySelectorAll('.val')];
+  const btns = [...root.querySelectorAll('#std-mode .btn')];
   function render(mode) {
-    const val = (s, k) => mode === 'raw' ? S[s][k] : z(S[s][k], k);
-    // equal length per unit on both axes: fit the larger span into the plot height
-    const xs = ['A', 'B', 'C'].map(s => val(s, 'ph')), ys = ['A', 'B', 'C'].map(s => val(s, 'nh'));
-    const cx = (Math.min(...xs) + Math.max(...xs)) / 2, cy = (Math.min(...ys) + Math.max(...ys)) / 2;
-    const sx = Math.max(...xs) - Math.min(...xs), sy = Math.max(...ys) - Math.min(...ys);
-    const k = Math.min((B - T - 70) / sy, (W - L - 260) / sx), X0 = (L + W) / 2, Y0 = (B + T) / 2;
-    const px = v => X0 + (v - cx) * k, py = v => Y0 - (v - cy) * k;
-    const P = s => [px(val(s, 'ph')), py(val(s, 'nh'))];
-    ['A', 'B', 'C'].forEach(s => { const [x, y] = P(s); pts[s].setAttribute('cx', x); pts[s].setAttribute('cy', y); labs[s].setAttribute('x', x + 22); labs[s].setAttribute('y', y + 8); });
-    const [ax, ay] = P('A'), [bx, by] = P('B'), [qx, qy] = P('C');
-    lnB.setAttribute('x1', ax); lnB.setAttribute('y1', ay); lnB.setAttribute('x2', bx); lnB.setAttribute('y2', by);
-    lnC.setAttribute('x1', ax); lnC.setAttribute('y1', ay); lnC.setAttribute('x2', qx); lnC.setAttribute('y2', qy);
-    const d = (a, b) => Math.hypot(val(a, 'ph') - val(b, 'ph'), val(a, 'nh') - val(b, 'nh'));
-    const f = v => mode === 'raw' ? v.toFixed(0) : v.toFixed(2);
-    dB.textContent = 'A↔B 거리 ' + f(d('A', 'B')); dC.textContent = 'A↔C 거리 ' + f(d('A', 'C'));
-    dB.setAttribute('x', (ax + bx) / 2 - 24); dB.setAttribute('text-anchor', 'end'); dB.setAttribute('y', (ay + by) / 2 - 10);
-    dC.setAttribute('x', (ax + qx) / 2 + 20); dC.setAttribute('y', (ay + qy) / 2 + 6);
-    xl.textContent = mode === 'raw' ? 'pH (원래 단위)' : 'pH (Z)'; yl.textContent = mode === 'raw' ? 'NH₄⁺-N (mg/kg)' : 'NH₄⁺-N (Z)';
-    const fmt = (v, k2) => mode === 'raw' ? (k2 === 'ph' ? v.toFixed(1) : v.toLocaleString()) : (v >= 0 ? '+' : '−') + Math.abs(v).toFixed(2);
-    $('std-rows').innerHTML = ['A', 'B', 'C'].map(s => `<tr><td>${s}</td><td>${fmt(val(s, 'ph'), 'ph')}</td><td>${fmt(val(s, 'nh'), 'nh')}</td></tr>`).join('');
-    $('std-ans').innerHTML = mode === 'raw'
-      ? '원래 값: NH₄⁺ 축이 너무 길어 pH 차이(6 vs 9)가 보이지 않는다. 그래서 <b>B가 더 가까워 보인다.</b>'
-      : '표준화 후: 두 축이 같은 잣대가 되어 pH 차이가 펼쳐진다. <b>C가 더 비슷한 퇴비</b>로 결론이 뒤집혔다.';
-    modeBtns.forEach(b => b.setAttribute('aria-pressed', String(b.dataset.m === mode)));
+    root.classList.toggle('zmode', mode === 'z');
+    V.forEach(([n, v, u, mu, sd], i) => {
+      if (mode === 'raw') {
+        const w = v / 1200 * 85;                       // NH4 1200 fills 85% of the track
+        bars[i].style.left = '0%'; bars[i].style.width = w + '%';
+        vals[i].style.left = `calc(${w}% + 12px)`; vals[i].textContent = v.toLocaleString() + u;
+      } else {
+        const z = (v - mu) / sd, w = Math.abs(z) / 2 * 45;   // ±2 fills half the track
+        bars[i].style.left = (z >= 0 ? 50 : 50 - w) + '%'; bars[i].style.width = w + '%';
+        vals[i].style.left = z >= 0 ? `calc(${50 + w}% + 12px)` : `calc(${50 - w}% - 90px)`;
+        vals[i].textContent = (z >= 0 ? '+' : '−') + Math.abs(z).toFixed(2);
+      }
+    });
+    msg.innerHTML = mode === 'raw'
+      ? '원래 숫자: NH₄⁺(1,200)만 거대하고 온도·pH는 거의 안 보인다. 이대로 넣으면 <b>NH₄⁺만 중요하게</b> 계산된다.'
+      : '표준화 후: 세 값이 비슷한 크기가 됐다. 가운데 선이 평균. <b>NH₄⁺는 사실 평균보다 낮은 값</b>이었다.';
+    btns.forEach(b => b.setAttribute('aria-pressed', String(b.dataset.m === mode)));
   }
-  modeBtns.forEach(b => b.addEventListener('click', () => render(b.dataset.m)));
+  btns.forEach(b => b.addEventListener('click', () => render(b.dataset.m)));
   render('raw');
 });
 </script>
