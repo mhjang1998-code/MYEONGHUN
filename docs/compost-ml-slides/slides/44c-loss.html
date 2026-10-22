@@ -1,0 +1,100 @@
+<style>
+#p-loss .two{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+#p-loss h3{margin:0;font-size:21px;color:var(--deep)}
+#p-loss h3 small{display:block;font-size:16px;color:var(--main);font-weight:700}
+#p-loss svg{width:100%;height:190px;display:block}
+#p-loss .cv{fill:none;stroke:var(--deep);stroke-width:3}
+#p-loss .pt{fill:var(--acc)}
+#p-loss .big3{display:flex;gap:18px;align-items:baseline;font-size:19px}
+#p-loss .big3 b{font-size:34px;color:var(--main)}
+#p-loss .obj{display:flex;align-items:center;gap:14px;flex-wrap:wrap;font-size:22px;font-weight:700;color:var(--deep);background:var(--panel);padding:14px 18px}
+#p-loss .obj span{border:1.5px solid var(--main);background:var(--white);padding:6px 12px}
+#p-loss .obj small{font-size:17px;color:var(--ink);font-weight:500;flex-basis:100%}
+</style>
+
+<section class="page" id="p-loss" data-sec="② 모델">
+  <div class="sec rv">② 모델 · XGBoost ③ 손실함수와 목적함수</div>
+  <h1 class="hl rv" style="--d:80ms">손실함수는 “얼마나 틀렸나”를 벌점 하나로 계산하는 규칙이다</h1>
+  <p class="sub rv" style="--d:150ms">모델은 이 벌점을 줄이는 쪽으로 배운다(경사하강법). 숫자 예측과 종류 예측은 벌점 규칙이 다르다</p>
+
+  <div class="body">
+    <div class="left">
+      <div class="term rv" style="--d:200ms"><span class="ko">손실함수</span><span class="en">loss function</span><span class="pr">[로스 펑션]</span>
+        <span class="def">예측과 정답의 차이를 벌점 숫자로 바꾸는 계산 규칙. 벌점이 작을수록 잘 맞힌 것. 앞 장 곡선의 세로축이 바로 이것.</span></div>
+      <div class="two rv" style="--d:280ms">
+        <div class="box">
+          <h3>회귀(숫자): 오차 제곱<small>squared error · 최소제곱 [스퀘어드 에러]</small></h3>
+          <div class="ctl" style="grid-template-columns:120px 1fr 90px"><label for="ls-p">예측 NH₃</label><input type="range" id="ls-p" min="0" max="6" step="0.1" value="4"><output id="ls-po"></output></div>
+          <svg id="ls-s1" viewBox="0 0 470 190" role="img" aria-label="오차 제곱 손실 곡선"></svg>
+          <div class="big3"><span>실제 3.0 · 오차 <b id="ls-e"></b></span><span>벌점 <b id="ls-l"></b></span></div>
+        </div>
+        <div class="box">
+          <h3>분류(종류): 로그 손실<small>log loss [로그 로스]</small></h3>
+          <div class="ctl" style="grid-template-columns:120px 1fr 90px"><label for="ls-q">“부숙” 확률</label><input type="range" id="ls-q" min="1" max="99" step="1" value="90"><output id="ls-qo"></output></div>
+          <svg id="ls-s2" viewBox="0 0 470 190" role="img" aria-label="로그 손실 곡선"></svg>
+          <div class="big3"><span>정답: 부숙</span><span>벌점 <b id="ls-g"></b></span></div>
+        </div>
+      </div>
+      <div class="obj rv" style="--d:360ms"><span>목적함수</span>=<span>손실함수 (틀린 정도)</span>+<span>규제 (복잡함 벌점)</span>
+        <small>objective function [오브젝티브 펑션]: XGB가 실제로 줄이는 최종 점수. “잘 맞히되, 너무 복잡하게는 말고.”</small></div>
+    </div>
+
+    <aside class="side rv" style="--d:300ms">
+      <span class="lab">외울 한 줄</span>
+      <button class="btn more" data-drawer="detail">내역 보기 ›</button>
+      <div class="memo">손실함수 = 틀린 정도의 벌점 규칙. 목적함수 = 손실 + 규제</div>
+      <p class="p2"><b>오차 제곱</b>: 2만큼 틀리면 4점, 4만큼 틀리면 16점. 크게 틀릴수록 벌점이 확 커진다 (RMSE와 같은 원리).<br><b>로그 손실</b>: 정답에 확신을 가질수록 벌점이 0에 가깝고, <b>자신 있게 틀리면</b> 벌점이 폭발한다.</p>
+      <div class="insight"><span class="il">우리 캡스톤에서는</span><span class="ih">NH₃ 같은 숫자 예측 → 오차 제곱 손실</span><ul><li>큰 오차에 민감하므로 이상치(추출 실수)를 먼저 걸러 낸다</li><li>부숙 판정처럼 종류를 맞히면 로그 손실을 쓴다</li></ul></div>
+    </aside>
+  </div>
+
+  <div class="note">예시 데이터 · 실제 NH₃ 3.0 g/kg, 정답 “부숙”은 설명용 · 벌점 = (예측 − 실제)², −ln(정답 확률) (입력에 따른 계산)</div>
+  <div class="foot"><span>Wang et al. (2024) 2.3.1 식 (2)–(3) · Shi et al. (2025) 2.2.5</span><span class="pn"></span></div>
+
+  <template data-tab="detail">
+    <h4>이 장의 용어</h4>
+    <table class="tb"><thead><tr><th>용어</th><th>영어 [발음]</th><th>쉬운 뜻</th></tr></thead><tbody>
+      <tr><td><b>손실함수</b></td><td>loss function [로스 펑션]</td><td>틀린 정도를 벌점으로 바꾸는 규칙</td></tr>
+      <tr><td><b>최소제곱</b></td><td>ordinary least squares, OLS [오디너리 리스트 스퀘어스]</td><td>오차 제곱의 합이 가장 작아지게 맞추기</td></tr>
+      <tr><td><b>로그 손실</b></td><td>log loss [로그 로스]</td><td>정답 확률이 낮을수록 벌점이 크게 늘어남</td></tr>
+      <tr><td><b>이진 분류</b></td><td>binary classification [바이너리 클래시피케이션]</td><td>둘 중 하나 맞히기 (부숙 / 미부숙)</td></tr>
+      <tr><td><b>목적함수</b></td><td>objective function [오브젝티브 펑션]</td><td>실제로 줄이는 최종 점수 = 손실 + 규제</td></tr>
+      <tr><td><b>규제항</b></td><td>regularization term [레귤러라이제이션 텀]</td><td>복잡함 벌점 (잎 개수, 잎 값 크기)</td></tr></tbody></table>
+    <h4>Wang 식 (2)를 말로</h4>
+    <div class="eq">목적함수 = Σ (지금 예측 + 새 나무의 답, 정답 사이의 손실) + 새 나무의 복잡함 벌점</div>
+    <p>새 나무는 이 값이 가장 작아지도록 만들어진다. 손실만 보면 외우고, 벌점만 보면 아무것도 못 배운다. 둘을 함께 줄인다.</p>
+    <h4>MSE와의 관계</h4>
+    <p>오차 제곱의 평균이 MSE, 그 루트가 RMSE. 손실함수로 배우고, 같은 계열의 지표로 채점하는 셈이다.</p>
+  </template>
+  <template data-tab="source">
+    <p><b>Wang 2024, 2.3.1:</b> 회귀 문제에서 가장 흔한 손실함수는 보통최소제곱(오차 제곱합)이고, 이진 분류의 손실함수는 로지스틱 회귀(로그 손실)이다. 목적함수는 손실함수와 규제항으로 이루어진다 (식 2–3).</p>
+    <p><b>Shi 2025, 2.2.5:</b> BPNN은 평균제곱오차(MSE)를 오차로 사용해 Adam 알고리즘으로 최적화했다.</p>
+  </template>
+  <template data-tab="notes">
+    <ol><li>Q. 손실함수가 뭐야? → 틀린 정도를 벌점으로 계산하는 규칙.</li>
+    <li>왼쪽 슬라이더: 예측을 실제(3.0)에서 멀리 보낼수록 벌점이 제곱으로 커진다.</li>
+    <li>오른쪽 슬라이더: 정답이 부숙인데 “부숙 확률 1%”라고 하면 벌점 4.6. 자신 있게 틀린 대가.</li>
+    <li>목적함수 = 손실 + 규제. 앞의 “규제” 장과 연결.</li></ol>
+  </template>
+</section>
+
+<script>
+DECK.register('p-loss', root => {
+  const NS = 'http://www.w3.org/2000/svg', $ = id => root.querySelector('#' + id);
+  const el = (t, a, s) => { const e = document.createElementNS(NS, t); for (const k in a) e.setAttribute(k, a[k]); if (s != null) e.textContent = s; return e; };
+  function curve(svg, f, x0, x1, ymax, xl, yl) {
+    const L = 50, R = 460, T = 10, B = 160, sx = x => L + (x - x0) / (x1 - x0) * (R - L), sy = y => B - Math.min(y, ymax) / ymax * (B - T);
+    let d = ''; for (let x = x0; x <= x1 + 1e-9; x += (x1 - x0) / 120) d += (d ? 'L' : 'M') + sx(x).toFixed(1) + ' ' + sy(f(x)).toFixed(1);
+    svg.append(el('line', {x1: L, y1: B, x2: R, y2: B, class: 'ax'}), el('line', {x1: L, y1: T, x2: L, y2: B, class: 'ax'}), el('path', {d, class: 'cv'}),
+      el('text', {x: R, y: B + 26, class: 'axl', 'text-anchor': 'end'}, xl), el('text', {x: L - 8, y: T + 12, class: 'axl', 'text-anchor': 'end'}, yl));
+    const p = el('circle', {r: 10, class: 'pt'}); svg.append(p);
+    return x => { p.setAttribute('cx', sx(x)); p.setAttribute('cy', sy(f(x))); };
+  }
+  const sq = x => (x - 3) ** 2, lg = q => -Math.log(q);
+  const m1 = curve($('ls-s1'), sq, 0, 6, 9, '예측 NH₃ (g/kg)', '벌점');
+  const m2 = curve($('ls-s2'), lg, 0.01, 0.99, 4.7, '모델이 말한 “부숙” 확률', '벌점');
+  function s1() { const p = +$('ls-p').value; $('ls-po').textContent = p.toFixed(1); $('ls-e').textContent = Math.abs(p - 3).toFixed(1); $('ls-l').textContent = sq(p).toFixed(2); m1(p); }
+  function s2() { const q = +$('ls-q').value / 100; $('ls-qo').textContent = Math.round(q * 100) + '%'; $('ls-g').textContent = lg(q).toFixed(2); m2(q); }
+  $('ls-p').addEventListener('input', s1); $('ls-q').addEventListener('input', s2); s1(); s2();
+});
+</script>

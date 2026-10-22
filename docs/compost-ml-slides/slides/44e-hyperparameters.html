@@ -1,0 +1,93 @@
+<style>
+#p-hp .knobs{display:grid;grid-template-columns:repeat(5,1fr);gap:10px}
+#p-hp .kb{font:inherit;text-align:left;border:1.5px solid var(--rule);background:var(--white);padding:10px 12px;cursor:pointer;display:flex;flex-direction:column;gap:4px}
+#p-hp .kb[aria-pressed="true"]{border-color:var(--main);background:var(--panel)}
+#p-hp .kb .c{font-size:15px;color:var(--main);font-weight:700;word-break:break-all}
+#p-hp .kb .k{font-size:21px;font-weight:700;color:var(--deep)}
+#p-hp .info{border:1.5px solid var(--main);padding:16px 20px;display:flex;flex-direction:column;gap:12px}
+#p-hp .info .t{font-size:24px;font-weight:700;color:var(--deep)}
+#p-hp .info .d{font-size:21px;line-height:1.45}
+#p-hp .info .d b{color:var(--main)}
+#p-hp .lohi{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+#p-hp .lohi div{background:var(--g0);padding:10px 14px;font-size:19px;line-height:1.4}
+#p-hp .lohi b{display:block;color:var(--deep)}
+#p-hp .cand{display:flex;gap:8px;align-items:center;font-size:19px;flex-wrap:wrap}
+#p-hp .cand span{border:1.5px solid var(--rule);padding:4px 12px;font-weight:700}
+#p-hp .cand span.on{background:var(--main);border-color:var(--main);color:var(--white)}
+</style>
+
+<section class="page" id="p-hp" data-sec="② 모델">
+  <div class="sec rv">② 모델 · XGBoost ⑤ 하이퍼파라미터</div>
+  <h1 class="hl rv" style="--d:80ms">하이퍼파라미터는 학습 전에 사람이 맞추는 손잡이다</h1>
+  <p class="sub rv" style="--d:150ms">오븐의 온도·시간처럼 배우기 전에 정하는 설정값. 나무의 질문은 모델이, 나무 수는 사람이 정한다</p>
+
+  <div class="body">
+    <div class="left">
+      <div class="term rv" style="--d:200ms"><span class="ko">하이퍼파라미터</span><span class="en">hyperparameter</span><span class="pr">[하이퍼파라미터]</span>
+        <span class="def">학습 전에 정하는 설정값. 모델이 데이터에서 스스로 찾는 값(나무의 질문·기준값, 가중치)과 구분한다.</span></div>
+      <div class="knobs rv" style="--d:260ms" id="hp-k"></div>
+      <div class="info rv" style="--d:320ms" id="hp-i"></div>
+    </div>
+
+    <aside class="side rv" style="--d:300ms">
+      <span class="lab">외울 한 줄</span>
+      <button class="btn more" data-drawer="detail">내역 보기 ›</button>
+      <div class="memo">하이퍼파라미터 = 학습 전에 정하는 손잡이. 후보를 바꿔 가며 교차검증으로 고른다</div>
+      <p class="p2"><b>논문에서는</b> Wang은 learning_rate, max_depth, n_estimators, subsample, colsample_bytree를 k-겹 교차검증으로 조정했다. Shi의 XGB 최종값은 나무 50그루, 깊이 7, 학습률 0.2.</p>
+      <div class="insight"><span class="il">우리 캡스톤에서는</span><span class="ih">손잡이마다 후보 2~4개만 정해 시험한다</span><ul><li>데이터가 수백 개면 깊이는 얕게, 학습률은 작게부터</li><li>고른 값과 후보를 표로 남긴다 (논문처럼)</li></ul></div>
+    </aside>
+  </div>
+
+  <div class="note">후보와 최종값은 Shi 2025 2.2.4의 XGB 설정 · Wang 2024는 조정한 손잡이 이름만 밝혔다</div>
+  <div class="foot"><span>Wang et al. (2024) 2.3.1 · Shi et al. (2025) 2.2.4</span><span class="pn"></span></div>
+
+  <template data-tab="detail">
+    <h4>Shi 논문 XGB 설정 전체</h4>
+    <table class="tb"><thead><tr><th>코드 이름 [발음]</th><th>쉬운 뜻</th><th>후보</th><th>선택</th></tr></thead><tbody>
+      <tr><td>n_estimators [엔 에스티메이터스]</td><td>나무 수</td><td>20, 30, 50</td><td>50</td></tr>
+      <tr><td>max_depth [맥스 뎁스]</td><td>나무 깊이 (질문 몇 번)</td><td>3, 5, 7, 9</td><td>7</td></tr>
+      <tr><td>min_child_weight [민 차일드 웨이트]</td><td>잎 하나에 최소 데이터 양</td><td>1, 3, 5</td><td>3</td></tr>
+      <tr><td>gamma [감마]</td><td>가지를 더 나눌 때 필요한 최소 개선 (나누기 벌점)</td><td>0, 0.1, 0.2</td><td>0.1</td></tr>
+      <tr><td>subsample [서브샘플]</td><td>나무마다 쓰는 데이터 비율</td><td>0.8, 0.9, 1.0</td><td>1.0</td></tr>
+      <tr><td>colsample_bytree [콜샘플 바이 트리]</td><td>나무마다 쓰는 변수 비율</td><td>0.8, 0.9, 1.0</td><td>0.9</td></tr>
+      <tr><td>learning_rate [러닝 레이트]</td><td>학습률 (보폭)</td><td>0.05, 0.1, 0.2</td><td>0.2</td></tr></tbody></table>
+    <h4>파라미터 vs 하이퍼파라미터</h4>
+    <table class="tb"><tbody>
+      <tr><td><b>파라미터</b> parameter [파라미터]</td><td>모델이 데이터에서 스스로 배우는 값 (나무의 질문·기준값, 잎 값, 신경망 가중치)</td></tr>
+      <tr class="k"><td>하이퍼파라미터</td><td>사람이 학습 전에 정하는 값 (나무 수, 깊이, 학습률)</td></tr></tbody></table>
+  </template>
+  <template data-tab="source">
+    <p><b>Wang 2024, 2.3.1:</b> XGB 모델의 복잡도를 조절하기 위해 하이퍼파라미터 조합(learning_rate, max_depth, n_estimators, subsample, colsample_bytree)을 k-겹 교차검증으로 최적화했다.</p>
+    <p><b>Shi 2025, 2.2.4:</b> 7개 하이퍼파라미터의 탐색 범위와 GridSearchCV로 결정된 값 [50, 7, 3, 0.1, 1, 0.9, 0.2].</p>
+  </template>
+  <template data-tab="notes">
+    <ol><li>비유: 오븐. 레시피(데이터)는 같아도 온도·시간 손잡이에 따라 결과가 달라진다.</li>
+    <li>손잡이 5개를 하나씩 눌러 “너무 작으면 / 너무 크면”을 읽는다.</li>
+    <li>어떻게 고르나? → 다음 장(k-겹 교차검증).</li></ol>
+  </template>
+</section>
+
+<script>
+DECK.register('p-hp', root => {
+  const K = [
+    ['n_estimators', '나무 수', '오답노트를 몇 번 반복할까', '나무가 적어 아직 덜 배움 (과소적합)', '너무 많으면 학습 데이터를 외우기 시작 (과적합)', [20, 30, 50], 50],
+    ['max_depth', '나무 깊이', '나무 하나가 질문을 몇 번까지 이어 붙일까', '질문이 적어 조합(상호작용)을 못 잡음', '질문이 너무 많아 데이터 하나하나를 외움', [3, 5, 7, 9], 7],
+    ['learning_rate', '학습률 (보폭)', '나무 하나의 답을 얼마나 크게 반영할까', '아주 천천히 배워 나무가 많이 필요', '한 나무에 휘둘려 왔다 갔다', [0.05, 0.1, 0.2], 0.2],
+    ['subsample', '데이터 비율', '나무마다 데이터의 몇 %만 무작위로 쓸까', '나무마다 데이터가 너무 적어 불안정', '1.0이면 모든 나무가 같은 데이터를 봄 (다양성 줄어듦)', [0.8, 0.9, 1.0], 1.0],
+    ['colsample_bytree', '변수 비율', '나무마다 변수의 몇 %만 무작위로 쓸까', '중요한 변수를 못 보는 나무가 많아짐', '모든 나무가 같은 변수에만 의존', [0.8, 0.9, 1.0], 0.9]
+  ];
+  const box = root.querySelector('#hp-k'), info = root.querySelector('#hp-i');
+  box.innerHTML = K.map((k, i) => `<button class="kb" data-i="${i}"><span class="c">${k[0]}</span><span class="k">${k[1]}</span></button>`).join('');
+  const btns = [...box.querySelectorAll('.kb')];
+  function pick(i) {
+    const [c, n, q, lo, hi, cand, sel] = K[i];
+    info.innerHTML = `<span class="t">${n} <span style="font-size:18px;color:var(--main)">${c}</span></span>
+      <span class="d">${q}?</span>
+      <div class="lohi"><div><b>너무 작으면</b>${lo}</div><div><b>너무 크면</b>${hi}</div></div>
+      <div class="cand">Shi 논문 후보 ${cand.map(v => `<span class="${v === sel ? 'on' : ''}">${v}</span>`).join('')} → 선택 <b style="color:var(--main)">${sel}</b></div>`;
+    btns.forEach((b, j) => b.setAttribute('aria-pressed', String(j === i)));
+  }
+  btns.forEach((b, i) => b.addEventListener('click', () => pick(i)));
+  pick(0);
+});
+</script>

@@ -1,0 +1,129 @@
+<style>
+#p-bst svg{width:100%;height:300px;display:block}
+#p-bst .rl{fill:var(--deep);font-size:19px;font-weight:700}
+#p-bst .rs{fill:var(--note);font-size:15px}
+#p-bst .gap{stroke:var(--t2);stroke-width:6;transition:all .6s var(--ease)}
+#p-bst .real{fill:var(--deep)}
+#p-bst .pred{fill:var(--white);stroke:var(--main);stroke-width:4;transition:cx .6s var(--ease)}
+#p-bst .gl{fill:var(--main);font-size:17px;font-weight:700;transition:x .6s var(--ease)}
+#p-bst .q{background:var(--panel);border-left:5px solid var(--main);padding:10px 16px;font-size:21px;line-height:1.45;min-height:76px}
+#p-bst .q b{color:var(--main)}
+#p-bst .hist{display:flex;gap:8px;align-items:flex-end;height:70px}
+#p-bst .hist div{width:56px;background:var(--t2);position:relative;transition:height .5s var(--ease)}
+#p-bst .hist div.now{background:var(--main)}
+#p-bst .hist span{position:absolute;top:-22px;left:0;right:0;text-align:center;font-size:15px;font-weight:700;color:var(--deep)}
+#p-bst .hrow{display:flex;gap:18px;align-items:flex-end}
+#p-bst .hrow .lb{font-size:17px;color:var(--note);font-weight:700;padding-bottom:4px}
+</style>
+
+<section class="page" id="p-bst" data-sec="② 모델">
+  <div class="sec rv">② 모델 · XGBoost ① 부스팅 = 오답노트</div>
+  <h1 class="hl rv" style="--d:80ms">나무 한 그루가 틀린 만큼을 다음 나무가 이어서 고친다</h1>
+  <p class="sub rv" style="--d:150ms">시험지를 채점하고, 틀린 문제만 다시 공부하고, 또 채점하고. 이것을 나무로 반복하는 것이 부스팅이다</p>
+
+  <div class="body">
+    <div class="left">
+      <div class="box rv" style="--d:220ms">
+        <div class="row"><button class="btn" id="bs-next">다음 나무 추가 ›</button><button class="btn" id="bs-reset">처음으로</button><span class="cap">퇴비 5개의 발아지수(GI)를 맞힌다 · ● 실제 ○ 예측</span></div>
+        <svg id="bs-svg" viewBox="0 0 1000 300" role="img" aria-label="퇴비 5개의 실제 GI와 예측 GI"></svg>
+        <div class="q" id="bs-q"></div>
+        <div class="hrow"><span class="lb">남은 오차<br>(RMSE)</span><div class="hist" id="bs-h"></div></div>
+      </div>
+    </div>
+
+    <aside class="side rv" style="--d:300ms">
+      <span class="lab">외울 한 줄</span>
+      <button class="btn more" data-drawer="detail">내역 보기 ›</button>
+      <div class="memo">부스팅 = 앞 나무가 틀린 만큼(남은 오차)을 다음 나무가 고치는 이어달리기</div>
+      <p class="p2"><b>핵심 3단계</b><br>① 지금 예측으로 채점한다 (남은 오차)<br>② 새 나무는 정답이 아니라 <b>남은 오차</b>를 맞히도록 배운다<br>③ 그 나무의 답을 예측에 더한다 → 다시 ①</p>
+      <div class="insight"><span class="il">우리 캡스톤에서는</span><span class="ih">나무 수를 늘릴수록 학습 오차는 계속 준다</span><ul><li>그래서 학습 점수만 보면 속는다 (외울 때까지 계속 고침)</li><li>새 데이터 점수가 더는 안 좋아지는 지점에서 멈춘다</li></ul></div>
+    </aside>
+  </div>
+
+  <div class="note">예시 데이터 · 퇴비 5개의 기간·온도·GI는 설명용 값 · 나무의 질문과 보정값은 실제로 계산 (한 번 질문하는 나무, 입력에 따른 계산)</div>
+  <div class="foot"><span>Wang et al. (2024) 2.3.1 · Shi et al. (2025) 2.2.3–2.2.4</span><span class="pn"></span></div>
+
+  <template data-tab="detail">
+    <h4>이 장의 용어</h4>
+    <table class="tb"><thead><tr><th>용어</th><th>영어 [발음]</th><th>쉬운 뜻</th></tr></thead><tbody>
+      <tr><td><b>부스팅</b></td><td>boosting [부스팅]</td><td>약한 모델을 차례로 이어 붙여 실수를 줄여 가는 방법</td></tr>
+      <tr><td><b>남은 오차 (잔차)</b></td><td>residual [레지듀얼]</td><td>실제 − 지금 예측. 다음 나무의 숙제</td></tr>
+      <tr><td><b>약한 학습기</b></td><td>weak learner [위크 러너]</td><td>혼자서는 대충 맞히는 작은 나무</td></tr></tbody></table>
+    <h4>계산이 실제로 하는 일</h4>
+    <ol><li>처음 예측 = 모든 퇴비의 GI 평균.</li>
+    <li>남은 오차 = 실제 − 예측을 퇴비마다 계산.</li>
+    <li>새 나무는 “기간 &gt; ○일?”, “온도 &gt; ○℃?” 중 남은 오차를 가장 잘 두 무리로 나누는 질문 하나를 고른다.</li>
+    <li>각 무리의 남은 오차 평균이 그 나무의 답(보정값). 예측에 더한다.</li>
+    <li>2로 돌아가 반복.</li></ol>
+    <h4>RF와 다른 점</h4>
+    <p>RF는 나무들이 서로 모른 채 같은 문제(정답)를 풀고 평균 낸다. 부스팅은 앞 나무의 채점 결과(남은 오차)를 보고 다음 나무가 만들어진다.</p>
+  </template>
+  <template data-tab="source">
+    <p><b>Shi 2025, 2.2.3:</b> GBDT는 그래디언트 부스팅으로 결정 트리를 학습시키며, 각 반복 단계는 이전 학습의 잔차를 이용해 학습된다.</p>
+    <p><b>Wang 2024, 식 (2):</b> 지금까지의 예측 ŷ⁽ᵗ⁾에 새 나무의 예측 f₍ₜ₊₁₎을 더했을 때의 오차를 줄이도록 새 나무를 만든다.</p>
+    <p><b>예시 데이터:</b> 퇴비 5개 (기간 3·10·25·40·50일, 온도 62·58·45·32·28℃, GI 20·35·62·80·95%). 질문 하나짜리 나무를 남은 오차 제곱합이 가장 작아지도록 골랐다.</p>
+  </template>
+  <template data-tab="notes">
+    <ol><li>비유: 오답노트. 채점 → 틀린 만큼만 다시 공부 → 다시 채점.</li>
+    <li>나무 0: 전부 평균(58.4)으로 찍음. 선(틀린 만큼)이 길다.</li>
+    <li>버튼을 누를 때마다 새 나무의 질문과 보정값이 나오고, 선이 짧아지며 아래 막대(남은 오차 합)가 줄어든다.</li>
+    <li>Q. XGB가 어렵다 → 오답노트 하나만 기억하면 된다.</li></ol>
+  </template>
+</section>
+
+<script>
+DECK.register('p-bst', root => {
+  const D = [[3, 62, 20], [10, 58, 35], [25, 45, 62], [40, 32, 80], [50, 28, 95]];   // days, temp, GI
+  const FEAT = [['기간', 0, '일'], ['온도', 1, '℃']];
+  const base = D.reduce((s, d) => s + d[2], 0) / D.length;
+  // precompute boosting rounds with one-question trees
+  const rounds = [{pred: D.map(() => base)}];
+  for (let r = 0; r < 5; r++) {
+    const pred = rounds[r].pred, res = D.map((d, i) => d[2] - pred[i]);
+    let best = null;
+    FEAT.forEach(([name, fi, unit]) => {
+      const vals = [...new Set(D.map(d => d[fi]))].sort((a, b) => a - b);
+      for (let k = 0; k < vals.length - 1; k++) {
+        const th = (vals[k] + vals[k + 1]) / 2, yes = [], no = [];
+        D.forEach((d, i) => (d[fi] > th ? yes : no).push(res[i]));
+        const m = a => a.reduce((s, v) => s + v, 0) / a.length, my = m(yes), mn = m(no);
+        const sse = yes.reduce((s, v) => s + (v - my) ** 2, 0) + no.reduce((s, v) => s + (v - mn) ** 2, 0);
+        if (!best || sse < best.sse - 1e-9) best = {sse, name, fi, unit, th, my, mn};
+      }
+    });
+    rounds.push({pred: D.map((d, i) => pred[i] + (d[best.fi] > best.th ? best.my : best.mn)), tree: best});
+  }
+  const err = p => Math.sqrt(D.reduce((s, d, i) => s + (d[2] - p[i]) ** 2, 0) / D.length);   // RMSE
+  const svg = root.querySelector('#bs-svg'), NS = 'http://www.w3.org/2000/svg';
+  const el = (t, a, s) => { const e = document.createElementNS(NS, t); for (const k in a) e.setAttribute(k, a[k]); if (s != null) e.textContent = s; return e; };
+  const sx = v => 260 + v / 100 * 720;
+  [0, 50, 100].forEach(v => svg.append(el('text', {x: sx(v), y: 296, class: 'rs', 'text-anchor': 'middle'}, `GI ${v}`)));
+  const rows = D.map((d, i) => {
+    const y = 34 + i * 52;
+    svg.append(el('text', {x: 0, y: y + 7, class: 'rl'}, `퇴비 ${i + 1}`), el('text', {x: 84, y: y + 7, class: 'rs'}, `${d[0]}일 · ${d[1]}℃`));
+    const g = el('line', {y1: y, y2: y, class: 'gap'}), real = el('circle', {cx: sx(d[2]), cy: y, r: 12, class: 'real'}),
+      pred = el('circle', {cy: y, r: 12, class: 'pred'}), lab = el('text', {y: y - 16, class: 'gl', 'text-anchor': 'middle'});
+    svg.append(g, real, pred, lab); return {g, pred, lab, d};
+  });
+  let n = 0;
+  const f1 = v => (v >= 0 ? '+' : '−') + Math.abs(v).toFixed(1);
+  function show() {
+    const p = rounds[n].pred;
+    rows.forEach((o, i) => {
+      const x0 = sx(o.d[2]), x1 = sx(p[i]), e = o.d[2] - p[i];
+      o.pred.setAttribute('cx', x1); o.g.setAttribute('x1', x0); o.g.setAttribute('x2', x1);
+      o.lab.setAttribute('x', (x0 + x1) / 2); o.lab.textContent = Math.abs(e) < 0.5 ? '' : Math.abs(e).toFixed(0);
+    });
+    const t = rounds[n].tree;
+    root.querySelector('#bs-q').innerHTML = n === 0
+      ? `<b>나무 0</b>: 아무것도 모르니 모든 퇴비를 평균 <b>${base.toFixed(1)}</b>로 찍었다. 선의 길이 = 틀린 만큼.`
+      : `<b>나무 ${n}</b>의 질문: “${t.name} &gt; ${t.th}${t.unit}?” → 예면 <b>${f1(t.my)}</b>, 아니오면 <b>${f1(t.mn)}</b> 보정. 정답이 아니라 <b>남은 오차</b>를 맞히도록 배웠다.`;
+    const hs = rounds.slice(0, n + 1).map(r => err(r.pred)), max = err(rounds[0].pred);
+    root.querySelector('#bs-h').innerHTML = hs.map((h, i) => `<div class="${i === n ? 'now' : ''}" style="height:${Math.max(3, h / max * 60)}px"><span>${h.toFixed(1)}</span></div>`).join('');
+    root.querySelector('#bs-next').disabled = n >= rounds.length - 1;
+  }
+  root.querySelector('#bs-next').addEventListener('click', () => { if (n < rounds.length - 1) { n++; show(); } });
+  root.querySelector('#bs-reset').addEventListener('click', () => { n = 0; show(); });
+  show();
+});
+</script>

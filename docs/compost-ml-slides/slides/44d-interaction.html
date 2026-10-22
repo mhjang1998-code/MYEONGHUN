@@ -1,0 +1,109 @@
+<style>
+#p-int .two{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+#p-int h3{margin:0;font-size:21px;color:var(--deep)}
+#p-int .g{display:grid;grid-template-columns:100px 1fr 1fr;gap:6px;font-size:18px}
+#p-int .g .h{font-weight:700;color:var(--note);display:flex;align-items:center;justify-content:center;text-align:center}
+#p-int .g .c{padding:14px 6px;text-align:center;font-weight:700;font-size:22px;color:var(--deep);background:var(--g0);transition:background .3s}
+#p-int .g .c small{display:block;font-size:15px;color:var(--note);font-weight:500}
+#p-int .g .c.bad{background:var(--t3)}
+#p-int .g .c.good{background:var(--main);color:var(--white)}
+#p-int .g .c.good small{color:var(--t3)}
+#p-int svg{width:100%;height:220px;display:block}
+#p-int .truth{fill:none;stroke:var(--deep);stroke-width:3}
+#p-int .fit{fill:none;stroke:var(--main);stroke-width:4;stroke-dasharray:10 6}
+#p-int .m2{font-size:19px;line-height:1.45;min-height:56px}
+#p-int .m2 b{color:var(--main)}
+</style>
+
+<section class="page" id="p-int" data-sec="② 모델">
+  <div class="sec rv">② 모델 · XGBoost ④ 왜 복잡한 관계에 강한가</div>
+  <h1 class="hl rv" style="--d:80ms">나무는 “A이면서 B일 때”와 꺾인 관계를 잘 잡는다</h1>
+  <p class="sub rv" style="--d:150ms">직선(더하기) 모델은 효과를 따로따로 더하기만 한다. 나무는 질문을 이어 붙여 조합과 구간을 나눈다</p>
+
+  <div class="body">
+    <div class="left">
+      <div class="row rv" style="--d:200ms" id="it-m"><button class="btn" data-m="lin" aria-pressed="true">직선(더하기) 모델로 맞히기</button><button class="btn" data-m="tree">나무 모델로 맞히기</button></div>
+      <div class="two rv" style="--d:260ms">
+        <div class="box">
+          <h3>① 상호작용: 온도 × 함수율 → NH₃</h3>
+          <div class="g" id="it-g"></div>
+          <div class="m2" id="it-m1"></div>
+        </div>
+        <div class="box">
+          <h3>② 비선형: 통기량 → NH₃</h3>
+          <svg id="it-svg" viewBox="0 0 470 220" role="img" aria-label="통기량과 NH3의 산 모양 관계와 모델 예측"></svg>
+          <div class="m2" id="it-m2"></div>
+        </div>
+      </div>
+      <div class="term rv" style="--d:340ms"><span class="ko">상호작용 · 비선형</span><span class="en">interaction · nonlinear</span><span class="pr">[인터랙션 · 논리니어]</span>
+        <span class="def">상호작용 = 두 변수가 함께일 때 효과가 달라짐. 비선형 = 직선이 아니라 휘거나 꺾이는 관계.</span></div>
+    </div>
+
+    <aside class="side rv" style="--d:300ms">
+      <span class="lab">외울 한 줄</span>
+      <button class="btn more" data-drawer="detail">내역 보기 ›</button>
+      <div class="memo">나무는 질문을 이어 붙여 조합(상호작용)과 꺾인 관계(비선형)를 잡는다</div>
+      <p class="p2"><b>논문에서는</b> Wang: “XGB는 비선형 관계와 복잡한 특성 간 상호작용을 다루는 성능이 뛰어나 선택했다.” 통기량은 너무 적어도, 많아도 NH₃가 줄어드는 관계로 나타났다.</p>
+      <div class="insight"><span class="il">우리 캡스톤에서는</span><span class="ih">퇴비화는 조합 효과가 많아 나무 모델이 맞다</span><ul><li>온도·함수율·통기량은 따로가 아니라 함께 작용한다</li><li>선형 회귀는 비교용 기준선으로만 쓴다</li></ul></div>
+    </aside>
+  </div>
+
+  <div class="note">예시 데이터 · NH₃ 표의 값과 통기량 곡선은 설명용 · 직선 모델 값은 더하기 모델로 실제 계산 (입력에 따른 계산)</div>
+  <div class="foot"><span>Wang et al. (2024) 2.3, 3.4 Fig. 4</span><span class="pn"></span></div>
+
+  <template data-tab="detail">
+    <h4>직선(더하기) 모델이 못 하는 이유</h4>
+    <p>더하기 모델은 “온도가 높으면 +a, 함수율이 높으면 +b”를 따로 더한다. 그래서 둘 다 높을 때 a + b 이상으로 확 늘어나는 효과를 표현할 수 없다. 표에서 실제 8을 6.75로, 실제 1을 −0.25로 맞혔다.</p>
+    <h4>나무가 하는 일</h4>
+    <p>“온도 높음?” → 예 → “함수율 높음?”처럼 질문을 이어 붙이면 네 칸을 각각 따로 맞힐 수 있다. 통기량도 “0.3 이하?”, “0.7 이상?”처럼 구간을 나눠 산 모양을 계단으로 따라간다.</p>
+    <h4>XGB는 왜 특히 잘하나</h4>
+    <p>이런 나무를 오답노트처럼 수십 그루 이어 붙이므로(Shi: 50그루, 깊이 7), 남은 오차에 숨은 조합까지 차례로 잡아낸다.</p>
+  </template>
+  <template data-tab="source">
+    <p><b>Wang 2024, 2.3:</b> XGB는 비선형 관계와 복잡한 특성 간 상호작용을 다루는 성능이 뛰어나 선택되었다.</p>
+    <p><b>Wang 2024, 3.4:</b> 통기가 지나치게 많아도, 부족해도 암모니아 휘산이 줄어든다.</p>
+    <p><b>예시 데이터:</b> NH₃ 표 (온도 낮/높 × 함수율 낮/높) = 1, 2, 2, 8. 더하기 모델 최적값 −0.25, 3.25, 3.25, 6.75.</p>
+  </template>
+  <template data-tab="notes">
+    <ol><li>“직선 모델” → 표의 “많음(8)”을 못 맞히고, 산 모양을 직선으로 뭉갠다.</li>
+    <li>“나무 모델” → 네 칸을 정확히, 산 모양은 계단으로 따라간다.</li>
+    <li>Q. XGB는 왜 비선형·상호작용에 강해? → 나무를 이어 붙이니까.</li></ol>
+  </template>
+</section>
+
+<script>
+DECK.register('p-int', root => {
+  const TRUE = [[1, 2], [2, 8]];               // [temp low/high][moist low/high]
+  const mean = 3.25, row = [1.5, 5], col = [1.5, 5];
+  const LIN = [[0, 1], [0, 1]].map((r, i) => r.map(j => row[i] + col[j] - mean));
+  const $ = id => root.querySelector('#' + id), NS = 'http://www.w3.org/2000/svg';
+  const el = (t, a, s) => { const e = document.createElementNS(NS, t); for (const k in a) e.setAttribute(k, a[k]); if (s != null) e.textContent = s; return e; };
+  const hump = a => 1 + 7 * Math.exp(-((a - 0.5) ** 2) / 0.03);       // aeration 0..1 → NH3
+  const L = 50, R = 460, T = 10, B = 180, sx = a => L + a * (R - L), sy = v => B - v / 9 * (B - T);
+  const svg = $('it-svg');
+  let d = ''; for (let a = 0; a <= 1.0001; a += 0.01) d += (d ? 'L' : 'M') + sx(a).toFixed(1) + ' ' + sy(hump(a)).toFixed(1);
+  svg.append(el('line', {x1: L, y1: B, x2: R, y2: B, class: 'ax'}), el('line', {x1: L, y1: T, x2: L, y2: B, class: 'ax'}), el('path', {d, class: 'truth'}),
+    el('text', {x: R, y: B + 28, class: 'axl', 'text-anchor': 'end'}, '통기량 (적음 → 많음)'), el('text', {x: L - 8, y: T + 12, class: 'axl', 'text-anchor': 'end'}, 'NH₃'));
+  const fit = el('path', {class: 'fit'}); svg.append(fit);
+  // straight-line fit and 5-step tree fit, computed on a grid
+  const xs = Array.from({length: 101}, (_, i) => i / 100), ys = xs.map(hump);
+  const mx = xs.reduce((s, v) => s + v, 0) / xs.length, my = ys.reduce((s, v) => s + v, 0) / ys.length;
+  const b = xs.reduce((s, x, i) => s + (x - mx) * (ys[i] - my), 0) / xs.reduce((s, x) => s + (x - mx) ** 2, 0), a0 = my - b * mx;
+  const cuts = [0, 0.3, 0.42, 0.58, 0.7, 1.0001];
+  const stepVal = cuts.slice(0, -1).map((c, k) => { const pts = xs.filter(x => x >= c && x < cuts[k + 1]); return pts.reduce((s, x) => s + hump(x), 0) / pts.length; });
+  const linPath = `M${sx(0)} ${sy(a0)}L${sx(1)} ${sy(a0 + b)}`;
+  const treePath = cuts.slice(0, -1).map((c, k) => `${k ? 'L' : 'M'}${sx(c).toFixed(1)} ${sy(stepVal[k]).toFixed(1)}L${sx(Math.min(1, cuts[k + 1])).toFixed(1)} ${sy(stepVal[k]).toFixed(1)}`).join('');
+  function show(m) {
+    const P = m === 'lin' ? LIN : TRUE, lab = ['낮음', '높음'];
+    $('it-g').innerHTML = `<span></span><span class="h">함수율 낮음</span><span class="h">함수율 높음</span>` + [0, 1].map(i =>
+      `<span class="h">온도 ${lab[i]}</span>` + [0, 1].map(j => { const ok = Math.abs(P[i][j] - TRUE[i][j]) < 0.01;
+        return `<span class="c ${m === 'tree' ? (i && j ? 'good' : '') : ok ? '' : 'bad'}">${P[i][j].toFixed(m === 'lin' ? 2 : 0)}<small>실제 ${TRUE[i][j]}</small></span>`; }).join('')).join('');
+    $('it-m1').innerHTML = m === 'lin' ? '더하기만 해서 <b>둘 다 높을 때(8)</b>를 6.75로, 둘 다 낮을 때(1)를 −0.25로 틀렸다.' : '“온도 높음? → 함수율 높음?” 두 질문으로 <b>네 칸 모두 정확히</b> 맞혔다.';
+    fit.setAttribute('d', m === 'lin' ? linPath : treePath);
+    $('it-m2').innerHTML = m === 'lin' ? '직선 하나로는 <b>산 모양</b>을 못 그린다. 거의 평평한 선이 됐다.' : '구간을 나눠 <b>계단처럼</b> 산 모양을 따라간다. 나무를 더 쓰면 더 촘촘해진다.';
+    root.querySelectorAll('#it-m .btn').forEach(o => o.setAttribute('aria-pressed', String(o.dataset.m === m)));
+  }
+  root.querySelectorAll('#it-m .btn').forEach(o => o.addEventListener('click', () => show(o.dataset.m)));
+  show('lin');
+});
+</script>

@@ -1,0 +1,105 @@
+<style>
+#p-rj .bars{display:grid;grid-template-columns:270px 1fr 120px;gap:14px 16px;align-items:center;font-size:20px}
+#p-rj .bars .k{font-weight:700;color:var(--deep)}
+#p-rj .bars .k small{display:block;font-size:16px;font-weight:500;color:var(--note)}
+#p-rj .tr{height:34px;background:var(--g0);position:relative}
+#p-rj .tr .b{position:absolute;left:0;top:0;bottom:0;transition:width .5s var(--ease)}
+#p-rj .b.rm{background:var(--main)}
+#p-rj .b.tol{background:var(--t2)}
+#p-rj .b.sd{background:var(--gray)}
+#p-rj .bars .v{text-align:right;font-weight:700;color:var(--deep)}
+#p-rj .verdict{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+#p-rj .vc{border:1.5px solid var(--rule);padding:10px 16px;font-size:19px;line-height:1.4}
+#p-rj .vc b{display:block;font-size:26px;color:var(--main)}
+</style>
+
+<section class="page" id="p-rj" data-sec="③ 평가">
+  <div class="sec rv">③ 평가 · RMSE는 몇이면 좋은가</div>
+  <h1 class="hl rv" style="--d:80ms">RMSE에 정해진 합격선은 없다. 단위와 허용 오차로 판단한다</h1>
+  <p class="sub rv" style="--d:150ms">RMSE 5는 발아지수면 5%p, 온도면 5℃, 날짜면 5일. 같은 5라도 무엇을 맞히느냐에 따라 좋기도, 나쁘기도 하다</p>
+
+  <div class="body">
+    <div class="left">
+      <div class="box rv" style="--d:220ms">
+        <div class="row" id="rj-t">
+          <button class="btn" data-t="0" aria-pressed="true">발아지수 GI (%)</button>
+          <button class="btn" data-t="1">퇴비 온도 (℃)</button>
+          <button class="btn" data-t="2">부숙까지 걸린 날 (일)</button>
+          <button class="btn" data-t="3">누적 NH₃ (g/kg)</button>
+        </div>
+        <div class="ctl"><label for="rj-s">모델의 RMSE</label><input type="range" id="rj-s" min="0" max="100" step="1" value="25"><output id="rj-o"></output></div>
+        <div class="bars">
+          <span class="k">우리 모델 RMSE<small>평균 이만큼 틀림</small></span><div class="tr"><div class="b rm" id="rj-b1"></div></div><span class="v" id="rj-v1"></span>
+          <span class="k">현장 허용 오차<small>이만큼은 틀려도 괜찮음</small></span><div class="tr"><div class="b tol" id="rj-b2"></div></div><span class="v" id="rj-v2"></span>
+          <span class="k">평균만 찍었을 때<small>모델 없이 틀리는 정도 (표준편차)</small></span><div class="tr"><div class="b sd" id="rj-b3"></div></div><span class="v" id="rj-v3"></span>
+        </div>
+        <div class="verdict"><div class="vc">허용 오차와 비교<b id="rj-a"></b></div><div class="vc">평균만 찍기와 비교<b id="rj-c"></b></div></div>
+        <div class="msg" id="rj-msg" style="min-height:0"></div>
+      </div>
+    </div>
+
+    <aside class="side rv" style="--d:300ms">
+      <span class="lab">외울 한 줄</span>
+      <button class="btn more" data-drawer="detail">내역 보기 ›</button>
+      <div class="memo">RMSE는 맞히려는 값의 단위. 허용 오차·표준편차·다른 모델과 비교해 판단한다</div>
+      <p class="p2"><b>논문에서는</b> Shi RF의 RMSE 7.26%p는 GI가 흩어진 정도(약 29%p)의 1/4 수준. R² 0.937에서 거꾸로 계산한 값이다.</p>
+      <div class="insight"><span class="il">우리 캡스톤에서는</span><span class="ih">모델을 만들기 전에 허용 오차를 먼저 정한다</span><ul><li>“NH₃를 몇 g/kg까지 틀려도 괜찮은가”를 현장 기준으로 적어 둔다</li><li>RMSE와 함께 RMSE ÷ 표준편차(또는 R²)도 같이 보고한다</li></ul></div>
+    </aside>
+  </div>
+
+  <div class="note">GI 표준편차 약 29%p는 Shi R²·RMSE로 역산한 값, GI RMSE 7.26·NH₃ RMSE 0.26은 논문 값 · 나머지 표준편차와 허용 오차는 예시 데이터</div>
+  <div class="foot"><span>Shi et al. (2025) 3.2 · Wang et al. (2024) Fig. 2a · Jamieson et al. (1991) 경험 기준</span><span class="pn"></span></div>
+
+  <template data-tab="detail">
+    <h4>판단하는 세 가지 방법</h4>
+    <table class="tb"><thead><tr><th>방법</th><th>어떻게</th><th>읽는 법</th></tr></thead><tbody>
+      <tr><td><b>① 허용 오차</b></td><td>RMSE와 “현장에서 괜찮은 오차”를 비교</td><td>RMSE가 더 작으면 실제로 쓸 만하다</td></tr>
+      <tr><td><b>② 표준편차</b></td><td>RMSE ÷ 표준편차</td><td>1이면 평균만 찍은 것과 같음. 0.5 미만이면 꽤 좋음 (R² 0.75 이상과 같음)</td></tr>
+      <tr><td><b>③ 다른 모델</b></td><td>같은 데이터에서 RMSE 비교</td><td>작을수록 좋다 (RF 7.26 &lt; ET 8.93)</td></tr></tbody></table>
+    <h4>R²와의 관계</h4>
+    <div class="eq">R² ≈ 1 − (RMSE ÷ 표준편차)²</div>
+    <p>Shi RF: R² 0.937 → RMSE ÷ 표준편차 ≈ √(1 − 0.937) ≈ 0.25 → 표준편차 ≈ 7.26 ÷ 0.25 ≈ 29%p.</p>
+    <h4>단위가 다른 목표끼리 비교할 때</h4>
+    <p>RMSE를 평균값으로 나눈 % (NRMSE, normalized RMSE [노멀라이즈드 알엠에스이])를 쓴다. 작물 모델 분야의 경험 기준: 10% 미만 매우 좋음, 10~20% 좋음, 20~30% 보통, 30% 초과 나쁨 (Jamieson et al., 1991; 분야마다 다름).</p>
+    <h4>이 장의 용어</h4>
+    <table class="tb"><tbody>
+      <tr><td><b>허용 오차</b></td><td>tolerance [톨러런스]</td><td>이만큼은 틀려도 판단이 안 바뀌는 범위</td></tr>
+      <tr><td><b>표준편차</b></td><td>standard deviation, SD [스탠더드 디비에이션]</td><td>값들이 평균에서 보통 떨어진 거리. 평균만 찍었을 때의 RMSE와 같다</td></tr></tbody></table>
+  </template>
+  <template data-tab="source">
+    <p><b>Shi 2025 3.2:</b> RF 시험 R² 0.937, RMSE 7.261, ET RMSE 8.930. GI 범위 0.31–154.82%.</p>
+    <p><b>Wang 2024 Fig. 2a:</b> NH₃ XGB 시험 RMSE 0.26 g/kg, 시험 R² 0.966 → 표준편차 약 1.4 g/kg로 역산.</p>
+    <p><b>Jamieson, P.D., Porter, J.R., Wilson, D.R. (1991)</b> Field Crops Research 27: NRMSE 구간 기준. 퇴비 분야의 공식 기준은 아니다 (일반 지식).</p>
+    <p><b>예시 데이터:</b> 온도 표준편차 12℃·허용 3℃, 부숙 기간 표준편차 15일·허용 3일, GI 허용 10%p, NH₃ 허용 0.5 g/kg는 설명용 값이다.</p>
+  </template>
+  <template data-tab="notes">
+    <ol><li>Q. RMSE는 몇이 나와야 오차가 적다는 기준이 있나? 단위는 맞히려는 값과 같은가? → 단위는 같다(온도면 ℃, 날짜면 일). 절대 기준은 없고 허용 오차·표준편차·다른 모델과 비교한다.</li>
+    <li>시연: 목표 버튼을 누르면 대표 RMSE로 이동한다 (GI 7.26 · NH₃ 0.26은 논문 값). 슬라이더를 키워 허용 오차를 넘는 지점을 확인. 부숙 기간 5일은 허용 3일을 넘는다.</li>
+    <li>경험칙(NRMSE 10/20/30%)은 참고만. 퇴비 분야 공식 기준은 아니다.</li></ol>
+  </template>
+</section>
+
+<script>
+DECK.register('p-rj', root => {
+  // name, unit, SD, tolerance, max slider, preset rmse, preset note
+  const T = [['GI를', '%p', 29, 10, 35, 7.26], ['온도를', '℃', 12, 3, 15, 2], ['부숙 기간을', '일', 15, 3, 18, 5], ['누적 NH₃를', 'g/kg', 1.4, 0.5, 1.7, 0.26]];
+  const $ = id => root.querySelector('#' + id), sl = $('rj-s');
+  let t = 0;
+  const fmt = v => v < 10 ? v.toFixed(2) : v.toFixed(1);
+  function show() {
+    const [n, u, sd, tol, mx] = T[t], rm = +sl.value / 100 * mx, scale = mx * 1.05;
+    $('rj-o').textContent = fmt(rm) + ' ' + u;
+    [[rm, 'rj-b1', 'rj-v1'], [tol, 'rj-b2', 'rj-v2'], [sd, 'rj-b3', 'rj-v3']].forEach(([v, b, l]) => { $(b).style.width = Math.min(100, v / scale * 100) + '%'; $(l).textContent = fmt(v) + ' ' + u; });
+    const ok = rm <= tol, ratio = rm / sd, r2 = 1 - ratio * ratio;
+    $('rj-a').textContent = ok ? '허용 범위 안 → 쓸 만함' : '허용 범위 밖 → 판단이 바뀔 수 있음';
+    $('rj-c').textContent = `${ratio.toFixed(2)}배 (R² ≈ ${r2.toFixed(2)})`;
+    $('rj-msg').innerHTML = `${n} 평균 <b>${fmt(rm)} ${u}</b> 틀린다. ` + (ratio >= 1 ? '평균만 찍은 것보다 못하다.' : ratio < 0.5 ? '평균만 찍을 때보다 오차가 절반도 안 된다 = 꽤 좋은 모델.' : '평균만 찍는 것보다는 낫지만 아쉽다.');
+  }
+  root.querySelectorAll('#rj-t .btn').forEach(b => b.addEventListener('click', () => {
+    t = +b.dataset.t; root.querySelectorAll('#rj-t .btn').forEach(o => o.setAttribute('aria-pressed', String(o === b)));
+    sl.value = Math.round(T[t][5] / T[t][4] * 100); show();
+  }));
+  sl.addEventListener('input', show);
+  sl.value = Math.round(T[0][5] / T[0][4] * 100); show();
+});
+</script>

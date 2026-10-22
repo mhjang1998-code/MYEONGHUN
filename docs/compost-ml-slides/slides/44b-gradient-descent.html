@@ -1,0 +1,100 @@
+<style>
+#p-gd svg{width:100%;height:300px;display:block}
+#p-gd .cv{fill:none;stroke:var(--deep);stroke-width:3}
+#p-gd .trail{fill:none;stroke:var(--t2);stroke-width:3;stroke-dasharray:6 5}
+#p-gd .ball{fill:var(--acc);transition:cx .35s var(--ease),cy .35s var(--ease)}
+#p-gd .old{fill:var(--t2)}
+#p-gd .min{fill:var(--main)}
+#p-gd .ml{fill:var(--main);font-size:17px;font-weight:700}
+#p-gd .stat{display:flex;gap:28px;font-size:20px;flex-wrap:wrap}
+#p-gd .stat b{color:var(--deep)}
+</style>
+
+<section class="page" id="p-gd" data-sec="② 모델">
+  <div class="sec rv">② 모델 · XGBoost ② 경사하강법과 학습률</div>
+  <h1 class="hl rv" style="--d:80ms">경사하강법은 오차가 줄어드는 쪽으로 한 걸음씩 내려간다</h1>
+  <p class="sub rv" style="--d:150ms">안개 낀 산에서 발밑의 기울기만 보고 아래로 걷는 것. 한 걸음의 크기가 “학습률”이다</p>
+
+  <div class="body">
+    <div class="left">
+      <div class="term rv" style="--d:200ms"><span class="ko">경사하강법</span><span class="en">gradient descent</span><span class="pr">[그래디언트 디센트]</span>
+        <span class="def">오차(손실)가 가장 작은 골짜기를 찾기 위해, 지금 서 있는 곳의 기울기(경사)를 보고 내려가는 쪽으로 조금씩 이동하는 방법. gradient = 경사, descent = 내려가기.</span></div>
+      <div class="box rv" style="--d:280ms">
+        <div class="row" id="gd-lr"><span class="cap" style="font-size:19px;font-weight:700;color:var(--deep)">보폭(학습률)</span><button class="btn" data-lr="0.05">아주 작게 0.05</button><button class="btn" data-lr="0.3" aria-pressed="true">적당 0.3</button><button class="btn" data-lr="0.95">너무 크게 0.95</button></div>
+        <div class="row"><button class="btn" id="gd-1">한 걸음 ›</button><button class="btn" id="gd-10">10걸음 ››</button><button class="btn" id="gd-r">처음으로</button></div>
+        <svg id="gd-svg" viewBox="0 0 1000 300" role="img" aria-label="손실 곡선을 따라 내려가는 공"></svg>
+        <div class="stat"><span>걸음 <b id="gd-n"></b></span><span>지금 오차(손실) <b id="gd-l"></b></span><span id="gd-m" style="font-weight:700;color:var(--main)"></span></div>
+      </div>
+    </div>
+
+    <aside class="side rv" style="--d:300ms">
+      <span class="lab">외울 한 줄</span>
+      <button class="btn more" data-drawer="detail">내역 보기 ›</button>
+      <div class="memo">경사하강법 = 기울기 보고 오차가 줄어드는 쪽으로 한 걸음씩. 보폭 = 학습률</div>
+      <p class="p2"><b>XGB와 연결</b> “그래디언트 부스팅”은 새 나무 하나하나가 오차를 줄이는 방향으로 내딛는 한 걸음이다. 학습률은 그 나무의 답을 얼마나 크게 반영할지 정한다.</p>
+      <div class="insight"><span class="il">우리 캡스톤에서는</span><span class="ih">학습률은 작게, 나무는 넉넉히가 기본</span><ul><li>너무 크면 골짜기를 지나쳐 왔다 갔다 한다</li><li>Shi의 XGB는 학습률 0.2를 골랐다 (후보 0.05·0.1·0.2)</li></ul></div>
+    </aside>
+  </div>
+
+  <div class="note">예시 데이터 · 곡선은 손실 = (w − 3)² + 1 · 한 걸음 = w − 학습률 × 기울기 (입력에 따른 계산)</div>
+  <div class="foot"><span>Wang et al. (2024) 2.3.1 · Shi et al. (2025) 2.2.4–2.2.5</span><span class="pn"></span></div>
+
+  <template data-tab="detail">
+    <h4>이 장의 용어</h4>
+    <table class="tb"><thead><tr><th>용어</th><th>영어 [발음]</th><th>쉬운 뜻</th></tr></thead><tbody>
+      <tr><td><b>경사하강법</b></td><td>gradient descent [그래디언트 디센트]</td><td>기울기를 보고 오차가 줄어드는 쪽으로 이동</td></tr>
+      <tr><td><b>경사 · 기울기</b></td><td>gradient [그래디언트]</td><td>지금 위치에서 오차가 얼마나 가파르게 변하나</td></tr>
+      <tr><td><b>학습률</b></td><td>learning rate [러닝 레이트]</td><td>한 걸음의 크기 (보폭)</td></tr>
+      <tr><td><b>수렴</b></td><td>convergence [컨버전스]</td><td>골짜기 바닥에 도착해 더 안 움직이는 것</td></tr>
+      <tr><td><b>발산</b></td><td>divergence [다이버전스]</td><td>보폭이 너무 커서 점점 멀어지는 것</td></tr></tbody></table>
+    <h4>원리 (한 걸음 계산)</h4>
+    <div class="eq">새 위치 = 지금 위치 − 학습률 × 기울기</div>
+    <p>기울기가 +면(오른쪽이 오르막) 왼쪽으로, −면 오른쪽으로 간다. 바닥에 가까울수록 기울기가 작아져 걸음도 작아진다.</p>
+    <h4>신경망과 XGB에서</h4>
+    <p>신경망(BPNN)은 가중치를 이 방식으로 고친다. XGB는 “다음 나무”가 기울기 방향의 한 걸음 역할을 한다(그래서 그래디언트 부스팅).</p>
+  </template>
+  <template data-tab="source">
+    <p><b>Wang 2024, 2.3.1:</b> XGB를 사용해 경사하강법 기법으로 지도학습 회귀 모델을 구축했다. learning_rate를 k-겹 교차검증으로 조정했다.</p>
+    <p><b>Shi 2025, 2.2.4:</b> XGB 학습률 탐색 [0.05, 0.1, 0.2] → 0.2 선택. 2.2.5: BPNN은 목적 함수의 기울기에 따라 매개변수를 갱신.</p>
+  </template>
+  <template data-tab="notes">
+    <ol><li>비유: 안개 낀 산. 멀리는 안 보이고 발밑 경사만 느낄 수 있다.</li>
+    <li>보폭 0.05: 너무 느림. 0.3: 몇 걸음 만에 바닥. 0.95: 골짜기를 넘나들며 왔다 갔다.</li>
+    <li>Q. 경사하강법이 뭐고 원리는? → 기울기를 보고 오차가 줄어드는 쪽으로 학습률만큼 이동, 반복.</li></ol>
+  </template>
+</section>
+
+<script>
+DECK.register('p-gd', root => {
+  const loss = w => (w - 3) ** 2 + 1, grad = w => 2 * (w - 3), W0 = -0.5;
+  const svg = root.querySelector('#gd-svg'), NS = 'http://www.w3.org/2000/svg';
+  const el = (t, a, s) => { const e = document.createElementNS(NS, t); for (const k in a) e.setAttribute(k, a[k]); if (s != null) e.textContent = s; return e; };
+  const L = 60, R = 990, T = 16, B = 260, sx = w => L + (w + 1) / 8 * (R - L), sy = v => B - Math.min(v, 17.5) / 17.5 * (B - T);
+  let d = ''; for (let w = -1; w <= 7.001; w += 0.05) d += (d ? 'L' : 'M') + sx(w).toFixed(1) + ' ' + sy(loss(w)).toFixed(1);
+  svg.append(el('line', {x1: L, y1: B, x2: R, y2: B, class: 'ax'}), el('line', {x1: L, y1: T, x2: L, y2: B, class: 'ax'}), el('path', {d, class: 'cv'}),
+    el('circle', {cx: sx(3), cy: sy(1), r: 7, class: 'min'}), el('text', {x: sx(3), y: sy(1) + 28, class: 'ml', 'text-anchor': 'middle'}, '골짜기 = 오차가 가장 작은 곳'),
+    el('text', {x: R, y: B + 30, class: 'axl', 'text-anchor': 'end'}, '모델 숫자 (가중치)'), el('text', {x: L - 10, y: T + 12, class: 'axl', 'text-anchor': 'end'}, '오차'));
+  const trail = el('path', {class: 'trail'}), olds = el('g', {}), ball = el('circle', {r: 13, class: 'ball'});
+  svg.append(trail, olds, ball);
+  let lr = 0.3, path = [W0];
+  function show() {
+    const w = path[path.length - 1];
+    ball.setAttribute('cx', sx(w)); ball.setAttribute('cy', sy(loss(w)));
+    trail.setAttribute('d', path.map((p, i) => (i ? 'L' : 'M') + sx(p).toFixed(1) + ' ' + sy(loss(p)).toFixed(1)).join(''));
+    olds.replaceChildren(...path.slice(0, -1).map(p => el('circle', {cx: sx(p), cy: sy(loss(p)), r: 6, class: 'old'})));
+    root.querySelector('#gd-n').textContent = path.length - 1 + '번';
+    root.querySelector('#gd-l').textContent = loss(w).toFixed(2);
+    const n = path.length - 1, near = Math.abs(w - 3) < 0.05;
+    root.querySelector('#gd-m').textContent = n === 0 ? '' : near ? '바닥 도착 (수렴)' :
+      lr >= 0.9 ? '보폭이 커서 골짜기를 넘나든다' : lr <= 0.06 ? '천천히 내려가는 중' : '내려가는 중';
+  }
+  const step = k => { for (let i = 0; i < k; i++) { const w = path[path.length - 1]; path.push(w - lr * grad(w)); } show(); };
+  root.querySelector('#gd-1').addEventListener('click', () => step(1));
+  root.querySelector('#gd-10').addEventListener('click', () => step(10));
+  root.querySelector('#gd-r').addEventListener('click', () => { path = [W0]; show(); });
+  root.querySelectorAll('#gd-lr .btn').forEach(b => b.addEventListener('click', () => {
+    lr = +b.dataset.lr; root.querySelectorAll('#gd-lr .btn').forEach(o => o.setAttribute('aria-pressed', String(o === b))); path = [W0]; show();
+  }));
+  show();
+});
+</script>

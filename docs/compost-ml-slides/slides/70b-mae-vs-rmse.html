@@ -1,0 +1,84 @@
+<style>
+#p-mr .errs{display:grid;grid-template-columns:repeat(5,1fr);gap:12px;align-items:end;height:220px}
+#p-mr .ec{display:flex;flex-direction:column;align-items:center;justify-content:flex-end;gap:6px;height:100%}
+#p-mr .ec .bar{width:70%;background:var(--t2);transition:height .45s var(--ease)}
+#p-mr .ec .bar.big{background:var(--main)}
+#p-mr .ec .v{font-size:20px;font-weight:700;color:var(--deep)}
+#p-mr .ec .sq{font-size:16px;color:var(--note)}
+#p-mr .ec .n{font-size:17px;color:var(--note);font-weight:700}
+#p-mr .duo{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+#p-mr .st{border:1.5px solid var(--rule);padding:10px 16px;display:flex;justify-content:space-between;align-items:baseline;font-size:19px;font-weight:700;color:var(--note)}
+#p-mr .st b{font-size:40px;color:var(--deep)}
+#p-mr .st.m{border-color:var(--main)}
+#p-mr .st.m b{color:var(--main)}
+</style>
+
+<section class="page" id="p-mr" data-sec="③ 평가">
+  <div class="sec rv">③ 평가 · MAE와 RMSE의 차이</div>
+  <h1 class="hl rv" style="--d:80ms">MAE는 평균 실수, RMSE는 “가끔 크게 틀리는지”까지 본다</h1>
+  <p class="sub rv" style="--d:150ms">틀린 점수 합이 같아도, 고르게 틀린 모델과 한 번 크게 틀린 모델은 RMSE가 다르다</p>
+
+  <div class="body">
+    <div class="left">
+      <div class="terms2 rv" style="--d:200ms;display:grid;grid-template-columns:1fr 1fr;gap:12px">
+        <div class="term"><span class="ko">평균절대오차</span><span class="en">MAE</span><span class="pr">[엠에이이 · 민 앱솔루트 에러]</span><span class="def" style="font-size:18px">틀린 점수의 단순 평균. 모든 실수를 똑같이 센다</span></div>
+        <div class="term"><span class="ko">평균제곱근오차</span><span class="en">RMSE</span><span class="pr">[알엠에스이]</span><span class="def" style="font-size:18px">제곱 → 평균 → 루트. 큰 실수를 더 무겁게 센다</span></div>
+      </div>
+      <div class="box rv" style="--d:280ms">
+        <div class="ctl"><label for="mr-s">실수 몰아주기</label><input type="range" id="mr-s" min="0" max="100" step="1" value="0"><output id="mr-o"></output></div>
+        <div class="errs" id="mr-e"></div>
+        <div class="duo"><div class="st"><span>MAE</span><b id="mr-mae"></b></div><div class="st m"><span>RMSE</span><b id="mr-rmse"></b></div></div>
+        <div class="msg" id="mr-msg" style="min-height:0"></div>
+      </div>
+    </div>
+
+    <aside class="side rv" style="--d:300ms">
+      <span class="lab">외울 한 줄</span>
+      <button class="btn more" data-drawer="detail">내역 보기 ›</button>
+      <div class="memo">RMSE ≈ MAE면 고르게 틀림, RMSE ≫ MAE면 가끔 크게 틀림</div>
+      <p class="p2"><b>논문에서는</b> Shi RF: MAE 5.69, RMSE 7.26 → 1.28배. 대체로 고르게 틀렸다. Wang 표에는 RMSE가 MAE보다 작게 적힌 칸이 있는데, 수학적으로 불가능해 오기로 보인다.</p>
+      <div class="insight"><span class="il">우리 캡스톤에서는</span><span class="ih">MAE와 RMSE를 둘 다 보고한다</span><ul><li>둘의 차이가 크면 크게 틀린 퇴비를 찾아 원인(추출 실수, 단위)을 확인한다</li><li>“평균 몇 g 틀림”을 말할 땐 MAE가 더 직관적이다</li></ul></div>
+    </aside>
+  </div>
+
+  <div class="note">예시 데이터 · 퇴비 5개의 틀린 점수 합은 항상 50 (MAE 10으로 고정), 몰아주는 정도만 바꾼다 (입력에 따른 계산)</div>
+  <div class="foot"><span>Shi et al. (2025) 2.3, 3.2 · Wang et al. (2024) 2.4 Table 1</span><span class="pn"></span></div>
+
+  <template data-tab="detail">
+    <h4>계산 비교</h4>
+    <table class="tb"><thead><tr><th></th><th>틀린 점수</th><th>MAE</th><th>RMSE</th></tr></thead><tbody>
+      <tr><td>고르게</td><td>10, 10, 10, 10, 10</td><td>50 ÷ 5 = 10</td><td>√(500 ÷ 5) = 10</td></tr>
+      <tr class="k"><td>한 번 크게</td><td>0, 0, 0, 0, 50</td><td>50 ÷ 5 = 10</td><td>√(2,500 ÷ 5) ≈ 22.4</td></tr></tbody></table>
+    <h4>왜 이런 차이가 나나</h4>
+    <p>제곱은 큰 수를 훨씬 크게 만든다. 10² = 100이지만 50² = 2,500. 그래서 큰 실수 하나가 평균을 끌어올리고, 루트를 씌워도 그 흔적이 남는다.</p>
+    <h4>어떤 걸 쓰나</h4>
+    <ul><li>큰 실수가 특히 곤란하면(예: 부숙 판정 경계) RMSE를 중시.</li>
+    <li>평균적인 오차를 쉽게 설명하려면 MAE.</li>
+    <li>두 논문 모두 둘 다 보고했다.</li></ul>
+  </template>
+  <template data-tab="source">
+    <p><b>Shi 2025 3.2:</b> RF 시험 MAE 5.685, RMSE 7.261.</p>
+    <p><b>Wang 2024 2.4:</b> RMSE는 잔차의 표본 표준편차, MAE는 절대오차의 평균. Table 1의 XGB-NH₃ 값(RMSE &lt; MAE)은 오기로 보인다.</p>
+  </template>
+  <template data-tab="notes">
+    <ol><li>Q. MAE와 RMSE가 느낌적으로 어떻게 다른지 안 와닿는다 → 틀린 합이 같아도, 한 번 크게 틀리면 RMSE만 커진다.</li>
+    <li>슬라이더를 오른쪽으로: MAE는 10 그대로, RMSE는 10 → 22.4.</li></ol>
+  </template>
+</section>
+
+<script>
+DECK.register('p-mr', root => {
+  const sl = root.querySelector('#mr-s');
+  function show() {
+    const t = +sl.value / 100;                               // 0 = even, 1 = all in one
+    const e = [0, 1, 2, 3].map(() => 10 * (1 - t)); e.push(50 - e.reduce((a, b) => a + b, 0));
+    const mae = e.reduce((a, b) => a + b, 0) / 5, rmse = Math.sqrt(e.reduce((a, b) => a + b * b, 0) / 5);
+    root.querySelector('#mr-e').innerHTML = e.map((v, i) => `<div class="ec"><span class="v">${v.toFixed(1)}점</span><span class="sq">제곱 ${(v * v).toFixed(0)}</span>
+      <div class="bar ${v > 20 ? 'big' : ''}" style="height:${Math.max(2, v / 50 * 120)}px"></div><span class="n">퇴비 ${i + 1}</span></div>`).join('');
+    root.querySelector('#mr-mae').textContent = mae.toFixed(1); root.querySelector('#mr-rmse').textContent = rmse.toFixed(1);
+    root.querySelector('#mr-o').textContent = t < 0.05 ? '고르게' : t > 0.95 ? '한 곳에 몰빵' : '몰리는 중';
+    root.querySelector('#mr-msg').innerHTML = `틀린 점수 합은 항상 50, <b>MAE는 계속 10</b>. 그런데 실수가 한 퇴비에 몰릴수록 <b>RMSE는 ${rmse.toFixed(1)}</b>까지 커진다 (MAE의 ${(rmse / mae).toFixed(2)}배).`;
+  }
+  sl.addEventListener('input', show); show();
+});
+</script>

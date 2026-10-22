@@ -51,6 +51,7 @@ window.DECK = (() => {
   stage.addEventListener('click', e => {
     const b = e.target.closest('[data-drawer]'); if (b) openDrawer(b.dataset.drawer);
     const j = e.target.closest('[data-goto]'); if (j) { closeAll(); show(+j.dataset.goto - 1); }
+    const g = e.target.closest('[data-goto-id]'); if (g) { closeAll(); show(pages.findIndex(p => p.id === g.dataset.gotoId)); }
   });
 
   // overview

@@ -72,7 +72,7 @@ CHROME = """
 
 
 def main():
-    files = sorted(glob.glob(os.path.join(HERE, "slides", "[0-9][0-9]-*.html")))
+    files = sorted(glob.glob(os.path.join(HERE, "slides", "[0-9][0-9]*.html")))
     styles, markup, scripts = [], [], []
     for f in files:
         s, m, j = split_fragment(open(f, encoding="utf-8").read())

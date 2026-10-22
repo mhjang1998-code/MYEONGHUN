@@ -1,0 +1,102 @@
+<style>
+#p-cv .folds{display:grid;grid-template-columns:120px repeat(5,1fr) 110px;gap:6px;align-items:center;font-size:18px}
+#p-cv .folds .lb{font-weight:700;color:var(--deep)}
+#p-cv .fd{height:44px;display:flex;align-items:center;justify-content:center;font-weight:700;background:var(--t3);color:var(--deep);transition:background .3s}
+#p-cv .fd.te{background:var(--main);color:var(--white)}
+#p-cv .fd.dim{opacity:.35}
+#p-cv .sc{text-align:right;font-weight:700;color:var(--main)}
+#p-cv .avg{font-size:22px;font-weight:700;color:var(--deep)}
+#p-cv .avg b{color:var(--main);font-size:30px}
+#p-cv .gs{display:grid;grid-template-columns:130px repeat(2,1fr);gap:6px;font-size:18px}
+#p-cv .gs .h{font-weight:700;color:var(--note);display:flex;align-items:center;justify-content:center}
+#p-cv .gs .c{padding:10px;text-align:center;font-weight:700;background:var(--g0);color:var(--deep)}
+#p-cv .gs .c.best{background:var(--main);color:var(--white)}
+#p-cv .two{display:grid;grid-template-columns:1.25fr 1fr;gap:14px}
+#p-cv h3{margin:0;font-size:20px;color:var(--deep)}
+</style>
+
+<section class="page" id="p-cv" data-sec="② 모델">
+  <div class="sec rv">② 모델 · XGBoost ⑥ k-겹 교차검증</div>
+  <h1 class="hl rv" style="--d:80ms">교차검증은 시험 범위를 돌려 가며 모의고사를 여러 번 본다</h1>
+  <p class="sub rv" style="--d:150ms">한 번만 시험 보면 운이 섞인다. 데이터를 k조각으로 나눠 조각마다 한 번씩 시험지로 쓰고 점수를 평균 낸다</p>
+
+  <div class="body">
+    <div class="left">
+      <div class="term rv" style="--d:200ms"><span class="ko">k-겹 교차검증</span><span class="en">k-fold cross-validation</span><span class="pr">[케이 폴드 크로스 밸리데이션]</span>
+        <span class="def">학습 데이터를 k조각으로 나눠, 한 조각은 시험용·나머지는 학습용으로 k번 돌려 본 뒤 평균 점수를 내는 방법. 손잡이(하이퍼파라미터)를 고를 때 쓴다.</span></div>
+      <div class="two rv" style="--d:280ms">
+        <div class="box">
+          <div class="row"><button class="btn" id="cv-n">다음 회차 ›</button><button class="btn" id="cv-r">처음으로</button><span class="cap">5겹 (k = 5) · 진한 칸 = 이번 시험지</span></div>
+          <div class="folds" id="cv-f"></div>
+          <div class="avg" id="cv-a"></div>
+        </div>
+        <div class="box">
+          <h3>손잡이 조합 고르기 (그리드 탐색)</h3>
+          <div class="gs" id="cv-g"></div>
+          <div class="cap" style="font-size:17px">칸 = 그 조합의 5겹 평균 R². 가장 높은 조합을 고른다 (6조합 × 5겹 = 30번 학습)</div>
+        </div>
+      </div>
+    </div>
+
+    <aside class="side rv" style="--d:300ms">
+      <span class="lab">외울 한 줄</span>
+      <button class="btn more" data-drawer="detail">내역 보기 ›</button>
+      <div class="memo">교차검증 = 시험 범위를 돌려 가며 여러 번 보고 평균. 손잡이를 고를 때 쓴다</div>
+      <p class="p2"><b>논문에서는</b> Wang: 10겹 교차검증 + 그리드·무작위 탐색. Shi: GridSearchCV(교차검증을 붙인 그리드 탐색)로 모든 모델의 손잡이를 골랐다.</p>
+      <div class="insight"><span class="il">우리 캡스톤에서는</span><span class="ih">조각을 논문 단위로 나눈다</span><ul><li>같은 논문의 날짜별 데이터가 학습·시험 조각에 섞이면 점수가 부풀려진다</li><li>마지막 시험 데이터는 교차검증에 쓰지 않고 끝까지 따로 둔다</li></ul></div>
+    </aside>
+  </div>
+
+  <div class="note">예시 데이터 · 회차별 점수와 조합별 평균 R²는 설명용 값</div>
+  <div class="foot"><span>Wang et al. (2024) 2.3, 3.2 · Shi et al. (2025) 2.2.1–2.2.6</span><span class="pn"></span></div>
+
+  <template data-tab="detail">
+    <h4>이 장의 용어</h4>
+    <table class="tb"><thead><tr><th>용어</th><th>영어 [발음]</th><th>쉬운 뜻</th></tr></thead><tbody>
+      <tr><td><b>k-겹 교차검증</b></td><td>k-fold cross-validation [케이 폴드 크로스 밸리데이션]</td><td>k조각을 돌려 가며 시험 보고 평균</td></tr>
+      <tr><td><b>그리드 탐색</b></td><td>grid search [그리드 서치]</td><td>후보 조합을 빠짐없이 전부 시험</td></tr>
+      <tr><td><b>무작위 탐색</b></td><td>random search [랜덤 서치]</td><td>조합 일부를 무작위로 골라 시험 (빠름)</td></tr>
+      <tr><td><b>GridSearchCV</b></td><td>[그리드 서치 씨브이]</td><td>사이킷런에서 그리드 탐색 + 교차검증을 한 번에 해 주는 도구</td></tr>
+      <tr><td><b>최적화 · 튜닝</b></td><td>optimization · tuning [옵티마이제이션 · 튜닝]</td><td>가장 좋은 손잡이 값을 찾는 일</td></tr></tbody></table>
+    <h4>전체 순서</h4>
+    <ol><li>데이터를 학습용(80%)과 마지막 시험용(20%)으로 나눈다. 시험용은 숨긴다.</li>
+    <li>학습용만으로 손잡이 조합마다 k-겹 교차검증 → 평균 점수.</li>
+    <li>평균이 가장 좋은 조합으로 학습용 전체를 다시 학습.</li>
+    <li>숨겨 둔 시험용으로 딱 한 번 채점 → 논문에 쓰는 시험 R².</li></ol>
+  </template>
+  <template data-tab="source">
+    <p><b>Wang 2024, 2.3:</b> 80% 학습, 20% 시험. cross_val_score, GridSearchCV, RandomizedSearchCV로 최적화. k-겹 교차검증으로 안정성과 성능을 확인하고, 그리드 탐색과 무작위 탐색을 결합해 파라미터를 조정했다. 3.2: 10겹 교차검증.</p>
+    <p><b>Shi 2025, 2.2:</b> 모든 모델의 하이퍼파라미터를 GridSearchCV로 결정했다.</p>
+    <p><b>예시 데이터:</b> 회차별 R² 0.88·0.91·0.85·0.90·0.89, 조합별 평균 R²는 설명용.</p>
+  </template>
+  <template data-tab="notes">
+    <ol><li>비유: 모의고사. 시험 범위를 바꿔 가며 다섯 번 보고 평균 내야 진짜 실력.</li>
+    <li>“다음 회차”를 눌러 시험지 조각이 옮겨 가는 것을 본다.</li>
+    <li>오른쪽 표: 깊이 × 학습률 조합 중 평균이 가장 높은 칸을 고른다.</li>
+    <li>Q. “k-겹 교차검증으로 최적화·조정”이 무슨 뜻? → 손잡이 후보를 바꿔 가며 모의고사 평균이 가장 좋은 것을 고른다.</li></ol>
+  </template>
+</section>
+
+<script>
+DECK.register('p-cv', root => {
+  const SC = [0.88, 0.91, 0.85, 0.90, 0.89];
+  let r = 0;
+  function show() {
+    const f = root.querySelector('#cv-f');
+    f.innerHTML = SC.map((s, i) => {
+      if (i > r) return `<span class="lb">${i + 1}회차</span>` + [0, 1, 2, 3, 4].map(() => '<span class="fd dim">·</span>').join('') + '<span class="sc"></span>';
+      return `<span class="lb">${i + 1}회차</span>` + [0, 1, 2, 3, 4].map(j => `<span class="fd ${j === i ? 'te' : ''}">${j === i ? '시험' : '학습'}</span>`).join('') + `<span class="sc">R² ${s.toFixed(2)}</span>`;
+    }).join('');
+    const done = SC.slice(0, r + 1), avg = done.reduce((a, b) => a + b, 0) / done.length;
+    root.querySelector('#cv-a').innerHTML = r < 4 ? `${r + 1}회 평균 R² <b>${avg.toFixed(3)}</b>` : `5회 평균 R² <b>${avg.toFixed(3)}</b> ← 이 조합의 점수`;
+    root.querySelector('#cv-n').disabled = r >= 4;
+  }
+  root.querySelector('#cv-n').addEventListener('click', () => { if (r < 4) { r++; show(); } });
+  root.querySelector('#cv-r').addEventListener('click', () => { r = 0; show(); });
+  show();
+  const D = [3, 5, 7], LR = [0.1, 0.2], G = [[0.84, 0.86], [0.88, 0.89], [0.87, 0.85]];
+  let best = [0, 0]; G.forEach((row, i) => row.forEach((v, j) => { if (v > G[best[0]][best[1]]) best = [i, j]; }));
+  root.querySelector('#cv-g').innerHTML = `<span class="h">깊이 / 학습률</span>` + LR.map(l => `<span class="h">학습률 ${l}</span>`).join('')
+    + D.map((d, i) => `<span class="h">깊이 ${d}</span>` + LR.map((l, j) => `<span class="c ${i === best[0] && j === best[1] ? 'best' : ''}">${G[i][j].toFixed(2)}</span>`).join('')).join('');
+});
+</script>
