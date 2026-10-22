@@ -67,6 +67,8 @@
   <div class="foot"><span>Shi et al. (2025) 2.2.5–2.2.6 BPNN·MLP, 3.2 · Wang et al. (2024) 2.2</span><span class="pn"></span></div>
 
   <template data-tab="detail">
+    <h4>손으로 계산해 보기</h4><p>퇴비 A 표준화 값: pH −1.25, NH₄⁺ −0.27. 가중치 w₁ 0.40, w₂ 0.30, 정답 0, 학습률 2.</p><table class="tb"><thead><tr><th>단계</th><th>계산</th><th>결과</th></tr></thead><tbody><tr><td>① 가중합 z</td><td>0.40 × (−1.25) + 0.30 × (−0.27)</td><td>−0.58</td></tr><tr><td>② 출력 y = σ(z)</td><td>1 ÷ (1 + e^0.58)</td><td>0.359</td></tr><tr class="k"><td>③ 기울기</td><td>y × (1 − y) = 0.359 × 0.641</td><td>0.230</td></tr><tr><td>④ 틀린 만큼</td><td>정답 − y = 0 − 0.359</td><td>−0.359</td></tr><tr><td>⑤ w₁ 변화</td><td>2 × (−0.359) × 0.230 × (−1.25)</td><td>+0.206 → w₁ = 0.606</td></tr><tr><td>⑥ w₂ 변화</td><td>2 × (−0.359) × 0.230 × (−0.27)</td><td>+0.044 → w₂ = 0.344</td></tr><tr class="k"><td>⑦ 다시 계산</td><td>z = 0.606 × (−1.25) + 0.344 × (−0.27) = −0.85</td><td>y = 0.299 (정답 0에 가까워짐)</td></tr></tbody></table><p>원래 값을 넣으면: z = 0.40 × 6.0 + 0.30 × 1,200 = <b>362.4</b> → y = 1.000, 기울기 = 1 × 0 ≈ 0 → ⑤⑥이 0 × … = 0. 가중치가 전혀 안 바뀐다 = 포화.</p>
+
     <h4>용어</h4>
     <table class="tb"><tbody>
       <tr><td><b>뉴런</b></td><td>입력에 가중치를 곱해 더한 뒤(가중합 z) 활성화 함수에 넣는 계산 단위</td></tr>

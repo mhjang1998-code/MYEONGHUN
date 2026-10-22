@@ -50,6 +50,8 @@
   <div class="foot"><span>Wang et al. (2024) 2.3.3 식 (7), 3.3 Fig. 3</span><span class="pn"></span></div>
 
   <template data-tab="detail">
+    <h4>손으로 계산해 보기</h4><p>표준화한 값 (기간, 온도). 새 퇴비 = (0.2, 0.1).</p><table class="tb"><thead><tr><th>과거 퇴비</th><th>값</th><th>거리 = √(기간차² + 온도차²)</th><th>부숙?</th></tr></thead><tbody><tr><td>A</td><td>(0.3, 0.4)</td><td>√(0.1² + 0.3²) = √0.10 = 0.32</td><td>미부숙</td></tr><tr><td>B</td><td>(0.5, −0.2)</td><td>√(0.3² + 0.3²) = √0.18 = 0.42</td><td>부숙</td></tr><tr><td>C</td><td>(−0.1, −0.3)</td><td>√(0.3² + 0.4²) = √0.25 = 0.50</td><td>부숙</td></tr><tr><td>D</td><td>(1.5, 1.2)</td><td>√(1.3² + 1.1²) = √2.90 = 1.70</td><td>미부숙</td></tr></tbody></table><p>k = 1 → 가장 가까운 A(0.32) → <b>미부숙</b>. k = 3 → A, B, C → 부숙 2표 · 미부숙 1표 → <b>부숙</b>. k에 따라 판정이 바뀐다.</p>
+
     <h4>이 장의 용어</h4>
     <table class="tb"><thead><tr><th>용어</th><th>영어 [발음]</th><th>쉬운 뜻</th></tr></thead><tbody>
       <tr><td><b>KNN</b></td><td>k-nearest neighbors [케이 니어리스트 네이버스]</td><td>가장 가까운 이웃 k개의 다수결(또는 평균)</td></tr>

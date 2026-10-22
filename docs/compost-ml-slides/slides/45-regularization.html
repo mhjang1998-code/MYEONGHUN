@@ -47,6 +47,8 @@
   <div class="foot"><span>Wang et al. (2024) 2.3, 2.3.1 식 (2)–(3) · Shi et al. (2025) 2.2.4–2.2.5</span><span class="pn"></span></div>
 
   <template data-tab="detail">
+    <h4>손으로 계산해 보기</h4><p>가중치가 [3, 0.5, −2]인 모델의 벌점.</p><table class="tb"><thead><tr><th>규제</th><th>계산</th><th>벌점</th></tr></thead><tbody><tr><td>L1</td><td>|3| + |0.5| + |−2|</td><td>5.5</td></tr><tr><td>L2</td><td>3² + 0.5² + (−2)²  = 9 + 0.25 + 4</td><td>13.25</td></tr></tbody></table><p>L2에서는 큰 가중치 3이 벌점의 대부분(9)을 차지한다 → 큰 값부터 줄이게 된다. L1은 크기에 비례해 깎으므로 작은 값(0.5)은 아예 0이 되기 쉽다.</p><h4>벌점이 모델 선택을 바꾸는 계산</h4><p>최종 점수 = 오차 + λ × 벌점 (λ = 0.1)</p><table class="tb"><thead><tr><th>모델</th><th>오차</th><th>L2 벌점</th><th>최종 점수</th></tr></thead><tbody><tr><td>꼬불꼬불 (외움)</td><td>2</td><td>400</td><td>2 + 40 = 42</td></tr><tr class="k"><td>부드러움</td><td>6</td><td>20</td><td>6 + 2 = <b>8</b></td></tr></tbody></table><p>오차만 보면 꼬불꼬불한 모델(2)이 이기지만, 벌점을 더하면 부드러운 모델이 선택된다.</p>
+
     <h4>이 장의 용어</h4>
     <table class="tb"><thead><tr><th>용어</th><th>영어 [발음]</th><th>쉬운 뜻</th></tr></thead><tbody>
       <tr><td><b>규제</b></td><td>regularization [레귤러라이제이션]</td><td>복잡함에 벌점을 줘 외우기를 막는 장치</td></tr>

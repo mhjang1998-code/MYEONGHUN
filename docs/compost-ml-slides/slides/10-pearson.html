@@ -42,6 +42,8 @@
   <div class="foot"><span>Wang et al. (2024) 2.2 데이터 전처리, 3.1 Fig. 1a</span><span class="pn"></span></div>
 
   <template data-tab="detail">
+    <h4>손으로 계산해 보기</h4><p>퇴비 4개: 기간 10·20·30·40일, GI 30·50·60·80%. 평균은 기간 25일, GI 55%.</p><table class="tb"><thead><tr><th>퇴비</th><th>기간 − 평균</th><th>GI − 평균</th><th>① 둘을 곱함</th><th>② 기간차²</th><th>③ GI차²</th></tr></thead><tbody><tr><td>1</td><td>−15</td><td>−25</td><td>+375</td><td>225</td><td>625</td></tr><tr><td>2</td><td>−5</td><td>−5</td><td>+25</td><td>25</td><td>25</td></tr><tr><td>3</td><td>+5</td><td>+5</td><td>+25</td><td>25</td><td>25</td></tr><tr><td>4</td><td>+15</td><td>+25</td><td>+375</td><td>225</td><td>625</td></tr><tr class="k"><td>합</td><td></td><td></td><td>800</td><td>500</td><td>1,300</td></tr></tbody></table><div class="eq">r = ① 합 ÷ √(② 합 × ③ 합) = 800 ÷ √(500 × 1,300) = 800 ÷ 806.2 = 0.99</div><p>핵심: 둘 다 평균보다 크거나(+×+) 둘 다 작으면(−×−) 곱이 +. 같은 방향으로 움직일수록 ①이 커져 r이 1에 가까워진다. 반대로 움직이면 곱이 −가 되어 r이 −쪽으로 간다.</p>
+
     <h4>이 장의 용어</h4>
     <table class="tb"><thead><tr><th>용어</th><th>영어 [발음]</th><th>쉬운 뜻</th></tr></thead><tbody>
       <tr><td><b>상관</b></td><td>correlation [코릴레이션]</td><td>두 값이 같이 움직이는 관계</td></tr>

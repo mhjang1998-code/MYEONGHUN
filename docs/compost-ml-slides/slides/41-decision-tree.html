@@ -40,6 +40,8 @@
   <div class="foot"><span>Shi et al. (2025) 2.2 · Wang et al. (2024) 2.3</span><span class="pn"></span></div>
 
   <template data-tab="detail">
+    <h4>손으로 계산해 보기</h4><p>퇴비 6개: 온도 62·58·50℃는 미부숙, 45·35·30℃는 부숙. 어떤 기준선이 더 좋은 질문일까?</p><table class="tb"><thead><tr><th>후보 질문</th><th>예 쪽</th><th>아니오 쪽</th><th>다수결로 답하면 틀리는 수</th></tr></thead><tbody><tr><td>온도 > 55℃?</td><td>62·58 → 미부숙 2</td><td>50·45·35·30 → 미부숙 1, 부숙 3</td><td>1개 (50℃)</td></tr><tr class="k"><td>온도 > 47.5℃?</td><td>62·58·50 → 미부숙 3</td><td>45·35·30 → 부숙 3</td><td>0개</td></tr><tr><td>온도 > 32.5℃?</td><td>62·58·50·45·35 → 미부숙 3, 부숙 2</td><td>30 → 부숙 1</td><td>2개</td></tr></tbody></table><p>→ 틀리는 수가 가장 적은 <b>“온도 > 47.5℃?”</b>를 고른다. 실제 모델은 “틀리는 수” 대신 지니 불순도(Gini impurity [지니 임퓨리티])나 오차 제곱으로 같은 비교를 한다. 기준값은 두 데이터 사이 가운데(45와 50의 중간 47.5)로 잡는다.</p>
+
     <h4>이 장의 용어</h4>
     <table class="tb"><thead><tr><th>용어</th><th>영어 [발음]</th><th>쉬운 뜻</th></tr></thead><tbody>
       <tr><td><b>결정 트리</b></td><td>decision tree [디시전 트리]</td><td>질문을 따라 내려가며 답을 정하는 나무 모양 모델</td></tr>

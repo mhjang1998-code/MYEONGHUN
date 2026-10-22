@@ -59,6 +59,8 @@
   <div class="foot"><span>Shi et al. (2025) 2.2, 3.2 · Wang et al. (2024) 2.3</span><span class="pn"></span></div>
 
   <template data-tab="detail">
+    <h4>손으로 계산해 보기</h4><p>기준선 51℃를 단위만 바꿔 보기 (표준화 μ 50℃, σ 13℃).</p><table class="tb"><thead><tr><th></th><th>℃</th><th>℉ = ℃ × 9/5 + 32</th><th>Z = (℃ − 50) ÷ 13</th><th>기준선보다</th></tr></thead><tbody><tr class="k"><td>기준선</td><td>51</td><td>123.8</td><td>+0.08</td><td></td></tr><tr><td>퇴비 47℃</td><td>47</td><td>116.6</td><td>−0.23</td><td>작다 (부숙 쪽)</td></tr><tr><td>퇴비 55℃</td><td>55</td><td>131.0</td><td>+0.38</td><td>크다 (미부숙 쪽)</td></tr></tbody></table><p>숫자는 모두 바뀌지만 “기준선보다 큰가 작은가”는 세 단위에서 똑같다. 그래서 트리 결과는 단위와 상관없다.</p>
+
     <h4>두 모델 가족</h4>
     <table class="tb"><thead><tr><th></th><th>트리 모델</th><th>신경망</th></tr></thead><tbody>
       <tr><td>계산</td><td>“온도 &gt; 55℃?” 같은 질문으로 계속 둘로 나눔</td><td>입력 × 가중치를 더해 S자 곡선(활성화 함수) 통과, 여러 층 반복</td></tr>

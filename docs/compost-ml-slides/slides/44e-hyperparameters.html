@@ -42,6 +42,8 @@
   <div class="foot"><span>Wang et al. (2024) 2.3.1 · Shi et al. (2025) 2.2.4</span><span class="pn"></span></div>
 
   <template data-tab="detail">
+    <h4>손으로 계산해 보기</h4><p>Shi 논문의 XGB 후보 개수: 나무 수 3 × 깊이 4 × min_child_weight 3 × gamma 3 × subsample 3 × colsample 3 × 학습률 3</p><div class="eq">3 × 4 × 3 × 3 × 3 × 3 × 3 = 2,916개 조합</div><p>조합마다 k-겹 교차검증을 하므로 학습 횟수는 2,916 × k번. 5겹이면 14,580번. 그래서 후보를 2~4개로 좁게 잡는다 (Shi도 “계산 능력 제한”으로 범위를 줄였다고 썼다).</p>
+
     <h4>Shi 논문 XGB 설정 전체</h4>
     <table class="tb"><thead><tr><th>코드 이름 [발음]</th><th>쉬운 뜻</th><th>후보</th><th>선택</th></tr></thead><tbody>
       <tr><td>n_estimators [엔 에스티메이터스]</td><td>나무 수</td><td>20, 30, 50</td><td>50</td></tr>

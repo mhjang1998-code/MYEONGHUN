@@ -42,6 +42,8 @@
   <div class="foot"><span>Shi et al. (2025) 2.3, 3.2 · Wang et al. (2024) 2.4, Table 1</span><span class="pn"></span></div>
 
   <template data-tab="detail">
+    <h4>손으로 계산해 보기</h4><p>퇴비 4개 실제 GI: 20, 40, 60, 80 (평균 50).</p><table class="tb"><thead><tr><th></th><th>예측</th><th>오차² 합</th><th>평균과의 차이² 합</th><th>R² = 1 − 오차² 합 ÷ 차이² 합</th></tr></thead><tbody><tr><td>잘 맞힌 모델</td><td>25, 35, 65, 75</td><td>25×4 = 100</td><td>900+100+100+900 = 1,800</td><td>1 − 100/1,800 = <b>0.94</b></td></tr><tr><td>항상 +25 치우침</td><td>45, 65, 85, 105</td><td>625×4 = 2,500</td><td>1,800</td><td>1 − 2,500/1,800 = <b>−0.39</b></td></tr></tbody></table><p>치우친 모델도 실제와 정확히 같이 움직이므로 피어슨 r = 1.00. 하지만 R²는 음수 = “평균 50만 찍는 것보다 못하다”.</p>
+
     <h4>이 장의 용어</h4>
     <table class="tb"><thead><tr><th>용어</th><th>영어 [발음]</th><th>쉬운 뜻</th></tr></thead><tbody>
       <tr><td><b>결정계수</b></td><td>coefficient of determination, R² [알 스퀘어]</td><td>모델 점수. 실제 변화의 몇 %를 설명했나</td></tr>

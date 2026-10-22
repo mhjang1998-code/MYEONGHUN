@@ -52,6 +52,8 @@
   <div class="foot"><span>Wang et al. (2024) 2.3.1 식 (2)–(3) · Shi et al. (2025) 2.2.5</span><span class="pn"></span></div>
 
   <template data-tab="detail">
+    <h4>손으로 계산해 보기</h4><table class="tb"><thead><tr><th>회귀: 실제 3.0 g/kg</th><th>오차</th><th>벌점 = 오차²</th></tr></thead><tbody><tr><td>예측 4.0</td><td>1</td><td>1</td></tr><tr><td>예측 5.0</td><td>2</td><td>4</td></tr><tr><td>예측 7.0</td><td>4</td><td>16</td></tr></tbody></table><table class="tb"><thead><tr><th>분류: 정답 부숙</th><th>모델이 말한 부숙 확률</th><th>벌점 = −ln(확률)</th></tr></thead><tbody><tr><td>자신 있게 맞힘</td><td>0.9</td><td>0.105</td></tr><tr><td>반반</td><td>0.5</td><td>0.693</td></tr><tr><td>틀림</td><td>0.1</td><td>2.303</td></tr><tr><td>자신 있게 틀림</td><td>0.01</td><td>4.605</td></tr></tbody></table><h4>목적함수 계산 (손실 + 규제)</h4><p>γ = 0.1, λ = 1일 때 두 나무를 비교한다.</p><table class="tb"><thead><tr><th></th><th>오차² 합 (손실)</th><th>잎 개수 T</th><th>잎 값² 합</th><th>벌점 = 0.1T + ½ × 1 × 잎 값² 합</th><th>목적함수</th></tr></thead><tbody><tr class="k"><td>작은 나무</td><td>10</td><td>4</td><td>5.25</td><td>0.4 + 2.6 = 3.0</td><td><b>13.0</b></td></tr><tr><td>큰 나무</td><td>6</td><td>8</td><td>20</td><td>0.8 + 10 = 10.8</td><td>16.8</td></tr></tbody></table><p>큰 나무가 손실은 더 작지만(6 &lt; 10) 벌점이 커서 목적함수는 더 크다. XGB는 <b>작은 나무</b>를 고른다 = 외우기 방지.</p>
+
     <h4>이 장의 용어</h4>
     <table class="tb"><thead><tr><th>용어</th><th>영어 [발음]</th><th>쉬운 뜻</th></tr></thead><tbody>
       <tr><td><b>손실함수</b></td><td>loss function [로스 펑션]</td><td>틀린 정도를 벌점으로 바꾸는 규칙</td></tr>

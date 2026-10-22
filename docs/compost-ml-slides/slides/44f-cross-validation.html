@@ -51,6 +51,8 @@
   <div class="foot"><span>Wang et al. (2024) 2.3, 3.2 · Shi et al. (2025) 2.2.1–2.2.6</span><span class="pn"></span></div>
 
   <template data-tab="detail">
+    <h4>손으로 계산해 보기</h4><table class="tb"><thead><tr><th>회차</th><th>시험 조각</th><th>점수 R²</th></tr></thead><tbody><tr><td>1</td><td>조각 1</td><td>0.88</td></tr><tr><td>2</td><td>조각 2</td><td>0.91</td></tr><tr><td>3</td><td>조각 3</td><td>0.85</td></tr><tr><td>4</td><td>조각 4</td><td>0.90</td></tr><tr><td>5</td><td>조각 5</td><td>0.89</td></tr><tr class="k"><td>평균</td><td>(0.88+0.91+0.85+0.90+0.89) ÷ 5 = 4.43 ÷ 5</td><td><b>0.886</b></td></tr></tbody></table><p>데이터 크기로 계산: Wang NH₃ 데이터 287개 → 학습 80% ≈ 230개, 시험 20% ≈ 57개(숨김). 학습 230개로 10겹 교차검증이면 한 회차에 약 207개로 학습, 23개로 시험 × 10번.</p><p>한 번만 시험 봤다면 0.85~0.91 중 운에 따라 아무 점수나 나왔을 것. 평균을 내야 믿을 만하다.</p>
+
     <h4>이 장의 용어</h4>
     <table class="tb"><thead><tr><th>용어</th><th>영어 [발음]</th><th>쉬운 뜻</th></tr></thead><tbody>
       <tr><td><b>k-겹 교차검증</b></td><td>k-fold cross-validation [케이 폴드 크로스 밸리데이션]</td><td>k조각을 돌려 가며 시험 보고 평균</td></tr>

@@ -43,6 +43,8 @@
   <div class="foot"><span>Shi et al. (2025) 2.2.1, 3.2 · Wang et al. (2024) 2.3.2</span><span class="pn"></span></div>
 
   <template data-tab="detail">
+    <h4>손으로 계산해 보기</h4><table class="tb"><thead><tr><th>학습 회차</th><th>나무 1~5의 예측</th><th>합</th><th>평균 (숲)</th></tr></thead><tbody><tr><td>1회</td><td>58, 84, 66, 79, 63</td><td>350</td><td>70.0</td></tr><tr><td>2회</td><td>80, 61, 72, 69, 77</td><td>359</td><td>71.8</td></tr><tr><td>3회</td><td>62, 75, 68, 83, 60</td><td>348</td><td>69.6</td></tr></tbody></table><p>나무 1번의 변화: 58 → 80 (<b>22점</b>) → 62 (18점). 숲 평균의 변화: 70.0 → 71.8 (<b>1.8점</b>) → 69.6 (2.2점).</p><p>왜 평균이 덜 흔들리나: 1회차 나무들이 실제 70에서 벗어난 정도는 −12, +14, −4, +9, −7. 더하면 0. 서로 반대 방향 실수가 평균에서 상쇄된다.</p>
+
     <h4>이 장의 용어</h4>
     <table class="tb"><thead><tr><th>용어</th><th>영어 [발음]</th><th>쉬운 뜻</th></tr></thead><tbody>
       <tr><td><b>단일 모델</b></td><td>single model [싱글 모델]</td><td>나무 1그루처럼 모델 하나만 쓰는 것</td></tr>

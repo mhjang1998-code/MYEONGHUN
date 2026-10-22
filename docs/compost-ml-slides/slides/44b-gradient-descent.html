@@ -40,6 +40,8 @@
   <div class="foot"><span>Wang et al. (2024) 2.3.1 · Shi et al. (2025) 2.2.4–2.2.5</span><span class="pn"></span></div>
 
   <template data-tab="detail">
+    <h4>손으로 계산해 보기</h4><p>오차 = (w − 3)² + 1, 기울기 = 2 × (w − 3), 출발 w = −0.5, 보폭(학습률) 0.3.</p><table class="tb"><thead><tr><th>걸음</th><th>지금 w</th><th>기울기 2(w−3)</th><th>새 w = w − 0.3 × 기울기</th><th>오차</th></tr></thead><tbody><tr><td>1</td><td>−0.5</td><td>−7.0</td><td>−0.5 + 2.1 = 1.60</td><td>2.96</td></tr><tr><td>2</td><td>1.60</td><td>−2.8</td><td>1.60 + 0.84 = 2.44</td><td>1.31</td></tr><tr><td>3</td><td>2.44</td><td>−1.12</td><td>2.44 + 0.34 = 2.78</td><td>1.05</td></tr><tr><td>…</td><td></td><td></td><td>→ 3에 가까워짐</td><td>→ 1 (최소)</td></tr></tbody></table><p>기울기가 −면 오른쪽으로 간다. 바닥(w = 3)에 가까울수록 기울기가 작아져 걸음도 작아진다.</p><p>보폭 0.95라면 1걸음: −0.5 − 0.95 × (−7) = <b>6.15</b> → 바닥(3)을 훌쩍 지나 오차 10.9. 보폭이 크면 넘나든다.</p>
+
     <h4>이 장의 용어</h4>
     <table class="tb"><thead><tr><th>용어</th><th>영어 [발음]</th><th>쉬운 뜻</th></tr></thead><tbody>
       <tr><td><b>경사하강법</b></td><td>gradient descent [그래디언트 디센트]</td><td>기울기를 보고 오차가 줄어드는 쪽으로 이동</td></tr>

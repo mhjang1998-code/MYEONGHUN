@@ -44,6 +44,8 @@
   <div class="foot"><span>Wang et al. (2024) 2.2 데이터 전처리</span><span class="pn"></span></div>
 
   <template data-tab="detail">
+    <h4>손으로 계산해 보기</h4><p>온도 데이터 5개: 40, 45, 50, 55, 60℃.</p><table class="tb"><thead><tr><th>단계</th><th>계산</th><th>결과</th></tr></thead><tbody><tr><td>① 평균 μ</td><td>(40+45+50+55+60) ÷ 5</td><td>50℃</td></tr><tr><td>② 평균과의 차이</td><td>−10, −5, 0, +5, +10</td><td></td></tr><tr><td>③ 차이²</td><td>100, 25, 0, 25, 100 → 합 250</td><td></td></tr><tr><td>④ 표준편차 σ</td><td>√(250 ÷ 5) = √50</td><td>7.07℃</td></tr><tr class="k"><td>⑤ 65℃의 Z</td><td>(65 − 50) ÷ 7.07</td><td>+2.12</td></tr><tr><td>⑥ 45℃의 Z</td><td>(45 − 50) ÷ 7.07</td><td>−0.71</td></tr></tbody></table><p>65℃는 “평균보다 표준편차 2.12칸 위”, 45℃는 “0.71칸 아래”. pH도 같은 계산을 하면 단위 없이 같은 잣대로 비교된다.</p>
+
     <h4>계산 방법</h4>
     <div class="eq">표준화 값 = (내 값 − 평균) ÷ 표준편차</div>
     <p>표준편차는 “값들이 평균에서 보통 얼마나 떨어져 있나”. 결과가 +1.5면 “평균보다 1.5칸 높다”.</p>

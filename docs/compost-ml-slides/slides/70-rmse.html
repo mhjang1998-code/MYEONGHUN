@@ -50,6 +50,8 @@
   <div class="foot"><span>Shi et al. (2025) 2.3, 3.2 · Wang et al. (2024) 2.4</span><span class="pn"></span></div>
 
   <template data-tab="detail">
+    <h4>손으로 계산해 보기</h4><table class="tb"><thead><tr><th>모델</th><th>틀린 점수</th><th>① 제곱</th><th>② 평균</th><th>③ 루트 = RMSE</th></tr></thead><tbody><tr><td>골고루 조금씩</td><td>3, 4, 2, 3, 4</td><td>9, 16, 4, 9, 16 → 합 54</td><td>54 ÷ 5 = 10.8</td><td>√10.8 = <b>3.3</b></td></tr><tr><td>하나를 크게</td><td>3, 4, 25, 3, 4</td><td>9, 16, 625, 9, 16 → 합 675</td><td>675 ÷ 5 = 135</td><td>√135 = <b>11.6</b></td></tr></tbody></table><p>퇴비 4개는 똑같이 맞혔는데, 25점 하나가 제곱으로 625가 되어 평균을 끌어올렸다.</p>
+
     <h4>계산 순서</h4>
     <ol><li>틀린 만큼(오차) = 실제 − 예측</li><li>오차를 제곱한다 (부호가 사라지고 큰 오차가 더 커진다)</li><li>평균을 낸다</li><li>루트를 씌워 원래 단위로 되돌린다</li></ol>
     <div class="eq">RMSE = √( (오차₁² + 오차₂² + … ) ÷ 개수 )</div>

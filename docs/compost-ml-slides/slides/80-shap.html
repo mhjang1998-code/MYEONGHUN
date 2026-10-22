@@ -52,6 +52,8 @@
   <div class="foot"><span>Shi et al. (2025) 2.4, 3.3 Fig. 5–6 · Wang et al. (2024) 2.5, 3.4 Fig. 4</span><span class="pn"></span></div>
 
   <template data-tab="detail">
+    <h4>손으로 계산해 보기</h4><p>변수 2개짜리 예: 예측 = 40 + 2×기간 + 10×TN + 1×기간×TN. 기준 퇴비 (기간 0, TN 0) → 40. 내 퇴비 (기간 5, TN 2) → 40 + 10 + 20 + 10 = 80.</p><table class="tb"><thead><tr><th>넣는 순서</th><th>기간을 넣을 때 변화</th><th>TN을 넣을 때 변화</th></tr></thead><tbody><tr><td>기간 먼저</td><td>40 → 50 : +10</td><td>50 → 80 : +30</td></tr><tr><td>TN 먼저</td><td>60 → 80 : +20</td><td>40 → 60 : +20</td></tr><tr class="k"><td>평균 = SHAP 값</td><td>(10 + 20) ÷ 2 = <b>+15</b></td><td>(30 + 20) ÷ 2 = <b>+25</b></td></tr></tbody></table><div class="eq">기준값 40 + 기간 15 + TN 25 = 80 = 예측값</div><p>두 변수가 함께 만든 몫(기간×TN = 10)은 순서에 따라 한쪽에 붙으므로, 모든 순서를 평균 내 공평하게 반씩 나눈다.</p>
+
     <h4>이 장의 용어</h4>
     <table class="tb"><thead><tr><th>용어</th><th>영어 [발음]</th><th>쉬운 뜻</th></tr></thead><tbody>
       <tr><td><b>SHAP</b></td><td>SHapley Additive exPlanations [샙]</td><td>예측을 변수별 몫으로 나누는 방법</td></tr>
