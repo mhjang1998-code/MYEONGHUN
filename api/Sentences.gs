@@ -17,7 +17,7 @@ function sentenceAudioParts_() {
   const parts = [], files = DriveApp.getFolderById(folderId).getFiles();
   while (files.hasNext()) {
     const file = files.next();
-    if (/^part-\d+$/.test(file.getName())) parts.push({ id: file.getId(), name: file.getName(), size: file.getSize() });
+    if (!file.isTrashed() && /^part-\d+$/.test(file.getName())) parts.push({ id: file.getId(), name: file.getName(), size: file.getSize() });
   }
   return parts.sort((a, b) => a.name < b.name ? -1 : 1);
 }
@@ -66,9 +66,18 @@ function sentenceDeckPlays(counts) {
   } finally { lock.releaseLock(); }
 }
 
-// Run once from the editor: points the API at the Drive folder holding part-00, part-01, ...
+// Run once from the editor after uploading the .m4a to the private Drive folder:
+// splits it into ~4 MB parts (part-00, part-01, ...) that the app downloads one by one.
 function setupSentenceAudio() {
-  const folderId = '__SENTENCE_AUDIO_FOLDER__';
+  const folderId = '1YBuwldVa1c8t_P4T0TAe5Oab-cXYh-Xx', folder = DriveApp.getFolderById(folderId);
   PropertiesService.getScriptProperties().setProperty('SENTENCE_AUDIO_FOLDER', folderId);
-  console.log('음성 조각 ' + sentenceAudioParts_().length + '개 연결 완료');
+  const files = folder.getFiles(); let source = null;
+  while (files.hasNext()) { const file = files.next(); if (/\.(m4a|mp4|aac)$/i.test(file.getName())) source = file; }
+  if (!source) throw new Error('폴더에 .m4a 음성 파일이 없습니다. sentences300.m4a를 먼저 올려 주세요.');
+  sentenceAudioParts_().forEach(part => DriveApp.getFileById(part.id).setTrashed(true));
+  const bytes = source.getBlob().getBytes(), size = 4000000;
+  for (let i = 0, n = 0; i < bytes.length; i += size, n++) {
+    folder.createFile(Utilities.newBlob(bytes.slice(i, i + size), 'application/octet-stream', 'part-' + String(n).padStart(2, '0')));
+  }
+  console.log('음성 조각 ' + sentenceAudioParts_().length + '개 준비 완료 (' + source.getName() + ')');
 }
