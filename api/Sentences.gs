@@ -1,13 +1,23 @@
-// 300-sentence listening deck for docs/sentences.html.
-// Text and timings live in the '300문장' sheet. The audio stays private in Drive, split into parts
-// that the app downloads once (with the connection key) and keeps on the device.
+// Listening decks for docs/sentences.html, one sheet tab each (columns: 번호, 뜻, 영어, 시작, 영어 시작, 끝,
+// 상태, 외운 날, 들은 횟수, 예문, 예문 뜻, 묶음). Timings are seconds in the deck's single audio track.
+// 300문장 audio stays private in Drive, split into parts the app downloads once with the connection key;
+// the TOEFL track is generated speech published with the app (docs/audio/decks).
 const SENTENCE_BOOK = '1QREAKTTImJvP90EmE8fLjAxF2Z-Tb8jcqU1cxe-Vs8Q';
-const SENTENCE_SHEET = '300문장';
+const SENTENCE_DECKS = {
+  s300: { sheet: '300문장' },
+  toefl: { sheet: '토플 단어', audioUrl: 'audio/decks/toefl.m4a' }
+};
 const SENTENCE_STATES = ['못외움', '외움'];
 
-function sentenceSheet_() {
-  const sheet = SpreadsheetApp.openById(SENTENCE_BOOK).getSheetByName(SENTENCE_SHEET);
-  if (!sheet) throw new Error("'300문장' 시트를 찾을 수 없습니다.");
+function sentenceDeck_(deck) {
+  const config = SENTENCE_DECKS[deck || 's300'];
+  if (!config) throw new Error('알 수 없는 단어장입니다: ' + deck);
+  return config;
+}
+
+function sentenceSheet_(deck) {
+  const name = sentenceDeck_(deck).sheet, sheet = SpreadsheetApp.openById(SENTENCE_BOOK).getSheetByName(name);
+  if (!sheet) throw new Error("'" + name + "' 시트를 찾을 수 없습니다.");
   return sheet;
 }
 
@@ -22,12 +32,14 @@ function sentenceAudioParts_() {
   return parts.sort((a, b) => a.name < b.name ? -1 : 1);
 }
 
-function sentenceDeckLoad() {
-  const sheet = sentenceSheet_(), timeZone = sheet.getParent().getSpreadsheetTimeZone(), count = sheet.getLastRow() - 1;
-  const items = count < 1 ? [] : sheet.getRange(2, 1, count, 9).getValues().filter(row => row[0] !== '').map(row => ({
+function sentenceDeckLoad(deck) {
+  const config = sentenceDeck_(deck), sheet = sentenceSheet_(deck), timeZone = sheet.getParent().getSpreadsheetTimeZone(), count = sheet.getLastRow() - 1;
+  const items = count < 1 ? [] : sheet.getRange(2, 1, count, 12).getValues().filter(row => row[0] !== '').map(row => ({
     no: Number(row[0]), ko: String(row[1]), en: String(row[2]), start: Number(row[3]), enStart: Number(row[4]), end: Number(row[5]),
-    state: SENTENCE_STATES.includes(row[6]) ? row[6] : '못외움', memorized: mobileStudyDate_(row[7], timeZone), plays: Number(row[8]) || 0
+    state: SENTENCE_STATES.includes(row[6]) ? row[6] : '못외움', memorized: mobileStudyDate_(row[7], timeZone), plays: Number(row[8]) || 0,
+    example: String(row[9] || ''), exampleKo: String(row[10] || ''), group: String(row[11] || '')
   }));
+  if (config.audioUrl) return { items: items, audio: { url: config.audioUrl, parts: [], version: config.audioUrl } };
   const parts = sentenceAudioParts_();
   return { items: items, audio: { parts: parts.map(p => ({ name: p.name, size: p.size })), version: parts.map(p => p.id + ':' + p.size).join('|') } };
 }
@@ -39,9 +51,9 @@ function sentenceAudioPart(name) {
   return Utilities.base64Encode(DriveApp.getFileById(part.id).getBlob().getBytes());
 }
 
-function sentenceDeckMark(no, state) {
+function sentenceDeckMark(no, state, deck) {
   if (!SENTENCE_STATES.includes(state)) throw new Error('암기 상태가 올바르지 않습니다.');
-  const sheet = sentenceSheet_(), lock = LockService.getScriptLock();
+  const sheet = sentenceSheet_(deck), lock = LockService.getScriptLock();
   lock.waitLock(10000);
   try {
     const numbers = sheet.getRange(2, 1, Math.max(1, sheet.getLastRow() - 1), 1).getValues().map(r => Number(r[0]));
@@ -54,9 +66,9 @@ function sentenceDeckMark(no, state) {
 }
 
 // Adds how many times each sentence was played, e.g. {"12": 3}.
-function sentenceDeckPlays(counts) {
+function sentenceDeckPlays(counts, deck) {
   if (!counts || typeof counts !== 'object') return true;
-  const sheet = sentenceSheet_(), lock = LockService.getScriptLock();
+  const sheet = sentenceSheet_(deck), lock = LockService.getScriptLock();
   lock.waitLock(10000);
   try {
     const range = sheet.getRange(2, 1, Math.max(1, sheet.getLastRow() - 1), 9), rows = range.getValues();

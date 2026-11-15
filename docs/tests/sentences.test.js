@@ -9,7 +9,8 @@ const { chromium } = require('playwright');
 const ROOT = path.join(__dirname, '..');
 const API = 'https://api.test/exec';
 // Each sentence: Korean 0-1s, English 1-3s of its own 3-second block.
-const ITEMS = [1, 2, 3, 4].map(no => ({ no, ko: '한국어 ' + no, en: 'English ' + no, start: (no - 1) * 3, enStart: (no - 1) * 3 + 1, end: no * 3, state: no === 1 ? '외움' : '못외움', memorized: '', plays: 0 }));
+const ITEMS = [1, 2, 3, 4].map(no => ({ no, ko: '한국어 ' + no, en: 'English ' + no, start: (no - 1) * 3, enStart: (no - 1) * 3 + 1, end: no * 3, state: no === 1 ? '외움' : '못외움', memorized: '', plays: 0, example: '', exampleKo: '', group: '' }));
+const TOEFL = [1, 2, 3, 4].map(no => ({ no, ko: '뜻 ' + no, en: 'word' + no, start: (no - 1) * 3, enStart: (no - 1) * 3 + 1, end: no * 3, state: '못외움', memorized: '', plays: 0, example: 'Example ' + no + '.', exampleKo: '예문 ' + no, group: 'Day ' + (no <= 2 ? 1 : 2) }));
 
 let browser, server, base;
 before(async () => {
@@ -25,13 +26,13 @@ before(async () => {
 });
 after(async () => { await browser.close(); server.close(); });
 
-async function open(context, { prefs } = {}) {
+async function open(context, { prefs, query = '' } = {}) {
   context = context || await browser.newContext();
   const page = await context.newPage(), calls = [];
   await page.route(API, async route => {
     const body = JSON.parse(route.request().postData());
     calls.push(body);
-    const result = body.fn === 'sentenceDeckLoad' ? { items: JSON.parse(JSON.stringify(ITEMS)), audio: { parts: [{ name: 'part-00', size: 3 }, { name: 'part-01', size: 3 }], version: 'v1' } }
+    const result = body.fn === 'sentenceDeckLoad' ? (body.args[0] === 'toefl' ? { items: JSON.parse(JSON.stringify(TOEFL)), audio: { url: 'audio/decks/toefl.m4a', parts: [], version: 'audio/decks/toefl.m4a' } } : { items: JSON.parse(JSON.stringify(ITEMS)), audio: { parts: [{ name: 'part-00', size: 3 }, { name: 'part-01', size: 3 }], version: 'v1' } })
       : body.fn === 'sentenceAudioPart' ? Buffer.from('abc').toString('base64')
       : body.fn === 'sentenceDeckMark' ? { no: body.args[0], state: body.args[1], memorized: '2026-11-15' } : true;
     await route.fulfill({ status: 200, headers: { 'Access-Control-Allow-Origin': '*', 'Content-Type': 'application/json' }, body: JSON.stringify({ ok: true, result }) });
@@ -46,7 +47,7 @@ async function open(context, { prefs } = {}) {
     proto.play = function () { if (!this._timer) { this._timer = setInterval(() => { this._t = (this._t || 0) + 0.25; this.dispatchEvent(new Event('timeupdate')); if (this._t >= 12) { this.pause(); this.dispatchEvent(new Event('ended')); } }, 20); this.dispatchEvent(new Event('play')); } return Promise.resolve(); };
     proto.pause = function () { if (this._timer) { clearInterval(this._timer); this._timer = null; this.dispatchEvent(new Event('pause')); } };
   }, [API, prefs || null]);
-  await page.goto(base + 'sentences.html');
+  await page.goto(base + 'sentences.html' + query);
   await page.waitForFunction(() => /준비 완료/.test(document.getElementById('notice').textContent));
   return { page, calls, context };
 }
@@ -85,7 +86,7 @@ test('marking the current sentence 외움 removes it from the loop and saves it'
   const order = await playedOrder(page, 900);
   assert.ok(!order.slice(1).includes(3), 'sentence 3 is not played again: ' + order.join(','));
   const mark = calls.find(c => c.fn === 'sentenceDeckMark');
-  assert.deepStrictEqual(mark.args, [3, '외움']);
+  assert.deepStrictEqual(mark.args, [3, '외움', 's300']);
   assert.match(await page.textContent('#summary'), /외움 2 \/ 4개/);
   await context.close();
 });
@@ -100,12 +101,12 @@ test('"영어만" starts each sentence at its English part', async () => {
 });
 
 test('hiding English shows it only after tapping', async () => {
-  const { page, context } = await open(null, { prefs: { hideEn: true } });
+  const { page, context } = await open(null, { prefs: { hide: true } });
   await page.click('#play');
   await page.waitForTimeout(60);
-  assert.match(await page.textContent('#nowEn'), /영어 보기/);
-  await page.click('#nowEn');
-  assert.match(await page.textContent('#nowEn'), /English/);
+  assert.match(await page.textContent('#nowSub'), /영어 보기/);
+  await page.click('#nowSub');
+  assert.match(await page.textContent('#nowSub'), /English/);
   assert.ok(!(await page.textContent('#list')).includes('English 2'));
   await context.close();
 });
@@ -115,5 +116,29 @@ test('range limits the loop to the chosen numbers', async () => {
   await page.click('#play');
   const order = await playedOrder(page, 700);
   assert.ok(order.every(n => n === 3 || n === 4), order.join(','));
+  await context.close();
+});
+
+test('TOEFL tab loads its own deck and plays the Day chosen', async () => {
+  const { page, calls, context } = await open();
+  await page.click('[data-deck="toefl"]');
+  await page.waitForFunction(() => /준비 완료/.test(document.getElementById('notice').textContent) && document.getElementById('title').textContent.includes('토플'));
+  assert.deepStrictEqual(calls.filter(c => c.fn === 'sentenceDeckLoad').map(c => c.args[0]), ['s300', 'toefl']);
+  assert.match(await page.textContent('#list'), /Example 1\./);
+  await page.selectOption('#group', 'Day 2');
+  assert.ok(!(await page.textContent('#list')).includes('word1'));
+  await page.click('#play');
+  const order = await playedOrder(page, 700);
+  assert.ok(order.length && order.every(n => n === 3 || n === 4), order.join(','));
+  await context.close();
+});
+
+test('TOEFL "단어만" plays only the word part of each entry', async () => {
+  const { page, context } = await open(null, { query: '?deck=toefl', prefs: null });
+  await page.selectOption('#mode', 'word');
+  await page.click('#play');
+  await page.waitForTimeout(400);
+  const seeks = await page.evaluate(() => window.mediaLog.seeks);
+  assert.ok(seeks.includes(3), 'jumps from the end of word 1 to word 2 at 3s: ' + seeks.join(','));
   await context.close();
 });
