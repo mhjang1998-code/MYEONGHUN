@@ -10,7 +10,6 @@ const ROOT = path.join(__dirname, '..');
 const API = 'https://api.test/exec';
 // Each sentence: Korean 0-1s, English 1-3s of its own 3-second block.
 const ITEMS = [1, 2, 3, 4].map(no => ({ no, ko: '한국어 ' + no, en: 'English ' + no, start: (no - 1) * 3, enStart: (no - 1) * 3 + 1, end: no * 3, state: no === 1 ? '외움' : '못외움', memorized: '', plays: 0, example: '', exampleKo: '', group: '' }));
-const TOEFL = [1, 2, 3, 4].map(no => ({ no, ko: '뜻 ' + no, en: 'word' + no, start: (no - 1) * 3, enStart: (no - 1) * 3 + 1, end: no * 3, state: '못외움', memorized: '', plays: 0, example: 'Example ' + no + '.', exampleKo: '예문 ' + no, group: 'Day ' + (no <= 2 ? 1 : 2) }));
 
 let browser, server, base;
 before(async () => {
@@ -32,7 +31,7 @@ async function open(context, { prefs, query = '' } = {}) {
   await page.route(API, async route => {
     const body = JSON.parse(route.request().postData());
     calls.push(body);
-    const result = body.fn === 'sentenceDeckLoad' ? (body.args[0] === 'toefl' ? { items: JSON.parse(JSON.stringify(TOEFL)), audio: { url: 'audio/decks/toefl.m4a', parts: [], version: 'audio/decks/toefl.m4a' } } : { items: JSON.parse(JSON.stringify(ITEMS)), audio: { parts: [{ name: 'part-00', size: 3 }, { name: 'part-01', size: 3 }], version: 'v1' } })
+    const result = body.fn === 'sentenceDeckLoad' ? { items: JSON.parse(JSON.stringify(ITEMS)), audio: { parts: [{ name: 'part-00', size: 3 }, { name: 'part-01', size: 3 }], version: 'v1' } }
       : body.fn === 'sentenceAudioPart' ? Buffer.from('abc').toString('base64')
       : body.fn === 'sentenceDeckMark' ? { no: body.args[0], state: body.args[1], memorized: '2026-11-15' } : true;
     await route.fulfill({ status: 200, headers: { 'Access-Control-Allow-Origin': '*', 'Content-Type': 'application/json' }, body: JSON.stringify({ ok: true, result }) });
@@ -119,26 +118,9 @@ test('range limits the loop to the chosen numbers', async () => {
   await context.close();
 });
 
-test('TOEFL tab loads its own deck and plays the Day chosen', async () => {
-  const { page, calls, context } = await open();
-  await page.click('[data-deck="toefl"]');
-  await page.waitForFunction(() => /준비 완료/.test(document.getElementById('notice').textContent) && document.getElementById('title').textContent.includes('토플'));
-  assert.deepStrictEqual(calls.filter(c => c.fn === 'sentenceDeckLoad').map(c => c.args[0]), ['s300', 'toefl']);
-  assert.match(await page.textContent('#list'), /Example 1\./);
-  await page.selectOption('#group', 'Day 2');
-  assert.ok(!(await page.textContent('#list')).includes('word1'));
-  await page.click('#play');
-  const order = await playedOrder(page, 700);
-  assert.ok(order.length && order.every(n => n === 3 || n === 4), order.join(','));
-  await context.close();
-});
-
-test('TOEFL "단어만" plays only the word part of each entry', async () => {
-  const { page, context } = await open(null, { query: '?deck=toefl', prefs: null });
-  await page.selectOption('#mode', 'word');
-  await page.click('#play');
-  await page.waitForTimeout(400);
-  const seeks = await page.evaluate(() => window.mediaLog.seeks);
-  assert.ok(seeks.includes(3), 'jumps from the end of word 1 to word 2 at 3s: ' + seeks.join(','));
+test('only one deck: the tab bar is hidden', async () => {
+  const { page, context } = await open();
+  assert.ok(await page.$eval('#tabs', n => n.hidden));
+  assert.strictEqual(await page.textContent('#title'), '300문장');
   await context.close();
 });

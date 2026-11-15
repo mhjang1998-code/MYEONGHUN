@@ -1,11 +1,10 @@
 // Listening decks for docs/sentences.html, one sheet tab each (columns: 번호, 뜻, 영어, 시작, 영어 시작, 끝,
 // 상태, 외운 날, 들은 횟수, 예문, 예문 뜻, 묶음). Timings are seconds in the deck's single audio track.
-// 300문장 audio stays private in Drive, split into parts the app downloads once with the connection key;
-// the TOEFL track is generated speech published with the app (docs/audio/decks).
+// 300문장 audio stays private in Drive, split into parts the app downloads once with the connection key.
+// A deck with audioUrl instead plays a track published with the app.
 const SENTENCE_BOOK = '1QREAKTTImJvP90EmE8fLjAxF2Z-Tb8jcqU1cxe-Vs8Q';
 const SENTENCE_DECKS = {
-  s300: { sheet: '300문장' },
-  toefl: { sheet: '토플 단어', audioUrl: 'audio/decks/toefl.m4a' }
+  s300: { sheet: '300문장' }
 };
 const SENTENCE_STATES = ['못외움', '외움'];
 

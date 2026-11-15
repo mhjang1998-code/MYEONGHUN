@@ -47,7 +47,7 @@
 <body>
 <main class="app">
   <header><div><h1 id="title">반복 듣기</h1><div class="meta" id="summary">불러오는 중</div></div><a href="./">단어장으로</a></header>
-  <div class="tabs" role="tablist" aria-label="단어장"><button type="button" role="tab" data-deck="s300">300문장</button><button type="button" role="tab" data-deck="toefl">토플 Day 1–7</button></div>
+  <div class="tabs" role="tablist" aria-label="단어장" id="tabs"><button type="button" role="tab" data-deck="s300">300문장</button></div>
   <div class="progress" aria-hidden="true"><div id="bar"></div></div>
   <div class="controls" id="controls">
     <label>들을 문장<select id="filter"><option value="left">못 외운 것만</option><option value="all">전체</option></select></label>
@@ -80,8 +80,7 @@
 <script>
   // main = line shown big, sub = the line hidden in practice mode; modes: [value, label, part of each item to play].
   const DECKS = {
-    s300: { title: '300문장', main: 'ko', sub: 'en', hideLabel: '영어 가리기 (영작 연습)', modes: [['koen', '한국어 → 영어 2번', 'full'], ['en', '영어만', 'tail']] },
-    toefl: { title: '토플 Day 1–7', main: 'en', sub: 'ko', hideLabel: '뜻 가리기', modes: [['full', '단어 2번 + 예문', 'full'], ['word', '단어만', 'head']] }
+    s300: { title: '300문장', main: 'ko', sub: 'en', hideLabel: '영어 가리기 (영작 연습)', modes: [['koen', '한국어 → 영어 2번', 'full'], ['en', '영어만', 'tail']] }
   };
   const $ = id => document.getElementById(id);
   const store = (name, value) => { try { if (value === undefined) return localStorage.getItem(name) || ''; localStorage.setItem(name, value); } catch (error) {} return ''; };
@@ -250,6 +249,7 @@
     try { prefs = JSON.parse(store(prefKey()) || '{}'); } catch (error) { prefs = {}; }
     document.title = $('title').textContent = deck().title;
     document.querySelectorAll('[data-deck]').forEach(tab => tab.setAttribute('aria-selected', String(tab.dataset.deck === deckId)));
+    $('tabs').hidden = Object.keys(DECKS).length < 2;
     $('mode').replaceChildren(...deck().modes.map(([value, label]) => new Option(label, value)));
     $('hideLabel').textContent = deck().hideLabel;
     ['filter', 'mode', 'order', 'rate'].forEach(id => { if (prefs[id] && [...$(id).options].some(o => o.value === prefs[id])) $(id).value = prefs[id]; });
