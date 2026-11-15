@@ -14,7 +14,8 @@ function doPost(e) {
   // Built per call: functions in other .gs files are not defined yet when this file loads.
   const api = {
     mobileStudyPreferences, mobileStudySavePreferences, mobileStudyPronunciation, mobileStudyLoad,
-    mobileStudyReview, mobileStudyUndo, mobileStudySetCount, mobileStudySetMemo, studyAudioTexts
+    mobileStudyReview, mobileStudyUndo, mobileStudySetCount, mobileStudySetMemo, studyAudioTexts,
+    sentenceDeckLoad, sentenceAudioPart, sentenceDeckMark, sentenceDeckPlays
   };
   const fn = Object.prototype.hasOwnProperty.call(api, request.fn) ? api[request.fn] : null;
   if (!fn) return studyJson_({ ok: false, error: '알 수 없는 요청입니다: ' + request.fn });

@@ -16,6 +16,7 @@
     header { display:flex; align-items:center; justify-content:space-between; gap:12px; margin-bottom:14px; }
     h1 { font-size:21px; margin:0; } .subtle,.meta { color:#607277; font-size:12px; line-height:1.5; }
     .toolbar { display:flex; gap:6px; } .toolbar button { font-size:13px; }
+    .toolbar-link { display:inline-flex; align-items:center; min-height:44px; padding:0 10px; border:1px solid #cad7d3; border-radius:6px; background:white; color:#176f65; font-size:13px; text-decoration:none; }
     label { display:block; font-size:12px; font-weight:650; color:#4b6165; } label select,label input { margin-top:5px; }
     .top-controls { display:grid; grid-template-columns:1fr; align-items:end; gap:10px; }
     .period { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:10px; margin-top:12px; }
@@ -92,7 +93,7 @@
 </head>
 <body>
 <main class="app">
-  <header><div><h1 id="pageTop" tabindex="-1">영어 복습</h1><div id="bookTitle" class="subtle">불러오는 중</div></div><div class="toolbar"><button id="reload" type="button">새로고침</button><button id="filterButton" type="button" aria-expanded="false">필터</button></div></header>
+  <header><div><h1 id="pageTop" tabindex="-1">영어 복습</h1><div id="bookTitle" class="subtle">불러오는 중</div></div><div class="toolbar"><a class="toolbar-link" href="sentences.html">300문장</a><button id="reload" type="button">새로고침</button><button id="filterButton" type="button" aria-expanded="false">필터</button></div></header>
   <div class="top-controls">
     <label>단어장<select id="bookSelect"><option value="general">영어 통합 학습장</option><option value="paper">논문 영어</option></select></label>
     <div class="segments" aria-label="학습 화면"><button id="cardView" type="button" aria-pressed="true">카드</button><button id="listView" type="button" aria-pressed="false">목록</button><button id="dashboardView" type="button" aria-pressed="false">대시보드</button></div>

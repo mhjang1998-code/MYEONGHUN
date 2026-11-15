@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#f7faf9">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-title" content="300문장">
+  <title>300문장</title>
+  <style>
+    :root { font:16px -apple-system,BlinkMacSystemFont,"Apple SD Gothic Neo","Noto Sans KR",sans-serif; color:#19262b; background:#f7faf9; color-scheme:light; }
+    * { box-sizing:border-box; } body { margin:0; } [hidden] { display:none !important; }
+    button,select,input { font:inherit; color:inherit; border:1px solid #cad7d3; border-radius:8px; background:#fff; min-height:44px; }
+    button { padding:8px 12px; cursor:pointer; } button:disabled { opacity:.5; }
+    button:focus-visible,select:focus-visible,input:focus-visible { outline:3px solid #62a99e; outline-offset:2px; }
+    .app { max-width:720px; margin:auto; padding:16px 16px calc(220px + env(safe-area-inset-bottom)); }
+    header { display:flex; align-items:center; justify-content:space-between; gap:12px; }
+    h1 { font-size:21px; margin:0; } .meta { color:#607277; font-size:12px; } a { color:#176f65; }
+    .progress { margin:12px 0 4px; height:8px; background:#e2e9e6; border-radius:4px; overflow:hidden; } .progress div { height:100%; background:#176f65; width:0; transition:width .3s; }
+    .controls { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:10px; margin-top:14px; }
+    label { display:block; font-size:12px; font-weight:650; color:#4b6165; } label select,label input { margin-top:5px; width:100%; padding:8px 10px; }
+    .range { display:flex; gap:8px; align-items:center; } .range input { width:100%; }
+    .toggle { display:flex; align-items:center; gap:8px; min-height:44px; font-size:14px; font-weight:400; color:#19262b; } .toggle input { width:20px; min-height:20px; margin:0; accent-color:#176f65; }
+    .notice { min-height:20px; margin:12px 0; font-size:13px; color:#176f65; } .error { color:#b43e36; }
+    .list { margin-top:8px; border-top:1px solid #d7e0dd; }
+    .row { display:grid; grid-template-columns:44px minmax(0,1fr) auto; gap:10px; align-items:center; padding:10px 0; border-bottom:1px solid #e2e9e6; }
+    .row .no { font-variant-numeric:tabular-nums; color:#607277; font-size:13px; text-align:right; }
+    .row .text { text-align:left; border:0; background:transparent; padding:2px 0; min-height:44px; }
+    .row .ko { font-size:15px; } .row .en { font-size:14px; color:#176f65; margin-top:2px; } .row .en.hidden { color:#9aaaa8; }
+    .row.current { background:#edf8f2; } .row.done .ko { color:#7d8f8d; text-decoration:line-through; text-decoration-color:#b9c7c4; }
+    .mark { min-width:64px; font-size:13px; } .mark[aria-pressed="true"] { background:#176f65; color:#fff; border-color:#176f65; }
+    .player { position:fixed; left:0; right:0; bottom:0; background:#fff; border-top:1px solid #cad7d3; padding:12px 16px calc(12px + env(safe-area-inset-bottom)); box-shadow:0 -6px 20px rgba(25,38,43,.08); }
+    .player .inner { max-width:720px; margin:auto; display:grid; gap:8px; }
+    .now-ko { font-size:18px; font-weight:650; } .now-en { font-size:17px; color:#176f65; min-height:24px; } .now-en.hidden { color:#9aaaa8; }
+    .buttons { display:grid; grid-template-columns:1fr 1fr 1.4fr 1fr; gap:8px; }
+    .buttons .play { background:#176f65; color:#fff; border-color:#176f65; font-weight:700; }
+    .buttons .mark-now[aria-pressed="true"] { background:#176f65; color:#fff; border-color:#176f65; }
+    .setup { display:grid; gap:12px; margin:30px 0; } .setup button { background:#176f65; color:#fff; border-color:#176f65; }
+    @media (min-width:600px) { .controls { grid-template-columns:repeat(4,minmax(0,1fr)); } }
+  </style>
+</head>
+<body>
+<main class="app">
+  <header><div><h1>300문장</h1><div class="meta" id="summary">불러오는 중</div></div><a href="./">단어장으로</a></header>
+  <div class="progress" aria-hidden="true"><div id="bar"></div></div>
+  <div class="controls" id="controls">
+    <label>들을 문장<select id="filter"><option value="left">못 외운 것만</option><option value="all">전체</option></select></label>
+    <label>재생 방식<select id="mode"><option value="koen">한국어 → 영어 2번</option><option value="en">영어만</option></select></label>
+    <label>순서<select id="order"><option value="seq">순서대로</option><option value="shuffle">섞기</option></select></label>
+    <label>속도<select id="rate"><option value="0.8">0.8배</option><option value="1" selected>보통</option><option value="1.2">1.2배</option></select></label>
+    <label>구간<span class="range"><input id="from" type="number" min="1" inputmode="numeric" aria-label="시작 번호"> ~ <input id="to" type="number" min="1" inputmode="numeric" aria-label="끝 번호"></span></label>
+    <label class="toggle"><input id="hideEn" type="checkbox">영어 가리기 (영작 연습)</label>
+  </div>
+  <div id="notice" class="notice" role="status" aria-live="polite"></div>
+  <div id="list" class="list"></div>
+</main>
+<section class="player" id="player" hidden>
+  <div class="inner">
+    <div class="meta" id="nowNo"></div>
+    <div class="now-ko" id="nowKo"></div>
+    <button type="button" class="now-en text" id="nowEn" style="border:0;background:transparent;text-align:left;padding:0;min-height:24px"></button>
+    <div class="buttons">
+      <button type="button" id="prev" aria-label="이전 문장">⏮</button>
+      <button type="button" id="next" aria-label="다음 문장">⏭</button>
+      <button type="button" id="play" class="play">▶ 재생</button>
+      <button type="button" id="markNow" class="mark-now" aria-pressed="false">외움</button>
+    </div>
+  </div>
+</section>
+<audio id="audio" preload="auto" playsinline></audio>
+<script src="config.js"></script>
+<script>
+  const $ = id => document.getElementById(id);
+  const store = (name, value) => { try { if (value === undefined) return localStorage.getItem(name) || ''; localStorage.setItem(name, value); } catch (error) {} return ''; };
+  const apiUrl = () => store('studyApiUrl') || (window.STUDY_CONFIG && STUDY_CONFIG.apiUrl) || '';
+  async function api(fn, args) {
+    let response;
+    try { response = await fetch(apiUrl(), { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify({ key: store('studyApiKey'), fn, args: args || [] }) }); }
+    catch (error) { throw new Error('서버에 연결하지 못했습니다. 인터넷 연결을 확인해 주세요.'); }
+    const data = await response.json().catch(() => ({ ok: false, error: '서버 응답을 읽지 못했습니다.' }));
+    if (!data.ok) { const error = new Error(data.error || '요청 실패'); error.auth = data.auth === false; throw error; }
+    return data.result;
+  }
+  function notice(text, error = false) { $('notice').textContent = text; $('notice').classList.toggle('error', error); }
+
+  // Audio is kept on this device (IndexedDB) after the first download.
+  function db() { return new Promise((resolve, reject) => { const open = indexedDB.open('study-audio', 1); open.onupgradeneeded = () => open.result.createObjectStore('files'); open.onsuccess = () => resolve(open.result); open.onerror = () => reject(open.error); }); }
+  async function stored(key) { const d = await db(); return new Promise(resolve => { const r = d.transaction('files').objectStore('files').get(key); r.onsuccess = () => resolve(r.result); r.onerror = () => resolve(null); }); }
+  async function keep(key, value) { const d = await db(); return new Promise(resolve => { const t = d.transaction('files', 'readwrite'); t.objectStore('files').put(value, key); t.oncomplete = t.onerror = () => resolve(); }); }
+  async function audioBlob(info) {
+    try { const saved = await stored('sentences300'); if (saved && saved.version === info.version) return saved.blob; } catch (error) {}
+    const chunks = [];
+    for (let i = 0; i < info.parts.length; i++) {
+      notice('음성 받는 중 ' + (i + 1) + '/' + info.parts.length + ' · 처음 한 번만 받습니다');
+      const base64 = await api('sentenceAudioPart', [info.parts[i].name]);
+      const binary = atob(base64), bytes = new Uint8Array(binary.length);
+      for (let j = 0; j < binary.length; j++) bytes[j] = binary.charCodeAt(j);
+      chunks.push(bytes);
+    }
+    const blob = new Blob(chunks, { type: 'audio/mp4' });
+    try { await keep('sentences300', { version: info.version, blob }); } catch (error) {}
+    return blob;
+  }
+
+  const prefKey = 'sentencePrefsV1';
+  let prefs = {}; try { prefs = JSON.parse(store(prefKey) || '{}'); } catch (error) {}
+  const state = { items: [], queue: [], index: -1, current: null, revealed: new Set(), plays: {} };
+  const audio = $('audio');
+  function savePrefs() { store(prefKey, JSON.stringify({ filter: $('filter').value, mode: $('mode').value, order: $('order').value, rate: $('rate').value, from: $('from').value, to: $('to').value, hideEn: $('hideEn').checked, last: state.current ? state.current.no : prefs.last })); }
+  const segment = item => [$('mode').value === 'en' ? item.enStart : item.start, item.end];
+  function wanted(item) {
+    const from = Number($('from').value) || 1, to = Number($('to').value) || Infinity;
+    return item.no >= from && item.no <= to && ($('filter').value === 'all' || item.state !== '외움');
+  }
+  function buildQueue() {
+    const queue = state.items.filter(wanted);
+    if ($('order').value === 'shuffle') for (let i = queue.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [queue[i], queue[j]] = [queue[j], queue[i]]; }
+    state.queue = queue;
+  }
+  function play(item) {
+    state.current = item; state.index = state.queue.indexOf(item);
+    const [start] = segment(item);
+    audio.playbackRate = audio.defaultPlaybackRate = Number($('rate').value) || 1;
+    if (Math.abs(audio.currentTime - start) > 0.3) audio.currentTime = start;
+    audio.play().catch(() => notice('재생 버튼을 눌러 주세요.'));
+    state.plays[item.no] = (state.plays[item.no] || 0) + 1;
+    showNow(); savePrefs();
+    if ('mediaSession' in navigator) navigator.mediaSession.metadata = new MediaMetadata({ title: item.no + '. ' + item.ko, artist: $('hideEn').checked ? '300문장' : item.en, album: '300문장' });
+  }
+  // Next sentence in the queue; memorized ones drop out because the queue is rebuilt at each pass.
+  function next(step = 1) {
+    if (!state.queue.length || state.index < 0) buildQueue();
+    let index = state.index + step;
+    if (index >= state.queue.length) { buildQueue(); index = 0; }
+    if (index < 0) index = Math.max(0, state.queue.length - 1);
+    const item = state.queue[index];
+    if (!item) { audio.pause(); state.current = null; showNow(); notice('🎉 이 구간의 문장을 모두 외웠어요! "전체"로 바꾸면 다시 들을 수 있습니다.'); return; }
+    if (state.queue[index] !== state.current || step) { state.index = index; play(item); }
+  }
+  audio.addEventListener('timeupdate', () => {
+    if (state.current && audio.currentTime >= segment(state.current)[1] - 0.05) {
+      // Drop sentences marked 외움 meanwhile, so they are skipped right away, not only at the next pass.
+      buildQueueKeeping(); next(1);
+    }
+  });
+  function buildQueueKeeping() {
+    if ($('order').value === 'shuffle') { state.queue = state.queue.filter(item => item === state.current || wanted(item)); state.index = state.queue.indexOf(state.current); return; }
+    state.queue = state.items.filter(item => item === state.current || wanted(item)); state.index = state.queue.indexOf(state.current);
+  }
+  audio.addEventListener('ended', () => next(1));
+  audio.addEventListener('play', () => { $('play').textContent = '⏸ 멈춤'; if ('mediaSession' in navigator) navigator.mediaSession.playbackState = 'playing'; });
+  audio.addEventListener('pause', () => { $('play').textContent = '▶ 재생'; if ('mediaSession' in navigator) navigator.mediaSession.playbackState = 'paused'; });
+  if ('mediaSession' in navigator) {
+    navigator.mediaSession.setActionHandler('play', () => audio.play());
+    navigator.mediaSession.setActionHandler('pause', () => audio.pause());
+    navigator.mediaSession.setActionHandler('nexttrack', () => next(1));
+    navigator.mediaSession.setActionHandler('previoustrack', () => next(-1));
+  }
+
+  function showNow() {
+    const item = state.current; $('player').hidden = !state.items.length;
+    $('nowNo').textContent = item ? item.no + '번 · ' + (item.state === '외움' ? '외움' : '못 외움') + ' · 남은 문장 ' + state.items.filter(wanted).length + '개' : '재생할 문장을 고르거나 ▶를 누르세요';
+    $('nowKo').textContent = item ? item.ko : '';
+    const hide = item && $('hideEn').checked && !state.revealed.has(item.no);
+    $('nowEn').textContent = !item ? '' : hide ? '영어 보기 (눌러서 확인)' : item.en;
+    $('nowEn').classList.toggle('hidden', !!hide);
+    $('markNow').disabled = !item; $('markNow').setAttribute('aria-pressed', String(!!item && item.state === '외움'));
+    $('markNow').textContent = item && item.state === '외움' ? '✓ 외움' : '외움';
+    document.querySelectorAll('.row.current').forEach(row => row.classList.remove('current'));
+    if (item) { const row = document.querySelector('[data-no="' + item.no + '"]'); if (row) row.classList.add('current'); }
+  }
+  function summary() {
+    const done = state.items.filter(item => item.state === '외움').length, total = state.items.length;
+    $('summary').textContent = '외움 ' + done + ' / ' + total + '개 · 남은 문장 ' + (total - done) + '개';
+    $('bar').style.width = total ? (done / total * 100) + '%' : '0';
+  }
+  function row(item) {
+    const node = document.createElement('div'); node.className = 'row' + (item.state === '외움' ? ' done' : ''); node.dataset.no = item.no;
+    const no = document.createElement('span'); no.className = 'no'; no.textContent = item.no;
+    const text = document.createElement('button'); text.type = 'button'; text.className = 'text'; text.setAttribute('aria-label', item.no + '번부터 재생');
+    const ko = document.createElement('div'); ko.className = 'ko'; ko.textContent = item.ko;
+    const hide = $('hideEn').checked && !state.revealed.has(item.no);
+    const en = document.createElement('div'); en.className = 'en' + (hide ? ' hidden' : ''); en.textContent = hide ? '영어 가림' : item.en;
+    text.append(ko, en); text.addEventListener('click', () => { buildQueue(); if (!state.queue.includes(item)) state.queue.unshift(item); state.index = state.queue.indexOf(item); play(item); });
+    const mark = document.createElement('button'); mark.type = 'button'; mark.className = 'mark'; mark.setAttribute('aria-pressed', String(item.state === '외움')); mark.textContent = item.state === '외움' ? '✓ 외움' : '외움';
+    mark.addEventListener('click', () => toggle(item));
+    node.append(no, text, mark); return node;
+  }
+  function render() { const list = $('list'); list.replaceChildren(...state.items.filter(item => { const from = Number($('from').value) || 1, to = Number($('to').value) || Infinity; return item.no >= from && item.no <= to; }).map(row)); summary(); showNow(); }
+  function refreshRow(item) { const old = document.querySelector('[data-no="' + item.no + '"]'); if (old) old.replaceWith(row(item)); summary(); showNow(); }
+  async function toggle(item) {
+    const before = item.state, after = before === '외움' ? '못외움' : '외움';
+    item.state = after; refreshRow(item);
+    try { const result = await api('sentenceDeckMark', [item.no, after]); item.memorized = result.memorized; notice(item.no + '번 ' + (after === '외움' ? '외움으로 저장 · 다음 반복부터 빠집니다' : '못 외움으로 되돌림')); }
+    catch (error) { item.state = before; refreshRow(item); notice('저장하지 못했습니다: ' + error.message, true); }
+  }
+  async function flushPlays() {
+    const counts = state.plays; if (!Object.keys(counts).length) return;
+    state.plays = {};
+    try { await api('sentenceDeckPlays', [counts]); } catch (error) { Object.keys(counts).forEach(k => { state.plays[k] = (state.plays[k] || 0) + counts[k]; }); }
+  }
+  setInterval(flushPlays, 60000);
+  window.addEventListener('pagehide', () => { savePrefs(); flushPlays(); });
+
+  $('play').addEventListener('click', () => { if (!audio.paused) { audio.pause(); return; } if (state.current) audio.play(); else next(0 + 1); });
+  $('next').addEventListener('click', () => next(1));
+  $('prev').addEventListener('click', () => next(-1));
+  $('markNow').addEventListener('click', () => state.current && toggle(state.current));
+  $('nowEn').addEventListener('click', () => { if (state.current) { state.revealed.add(state.current.no); showNow(); } });
+  ['filter', 'order', 'from', 'to'].forEach(id => $(id).addEventListener('change', () => { buildQueue(); state.index = state.queue.indexOf(state.current); render(); savePrefs(); }));
+  $('mode').addEventListener('change', savePrefs);
+  $('rate').addEventListener('change', () => { audio.playbackRate = audio.defaultPlaybackRate = Number($('rate').value) || 1; savePrefs(); });
+  $('hideEn').addEventListener('change', () => { state.revealed.clear(); render(); savePrefs(); });
+
+  function setup(message) {
+    $('controls').hidden = true;
+    const form = document.createElement('form'); form.className = 'setup';
+    form.innerHTML = '<p class="meta"></p><label>연결 키<input id="setupKey" type="password" autocomplete="off" required></label><button type="submit">연결</button>';
+    form.querySelector('.meta').textContent = message || '단어장 앱과 같은 연결 키를 넣어 주세요. 이 기기에서 처음 한 번만 필요합니다.';
+    form.addEventListener('submit', event => { event.preventDefault(); store('studyApiKey', form.querySelector('#setupKey').value.trim()); location.reload(); });
+    $('list').replaceChildren(form);
+  }
+  (async function start() {
+    ['filter', 'mode', 'order', 'rate', 'from', 'to'].forEach(id => { if (prefs[id]) $(id).value = prefs[id]; });
+    $('hideEn').checked = !!prefs.hideEn;
+    if (!apiUrl() || !store('studyApiKey')) { setup(); return; }
+    try {
+      const deck = await api('sentenceDeckLoad', []);
+      state.items = deck.items.sort((a, b) => a.no - b.no);
+      if (!$('to').value && state.items.length) $('to').value = state.items[state.items.length - 1].no;
+      if (!$('from').value) $('from').value = 1;
+      render(); buildQueue();
+      if (!deck.audio.parts.length) { notice('음성 파일이 아직 연결되지 않았습니다.', true); return; }
+      audio.src = URL.createObjectURL(await audioBlob(deck.audio));
+      const last = state.items.find(item => item.no === prefs.last);
+      notice('준비 완료 · ▶를 누르면 ' + ($('filter').value === 'left' ? '못 외운 문장만' : '전체 문장을') + ' 반복합니다. 화면을 꺼도 계속 재생됩니다.');
+      if (last && wanted(last)) { state.current = last; state.index = state.queue.indexOf(last); audio.currentTime = segment(last)[0]; showNow(); }
+    } catch (error) { if (error.auth) setup('연결 키가 맞지 않습니다. 다시 입력해 주세요.'); else notice(error.message, true); }
+  })();
+</script>
+</body>
+</html>
