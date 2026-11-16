@@ -169,7 +169,7 @@
     state.current = item; state.index = state.queue.indexOf(item);
     const [start] = segment(item);
     audio.playbackRate = audio.defaultPlaybackRate = Number($('rate').value) || 1;
-    if (Math.abs(audio.currentTime - start) > 0.3) audio.currentTime = start;
+    if (Math.abs(audio.currentTime - start) > 0.3) seekTo(start);
     audio.play().catch(() => notice('재생 버튼을 눌러 주세요.'));
     state.plays[item.no] = (state.plays[item.no] || 0) + 1;
     showNow(); savePrefs();
@@ -179,6 +179,8 @@
   function next(step = 1) {
     if (!state.queue.length || state.index < 0) buildQueue();
     let index = state.index + step;
+    // The current sentence left the queue (settings changed): continue from the next one after it, not from the top.
+    if (state.index < 0 && state.current && step > 0 && $('order').value !== 'shuffle') { const after = state.queue.findIndex(item => item.no > state.current.no); index = after < 0 ? 0 : after; }
     if (index >= state.queue.length) { buildQueue(); index = 0; }
     if (index < 0) index = Math.max(0, state.queue.length - 1);
     const item = state.queue[index];
@@ -192,10 +194,24 @@
     const item = itemAt(audio.currentTime);
     if (item && item !== state.current) { state.current = item; state.index = state.queue.indexOf(item); showNow(); }
   }
+  // iOS drops a seek made before the audio is ready and then plays from 0 (the opening talk),
+  // so a requested position is kept and re-applied until the playhead really gets there.
+  let pendingSeek = null;
+  function seekTo(t) { pendingSeek = t; if (audio.readyState >= 1) { try { audio.currentTime = t; } catch (error) {} } }
+  function applyPendingSeek() {
+    if (pendingSeek === null || audio.seeking || audio.readyState < 1) return;
+    if (Math.abs(audio.currentTime - pendingSeek) < 1) pendingSeek = null; else { try { audio.currentTime = pendingSeek; } catch (error) {} }
+  }
+  ['loadedmetadata', 'canplay', 'playing', 'seeked'].forEach(type => audio.addEventListener(type, applyPendingSeek));
   audio.addEventListener('timeupdate', () => {
     if (!state.current || audio.seeking) return;
+    if (pendingSeek !== null) { applyPendingSeek(); if (pendingSeek !== null) return; }
     const [start, end] = [state.current.start, segment(state.current)[1]], t = audio.currentTime;
-    if (t < start - 0.5 || t > end + 1) { syncToAudio(); return; }
+    if (t < start - 0.5 || t > end + 1) {
+      // Outside every sentence (opening or closing talk): go back to the current sentence instead of playing it.
+      if (itemAt(t)) syncToAudio(); else seekTo(segment(state.current)[0]);
+      return;
+    }
     if (t >= end - 0.05) { buildQueueKeeping(); next(1); }
   });
   // Keep the list on the sentence being played, unless the user scrolled it in the last few seconds.
@@ -325,7 +341,7 @@
       audio.src = src;
       notice('준비 완료 · ▶를 누르면 ' + ($('filter').value === 'left' ? '못 외운 것만' : '전체를') + ' 반복합니다. 화면을 꺼도 계속 재생됩니다.');
       const last = state.items.find(item => item.no === prefs.last);
-      if (last && wanted(last)) { state.current = last; state.index = state.queue.indexOf(last); audio.currentTime = segment(last)[0]; showNow(); }
+      if (last && wanted(last)) { state.current = last; state.index = state.queue.indexOf(last); seekTo(segment(last)[0]); showNow(); }
     } catch (error) { if (token !== loadToken) return; if (error.auth) setup('연결 키가 맞지 않습니다. 다시 입력해 주세요.'); else notice(error.message, true); }
   }
   loadDeck();

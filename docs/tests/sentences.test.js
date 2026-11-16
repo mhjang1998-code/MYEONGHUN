@@ -42,6 +42,7 @@ async function open(context, { prefs, query = '', items = ITEMS } = {}) {
     // Fake media clock: 0.25s of audio every 20ms while playing; records every seek.
     const proto = HTMLMediaElement.prototype, log = window.mediaLog = { seeks: [], playing: false };
     Object.defineProperty(proto, 'currentTime', { get() { return this._t || 0; }, set(v) { this._t = v; log.seeks.push(v); } });
+    Object.defineProperty(proto, 'readyState', { get() { return 4; } });
     Object.defineProperty(proto, 'paused', { get() { return !this._timer; } });
     proto.play = function () { if (!this._timer) { this._timer = setInterval(() => { this._t = (this._t || 0) + 0.25; this.dispatchEvent(new Event('timeupdate')); if (this._t >= (window.mediaEnd || 12)) { this.pause(); this.dispatchEvent(new Event('ended')); } }, 20); this.dispatchEvent(new Event('play')); } return Promise.resolve(); };
     proto.pause = function () { if (this._timer) { clearInterval(this._timer); this._timer = null; this.dispatchEvent(new Event('pause')); } };
@@ -179,5 +180,17 @@ test('weekly plan: picking a week by hand, and the last week holds the remainder
   const rows = await listed(page);
   assert.strictEqual(rows.length, 20); assert.strictEqual(rows[0], 101);
   assert.ok(await page.$eval('#startLabel', n => n.hidden));
+  await context.close();
+});
+
+test('never plays the opening talk: a dropped seek is re-applied and gaps jump back to the sentence', async () => {
+  const late = MANY.map(item => ({ ...item, start: item.start + 90, enStart: item.enStart + 90, end: item.end + 90 }));
+  const { page, context } = await open(null, { items: late, prefs: { filter: 'all' } });
+  await page.evaluate(() => { window.mediaEnd = 400; });
+  await page.click('#play');
+  // Simulate iOS ignoring the seek: playhead is back at the start of the file.
+  await page.evaluate(() => { const a = document.getElementById('audio'); a._t = 0.5; a.dispatchEvent(new Event('timeupdate')); a.pause(); });
+  const t = await page.evaluate(() => document.getElementById('audio').currentTime);
+  assert.ok(t >= 90, 'playhead moved to the first sentence, got ' + t);
   await context.close();
 });
