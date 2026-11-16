@@ -25,6 +25,8 @@ def api(fn, *args):
             if attempt == 3: raise
             time.sleep(10 * (attempt + 1))
     if not data.get('ok'):
+        if '알 수 없는 요청' in str(data.get('error')):  # the API project has not been updated yet
+            print('The study API does not have the TOEIC functions yet; nothing to do.'); sys.exit(0)
         sys.exit('API error: ' + str(data.get('error')))
     return data.get('result')
 
