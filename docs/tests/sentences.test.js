@@ -25,13 +25,13 @@ before(async () => {
 });
 after(async () => { await browser.close(); server.close(); });
 
-async function open(context, { prefs, query = '' } = {}) {
+async function open(context, { prefs, query = '', items = ITEMS } = {}) {
   context = context || await browser.newContext();
   const page = await context.newPage(), calls = [];
   await page.route(API, async route => {
     const body = JSON.parse(route.request().postData());
     calls.push(body);
-    const result = body.fn === 'sentenceDeckLoad' ? { items: JSON.parse(JSON.stringify(ITEMS)), audio: { parts: [{ name: 'part-00', size: 3 }, { name: 'part-01', size: 3 }], version: 'v1' } }
+    const result = body.fn === 'sentenceDeckLoad' ? { items: JSON.parse(JSON.stringify(items)), audio: { parts: [{ name: 'part-00', size: 3 }, { name: 'part-01', size: 3 }], version: 'v1' } }
       : body.fn === 'sentenceAudioPart' ? Buffer.from('abc').toString('base64')
       : body.fn === 'sentenceDeckMark' ? { no: body.args[0], state: body.args[1], memorized: '2026-11-15' } : true;
     await route.fulfill({ status: 200, headers: { 'Access-Control-Allow-Origin': '*', 'Content-Type': 'application/json' }, body: JSON.stringify({ ok: true, result }) });
@@ -43,7 +43,7 @@ async function open(context, { prefs, query = '' } = {}) {
     const proto = HTMLMediaElement.prototype, log = window.mediaLog = { seeks: [], playing: false };
     Object.defineProperty(proto, 'currentTime', { get() { return this._t || 0; }, set(v) { this._t = v; log.seeks.push(v); } });
     Object.defineProperty(proto, 'paused', { get() { return !this._timer; } });
-    proto.play = function () { if (!this._timer) { this._timer = setInterval(() => { this._t = (this._t || 0) + 0.25; this.dispatchEvent(new Event('timeupdate')); if (this._t >= 12) { this.pause(); this.dispatchEvent(new Event('ended')); } }, 20); this.dispatchEvent(new Event('play')); } return Promise.resolve(); };
+    proto.play = function () { if (!this._timer) { this._timer = setInterval(() => { this._t = (this._t || 0) + 0.25; this.dispatchEvent(new Event('timeupdate')); if (this._t >= (window.mediaEnd || 12)) { this.pause(); this.dispatchEvent(new Event('ended')); } }, 20); this.dispatchEvent(new Event('play')); } return Promise.resolve(); };
     proto.pause = function () { if (this._timer) { clearInterval(this._timer); this._timer = null; this.dispatchEvent(new Event('pause')); } };
   }, [API, prefs || null]);
   await page.goto(base + 'sentences.html' + query);
@@ -122,5 +122,35 @@ test('only one deck: the tab bar is hidden', async () => {
   const { page, context } = await open();
   assert.ok(await page.$eval('#tabs', n => n.hidden));
   assert.strictEqual(await page.textContent('#title'), '300문장');
+  await context.close();
+});
+
+const MANY = Array.from({ length: 40 }, (_, i) => ({ ...ITEMS[1], no: i + 1, ko: '한국어 ' + (i + 1), en: 'English ' + (i + 1), start: i * 3, enStart: i * 3 + 1, end: (i + 1) * 3, state: '못외움' }));
+const inView = (page, no) => page.$eval('[data-no="' + no + '"]', el => { const r = el.getBoundingClientRect(); return r.top >= 0 && r.bottom <= innerHeight; });
+
+test('the list follows the sentence being played', async () => {
+  const { page, context } = await open(null, { items: MANY, prefs: { filter: 'all' } });
+  await page.setViewportSize({ width: 390, height: 700 });
+  await page.evaluate(() => { window.mediaEnd = 120; });
+  await page.click('#play');
+  await page.waitForFunction(() => parseInt(document.getElementById('nowNo').textContent, 10) >= 6);
+  await page.click('#play');
+  await page.waitForTimeout(800);
+  const no = await page.$eval('#nowNo', n => parseInt(n.textContent, 10));
+  assert.ok(await inView(page, no), 'row ' + no + ' is on screen');
+  await context.close();
+});
+
+test('after the audio moved on without the page, the player jumps to the sentence under the playhead', async () => {
+  const { page, context } = await open(null, { items: MANY, prefs: { filter: 'all' } });
+  await page.setViewportSize({ width: 390, height: 700 });
+  await page.evaluate(() => { window.mediaEnd = 120; });
+  await page.click('#play');
+  await page.waitForTimeout(100);
+  await page.evaluate(() => { const a = document.getElementById('audio'); a._t = 34 * 3 + 0.5; a.dispatchEvent(new Event('timeupdate')); a.pause(); });
+  await page.waitForTimeout(800);
+  const no = await page.$eval('#nowNo', n => parseInt(n.textContent, 10));
+  assert.ok(no >= 35 && no <= 36, 'now at ' + no);
+  assert.ok(await inView(page, no));
   await context.close();
 });
