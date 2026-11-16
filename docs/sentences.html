@@ -55,7 +55,10 @@
     <label>순서<select id="order"><option value="seq">순서대로</option><option value="shuffle">섞기</option></select></label>
     <label>속도<select id="rate"><option value="0.8">0.8배</option><option value="1" selected>보통</option><option value="1.2">1.2배</option></select></label>
     <label id="groupLabel" hidden>Day<select id="group"></select></label>
-    <label>구간<span class="range"><input id="from" type="number" min="1" inputmode="numeric" aria-label="시작 번호"> ~ <input id="to" type="number" min="1" inputmode="numeric" aria-label="끝 번호"></span></label>
+    <label>주차<select id="week"><option value="auto">이번 주 (자동)</option><option value="all">전체 (주차 없이)</option></select></label>
+    <label id="startLabel">시작일<input id="startDate" type="date"></label>
+    <label class="toggle" id="reviewLabel"><input id="review" type="checkbox" checked>지난 주 못 외운 것 포함</label>
+    <label id="rangeLabel">구간<span class="range"><input id="from" type="number" min="1" inputmode="numeric" aria-label="시작 번호"> ~ <input id="to" type="number" min="1" inputmode="numeric" aria-label="끝 번호"></span></label>
     <label class="toggle"><input id="hide" type="checkbox"><span id="hideLabel">영어 가리기</span></label>
   </div>
   <div id="notice" class="notice" role="status" aria-live="polite"></div>
@@ -123,14 +126,34 @@
   let prefs = {}, loadToken = 0;
   const state = { items: [], queue: [], index: -1, current: null, revealed: new Set(), plays: {} };
   const audio = $('audio');
-  function savePrefs() { store(prefKey(), JSON.stringify({ filter: $('filter').value, mode: $('mode').value, order: $('order').value, rate: $('rate').value, group: $('group').value, from: $('from').value, to: $('to').value, hide: $('hide').checked, last: state.current ? state.current.no : prefs.last })); }
+  function savePrefs() { store(prefKey(), JSON.stringify({ filter: $('filter').value, mode: $('mode').value, order: $('order').value, rate: $('rate').value, group: $('group').value, from: $('from').value, to: $('to').value, hide: $('hide').checked, week: $('week').value, startDate: $('startDate').value, review: $('review').checked, last: state.current ? state.current.no : prefs.last })); }
   function segment(item) {
     const mode = deck().modes.find(m => m[0] === $('mode').value) || deck().modes[0];
     return mode[2] === 'tail' ? [item.enStart, item.end] : mode[2] === 'head' ? [item.start, item.enStart] : [item.start, item.end];
   }
+  // Weekly plan: 50 sentences a week counted from the start date; earlier weeks' unmemorized ones can ride along.
+  const WEEK_SIZE = 50;
+  const weekOf = no => Math.ceil(no / WEEK_SIZE);
+  const weekCount = () => state.items.length ? weekOf(state.items[state.items.length - 1].no) : 0;
+  const weekRange = w => [(w - 1) * WEEK_SIZE + 1, Math.min(w * WEEK_SIZE, state.items.length ? state.items[state.items.length - 1].no : w * WEEK_SIZE)];
+  function todayKey() { const d = new Date(); return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0'); }
+  function autoWeek() {
+    const start = $('startDate').value; if (!start) return 1;
+    const days = Math.floor((Date.parse(todayKey()) - Date.parse(start)) / 86400000);
+    return Math.min(Math.max(1, weekCount()), Math.max(1, Math.floor(days / 7) + 1));
+  }
+  function activeWeek() { const value = $('week').value; return value === 'all' ? 0 : value === 'auto' ? autoWeek() : Number(value); }
+  function weekControls() {
+    const value = $('week').value, auto = value === 'auto' ? autoWeek() : 0;
+    $('rangeLabel').hidden = value !== 'all'; $('startLabel').hidden = value !== 'auto'; $('reviewLabel').hidden = value === 'all';
+    $('week').options[0].textContent = '이번 주 (자동' + (auto && weekCount() ? ' · ' + auto + '주차' : '') + ')';
+  }
   function inRange(item) {
-    const from = Number($('from').value) || 1, to = Number($('to').value) || Infinity, group = $('group').value;
-    return item.no >= from && item.no <= to && (!group || item.group === group);
+    const group = $('group').value; if (group && item.group !== group) return false;
+    const week = activeWeek();
+    if (!week) { const from = Number($('from').value) || 1, to = Number($('to').value) || Infinity; return item.no >= from && item.no <= to; }
+    const own = weekOf(item.no);
+    return own === week || ($('review').checked && own < week && item.state !== '외움');
   }
   const wanted = item => inRange(item) && ($('filter').value === 'all' || item.state !== '외움');
   function buildQueue() {
@@ -198,7 +221,7 @@
   const subText = item => masked(item) ? (deck().sub === 'en' ? '영어 보기 (눌러서 확인)' : '뜻 보기 (눌러서 확인)') : item[deck().sub];
   function showNow() {
     const item = state.current; $('player').hidden = !state.items.length;
-    $('nowNo').textContent = item ? item.no + '번' + (item.group ? ' · ' + item.group : '') + ' · ' + (item.state === '외움' ? '외움' : '못 외움') + ' · 남은 ' + state.items.filter(wanted).length + '개' : '재생할 항목을 고르거나 ▶를 누르세요';
+    $('nowNo').textContent = item ? item.no + '번' + (activeWeek() ? ' · ' + weekOf(item.no) + '주차' : '') + (item.group ? ' · ' + item.group : '') + ' · ' + (item.state === '외움' ? '외움' : '못 외움') + ' · 남은 ' + state.items.filter(wanted).length + '개' : '재생할 항목을 고르거나 ▶를 누르세요';
     $('nowMain').textContent = item ? item[deck().main] : '';
     $('nowSub').textContent = item ? subText(item) : ''; $('nowSub').classList.toggle('masked', !!item && masked(item));
     $('nowEx').textContent = item && item.example ? item.example + (masked(item) ? '' : '  ' + item.exampleKo) : '';
@@ -210,7 +233,9 @@
   }
   function summary() {
     const done = state.items.filter(item => item.state === '외움').length, total = state.items.length;
-    $('summary').textContent = '외움 ' + done + ' / ' + total + '개 · 남은 ' + (total - done) + '개';
+    const week = activeWeek(), [a, b] = week ? weekRange(week) : [0, 0];
+    const weekDone = week ? state.items.filter(item => weekOf(item.no) === week && item.state === '외움').length : 0;
+    $('summary').textContent = '외움 ' + done + ' / ' + total + '개' + (week ? ' · ' + week + '주차(' + a + '–' + b + ') ' + weekDone + ' / ' + (b - a + 1) + '개' : ' · 남은 ' + (total - done) + '개');
     $('bar').style.width = total ? (done / total * 100) + '%' : '0';
   }
   function row(item) {
@@ -248,7 +273,7 @@
   $('markNow').addEventListener('click', () => state.current && toggle(state.current));
   ['nowNo', 'nowMain'].forEach(id => $(id).addEventListener('click', () => scrollToCurrent(true)));
   $('nowSub').addEventListener('click', () => { if (state.current) { state.revealed.add(state.current.no); showNow(); } });
-  ['filter', 'order', 'from', 'to', 'group'].forEach(id => $(id).addEventListener('change', () => { buildQueue(); state.index = state.queue.indexOf(state.current); render(); savePrefs(); }));
+  ['filter', 'order', 'from', 'to', 'group', 'week', 'startDate', 'review'].forEach(id => $(id).addEventListener('change', () => { weekControls(); buildQueue(); state.index = state.queue.indexOf(state.current); render(); savePrefs(); }));
   $('mode').addEventListener('change', savePrefs);
   $('rate').addEventListener('change', () => { audio.playbackRate = audio.defaultPlaybackRate = Number($('rate').value) || 1; savePrefs(); });
   $('hide').addEventListener('change', () => { state.revealed.clear(); render(); savePrefs(); });
@@ -277,6 +302,7 @@
     $('hideLabel').textContent = deck().hideLabel;
     ['filter', 'mode', 'order', 'rate'].forEach(id => { if (prefs[id] && [...$(id).options].some(o => o.value === prefs[id])) $(id).value = prefs[id]; });
     $('from').value = prefs.from || ''; $('to').value = prefs.to || ''; $('hide').checked = !!prefs.hide;
+    $('startDate').value = prefs.startDate || todayKey(); $('review').checked = prefs.review !== false;
     $('list').replaceChildren(); $('summary').textContent = '불러오는 중'; notice(''); $('player').hidden = true;
     if (!apiUrl() || !store('studyApiKey')) { setup(); return; }
     try {
@@ -287,6 +313,9 @@
       $('groupLabel').hidden = !groups.length;
       $('group').replaceChildren(new Option('전체', ''), ...groups.map(g => new Option(g, g)));
       $('group').value = groups.includes(prefs.group) ? prefs.group : '';
+      $('week').replaceChildren($('week').options[0], $('week').options[1], ...Array.from({ length: weekCount() }, (_, i) => { const [a, b] = weekRange(i + 1); return new Option((i + 1) + '주차 (' + a + '–' + b + ')', String(i + 1)); }));
+      $('week').value = [...$('week').options].some(o => o.value === prefs.week) ? prefs.week : 'auto';
+      weekControls();
       if (!$('from').value) $('from').value = 1;
       if (!$('to').value && state.items.length) $('to').value = state.items[state.items.length - 1].no;
       render(); buildQueue();

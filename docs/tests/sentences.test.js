@@ -111,7 +111,7 @@ test('hiding English shows it only after tapping', async () => {
 });
 
 test('range limits the loop to the chosen numbers', async () => {
-  const { page, context } = await open(null, { prefs: { from: '3', to: '4', filter: 'all' } });
+  const { page, context } = await open(null, { prefs: { from: '3', to: '4', filter: 'all', week: 'all' } });
   await page.click('#play');
   const order = await playedOrder(page, 700);
   assert.ok(order.every(n => n === 3 || n === 4), order.join(','));
@@ -152,5 +152,32 @@ test('after the audio moved on without the page, the player jumps to the sentenc
   const no = await page.$eval('#nowNo', n => parseInt(n.textContent, 10));
   assert.ok(no >= 35 && no <= 36, 'now at ' + no);
   assert.ok(await inView(page, no));
+  await context.close();
+});
+
+const WEEKS = Array.from({ length: 120 }, (_, i) => ({ ...ITEMS[1], no: i + 1, ko: '한국어 ' + (i + 1), en: 'English ' + (i + 1), start: i * 3, enStart: i * 3 + 1, end: (i + 1) * 3, state: i + 1 === 7 ? '외움' : '못외움' }));
+const daysAgo = n => { const d = new Date(Date.now() - n * 86400000); return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0'); };
+const listed = page => page.$$eval('#list [data-no]', rows => rows.map(r => Number(r.dataset.no)));
+
+test('weekly plan: the start date picks this week (50 sentences) and adds earlier unmemorized ones', async () => {
+  const { page, context } = await open(null, { items: WEEKS, prefs: { startDate: daysAgo(8) } });
+  assert.match(await page.textContent('#week'), /이번 주 \(자동 · 2주차\)/);
+  const rows = await listed(page);
+  assert.ok(rows.includes(51) && rows.includes(100) && !rows.includes(101), 'week 2 is 51-100');
+  assert.ok(rows.includes(1) && !rows.includes(7), 'week 1 unmemorized included, memorized #7 left out');
+  assert.match(await page.textContent('#summary'), /2주차\(51–100\) 0 \/ 50개/);
+  await page.uncheck('#review');
+  const only = await listed(page);
+  assert.strictEqual(only[0], 51); assert.strictEqual(only.length, 50);
+  await context.close();
+});
+
+test('weekly plan: picking a week by hand, and the last week holds the remainder', async () => {
+  const { page, context } = await open(null, { items: WEEKS, prefs: { review: false } });
+  assert.deepStrictEqual(await page.$$eval('#week option', o => o.map(x => x.textContent)).then(l => l.slice(2)), ['1주차 (1–50)', '2주차 (51–100)', '3주차 (101–120)']);
+  await page.selectOption('#week', '3');
+  const rows = await listed(page);
+  assert.strictEqual(rows.length, 20); assert.strictEqual(rows[0], 101);
+  assert.ok(await page.$eval('#startLabel', n => n.hidden));
   await context.close();
 });
