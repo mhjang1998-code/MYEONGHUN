@@ -72,6 +72,23 @@ def build_items(wav, audio, rate, small, sharp):
         segs, _ = model.transcribe(clip, language=language, beam_size=5, vad_filter=False, without_timestamps=True, condition_on_previous_text=False)
         return ' '.join(s.text.strip() for s in segs).strip()
 
+    def sentences(a, b):
+        """The different sentences read in a..b, each as (text, start, end); a sentence read twice counts once."""
+        clip = audio[int(max(0, a - 0.12) * rate):int((b + 0.12) * rate)]
+        segs, _ = sharp.transcribe(clip, language='en', beam_size=5, vad_filter=False, word_timestamps=True, condition_on_previous_text=False)
+        words = [w for seg in segs for w in (seg.words or [])]
+        runs, cur = [], []
+        for w in words:
+            cur.append(w)
+            if re.search(r'[.?!]["\']?$', w.word.strip()): runs.append(cur); cur = []
+        if cur: runs.append(cur)
+        runs = [(' '.join(w.word.strip() for w in r), a - 0.12 + r[0].start, a - 0.12 + r[-1].end) for r in runs if r]
+        out = []
+        for text, start, end in runs:
+            if out and alike(text, out[-1][0]): out[-1] = (text, out[-1][1], end)
+            else: out.append((text, start, end))
+        return out
+
     entries = []
     for a, b in pieces(wav):
         if entries and a - entries[-1][-1][1] < 0.6: entries[-1].append([a, b])
@@ -102,11 +119,16 @@ def build_items(wav, audio, rate, small, sharp):
             a, b = long['a'], stretch[-1]['b']
             text = halve(hear(sharp, a, b, 'en'))
             if len(norm(text)) < 4 or re.search(r'hackers|vocabulary', text, re.I): continue
-            if items and not meaning and abs(a - (items[-1]['end'] - 0.35)) < 2.5 and alike(text, items[-1]['en']):
-                items[-1]['end'] = round(b + 0.35, 2)  # the second reading came after a longer pause
-            else:
-                items.append({'en': text, 'start': round(max(0, cursor - 0.15), 2), 'enStart': round(a - 0.12, 2), 'end': round(b + 0.35, 2), 'head': head, 'meaning': meaning})
-            cursor, meaning = b + 0.35, ''
+            found = [(text, a, b)]
+            if len(norm(text)) >= 14:  # maybe two sentences (a second meaning whose Korean was not caught)
+                split = [x for x in sentences(a, b) if len(norm(x[0])) >= 4]
+                if len(split) >= 2: found = [(t, max(a, s0), min(b, e0)) for t, s0, e0 in split]; found[0] = (found[0][0], a, found[0][2]); found[-1] = (found[-1][0], found[-1][1], b)
+            for text, a, b in found:
+                if items and not meaning and abs(a - (items[-1]['end'] - 0.35)) < 2.5 and alike(text, items[-1]['en']):
+                    items[-1]['end'] = round(b + 0.35, 2)  # the second reading came after a longer pause
+                else:
+                    items.append({'en': text, 'start': round(max(0, cursor - 0.15), 2), 'enStart': round(a - 0.12, 2), 'end': round(b + 0.35, 2), 'head': head, 'meaning': meaning})
+                cursor, meaning = b + 0.35, ''
     return items
 
 
@@ -130,7 +152,8 @@ def main():
     if not URL or not KEY:
         print('Study API not configured; nothing to do.'); return 0
     files, done = api('toeicFiles'), set(api('toeicItemDays'))
-    todo = [f for f in files if (f['day'] in ONLY if ONLY else f['day'] not in done)]
+    redo = [int(d) for d in os.environ.get('REDO', '').split(',') if d.strip()]
+    todo = [f for f in files if (f['day'] in ONLY if ONLY else f['day'] not in done or f['day'] in redo)]
     print(f'{len(files)} files, {len(done)} done, {len(todo)} to do', flush=True)
     if not todo: return 0
     import soundfile as sf
