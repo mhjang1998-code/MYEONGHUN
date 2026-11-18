@@ -17,6 +17,7 @@ function bundleBytes(items) {
   const head = Buffer.from(JSON.stringify(index)), size = Buffer.alloc(4); size.writeUInt32BE(head.length);
   return Buffer.concat([Buffer.from('SCB1'), size, head, Buffer.alloc(items.length * 8)]);
 }
+const TOEIC = [1001, 1002, 2001].map(no => ({ no, ko: '해석 ' + no, en: 'Sentence ' + no, start: 0, enStart: 1, end: 3, state: '못외움', memorized: '', plays: 0, example: 'word' + no, exampleKo: '뜻', group: no < 2000 ? 'Day 01' : 'Day 02' }));
 let browser, server, base;
 before(async () => {
   server = http.createServer((req, res) => {
@@ -37,7 +38,10 @@ async function open(context, { prefs, query = '', items = ITEMS, bundle = false 
   await page.route(API, async route => {
     const body = JSON.parse(route.request().postData());
     calls.push(body);
-    const result = body.fn === 'sentenceDeckLoad' ? { items: JSON.parse(JSON.stringify(items)), audio: { parts: [{ name: 'part-00', size: 3 }, { name: 'part-01', size: 3 }], version: 'v1' } }
+    const toeicDeck = () => ({ items: JSON.parse(JSON.stringify(TOEIC)), audio: { parts: [], groups: { 'Day 01': { version: 'a', parts: [{ name: 'toeic-01-part-00' }] } } } });
+    const result = body.fn === 'sentenceDeckLoad' && body.args[0] === 'toeic' ? toeicDeck()
+      : body.fn === 'sentenceAudioPart' && /^toeic-/.test(body.args[0]) ? bundleBytes(TOEIC.filter(i => i.group === 'Day 01')).toString('base64')
+      : body.fn === 'sentenceDeckLoad' ? { items: JSON.parse(JSON.stringify(items)), audio: { parts: [{ name: 'part-00', size: 3 }, { name: 'part-01', size: 3 }], version: 'v1' } }
       : body.fn === 'sentenceAudioPart' ? (bundle ? (body.args[0] === 'part-00' ? bundleBytes(items).toString('base64') : '') : Buffer.from('abc').toString('base64'))
       : body.fn === 'sentenceDeckMark' ? { no: body.args[0], state: body.args[1], memorized: '2026-11-15' } : true;
     await route.fulfill({ status: 200, headers: { 'Access-Control-Allow-Origin': '*', 'Content-Type': 'application/json' }, body: JSON.stringify({ ok: true, result }) });
@@ -53,7 +57,7 @@ async function open(context, { prefs, query = '', items = ITEMS, bundle = false 
     proto.play = function () {
       if (this.dataset.clip) { // clip mode: one short file per sentence part
         (log.clips = log.clips || []).push(this.dataset.clip); clearTimeout(this._clipTimer); this._timer = -1;
-        this._clipTimer = setTimeout(() => { this._timer = null; this.dispatchEvent(new Event('ended')); }, 60);
+        this._clipTimer = setTimeout(() => { this._timer = null; this.dispatchEvent(new Event('ended')); }, window.clipMs || 60);
         this.dispatchEvent(new Event('play')); return Promise.resolve();
       } if (!this._timer) { this._timer = setInterval(() => { this._t = (this._t || 0) + 0.25; this.dispatchEvent(new Event('timeupdate')); if (this._t >= (window.mediaEnd || 12)) { this.pause(); this.dispatchEvent(new Event('ended')); } }, 20); this.dispatchEvent(new Event('play')); } return Promise.resolve(); };
     proto.pause = function () { clearTimeout(this._clipTimer); if (this._timer) { clearInterval(this._timer); this._timer = null; this.dispatchEvent(new Event('pause')); } };
@@ -130,12 +134,7 @@ test('range limits the loop to the chosen numbers', async () => {
   await context.close();
 });
 
-test('only one deck: the tab bar is hidden', async () => {
-  const { page, context } = await open();
-  assert.ok(await page.$eval('#tabs', n => n.hidden));
-  assert.strictEqual(await page.textContent('#title'), '300문장');
-  await context.close();
-});
+
 
 const MANY = Array.from({ length: 40 }, (_, i) => ({ ...ITEMS[1], no: i + 1, ko: '한국어 ' + (i + 1), en: 'English ' + (i + 1), start: i * 3, enStart: i * 3 + 1, end: (i + 1) * 3, state: '못외움' }));
 const inView = (page, no) => page.$eval('[data-no="' + no + '"]', el => { const r = el.getBoundingClientRect(); return r.top >= 0 && r.bottom <= innerHeight; });
@@ -220,6 +219,7 @@ test('clip bundle: plays Korean then English of each unmemorized sentence withou
 
 test('clip bundle: next button and tapping a row switch the audio right away; "영어만" plays only English', async () => {
   const { page, context } = await open(null, { bundle: true, items: MANY, prefs: { filter: 'all', mode: 'en', week: 'all' } });
+  await page.evaluate(() => { window.clipMs = 400; });
   await page.click('#play');
   await page.waitForTimeout(30);
   await page.click('#next');
@@ -231,8 +231,26 @@ test('clip bundle: next button and tapping a row switch the audio right away; "�
   clips = await clipLog(page);
   assert.strictEqual(clips.at(-1), '20b');
   assert.strictEqual(await page.$eval('#nowNo', n => parseInt(n.textContent, 10)), 20);
-  await page.waitForTimeout(150);
+  await page.waitForTimeout(600);
   assert.ok((await clipLog(page)).includes('21b'), 'continues with the next sentence');
   await page.click('#prev');
+  await context.close();
+});
+
+test('TOEIC tab: plays the chosen Day from its own clip bundle, word then sentence; other Days wait for audio', async () => {
+  const { page, calls, context } = await open(null, { bundle: true });
+  await page.click('[data-deck="toeic"]');
+  await page.waitForFunction(() => document.getElementById('title').textContent === '토익 예문' && /준비 완료/.test(document.getElementById('notice').textContent));
+  assert.deepStrictEqual(await page.$$eval('#group option', o => o.map(x => x.textContent)), ['Day 01', 'Day 02 (준비 중)']);
+  assert.ok(await page.$eval('#weekLabel', n => n.hidden));
+  assert.deepStrictEqual(await page.$$eval('#list [data-no]', r => r.map(x => Number(x.dataset.no))), [1001, 1002]);
+  await page.click('#play');
+  await page.waitForTimeout(330);
+  assert.deepStrictEqual((await clipLog(page)).slice(0, 5), ['1001a', '1001b', '1002a', '1002b', '1001a']);
+  await page.click('#markNow');
+  await page.waitForTimeout(100);
+  assert.strictEqual(calls.find(c => c.fn === 'sentenceDeckMark').args[2], 'toeic');
+  await page.selectOption('#group', 'Day 02');
+  await page.waitForFunction(() => /준비 중/.test(document.getElementById('notice').textContent));
   await context.close();
 });

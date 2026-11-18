@@ -47,7 +47,7 @@
 <body>
 <main class="app">
   <header><div><h1 id="title">반복 듣기</h1><div class="meta" id="summary">불러오는 중</div></div><a href="./">단어장으로</a></header>
-  <div class="tabs" role="tablist" aria-label="단어장" id="tabs"><button type="button" role="tab" data-deck="s300">300문장</button></div>
+  <div class="tabs" role="tablist" aria-label="단어장" id="tabs"><button type="button" role="tab" data-deck="s300">300문장</button><button type="button" role="tab" data-deck="toeic">토익 예문</button></div>
   <div class="progress" aria-hidden="true"><div id="bar"></div></div>
   <div class="controls" id="controls">
     <label>들을 문장<select id="filter"><option value="left">못 외운 것만</option><option value="all">전체</option></select></label>
@@ -55,7 +55,7 @@
     <label>순서<select id="order"><option value="seq">순서대로</option><option value="shuffle">섞기</option></select></label>
     <label>속도<select id="rate"><option value="0.8">0.8배</option><option value="1" selected>보통</option><option value="1.2">1.2배</option></select></label>
     <label id="groupLabel" hidden>Day<select id="group"></select></label>
-    <label>주차<select id="week"><option value="auto">이번 주 (자동)</option><option value="all">전체 (주차 없이)</option></select></label>
+    <label id="weekLabel">주차<select id="week"><option value="auto">이번 주 (자동)</option><option value="all">전체 (주차 없이)</option></select></label>
     <label id="startLabel">시작일<input id="startDate" type="date"></label>
     <label class="toggle" id="reviewLabel"><input id="review" type="checkbox" checked>지난 주 못 외운 것 포함</label>
     <label id="rangeLabel">구간<span class="range"><input id="from" type="number" min="1" inputmode="numeric" aria-label="시작 번호"> ~ <input id="to" type="number" min="1" inputmode="numeric" aria-label="끝 번호"></span></label>
@@ -83,7 +83,9 @@
 <script>
   // main = line shown big, sub = the line hidden in practice mode; modes: [value, label, part of each item to play].
   const DECKS = {
-    s300: { title: '300문장', main: 'ko', sub: 'en', hideLabel: '영어 가리기 (영작 연습)', modes: [['koen', '한국어 → 영어 2번', 'full'], ['en', '영어만', 'tail']] }
+    s300: { title: '300문장', main: 'ko', sub: 'en', hideLabel: '영어 가리기 (영작 연습)', modes: [['koen', '한국어 → 영어 2번', 'full'], ['en', '영어만', 'tail']] },
+    // perGroup: one clip bundle per Day, downloaded when that Day is chosen.
+    toeic: { title: '토익 예문', main: 'en', sub: 'ko', hideLabel: '해석 가리기', perGroup: true, modes: [['full', '단어·뜻 → 예문 2번', 'full'], ['en', '예문만', 'tail']] }
   };
   const $ = id => document.getElementById(id);
   const store = (name, value) => { try { if (value === undefined) return localStorage.getItem(name) || ''; localStorage.setItem(name, value); } catch (error) {} return ''; };
@@ -104,7 +106,7 @@
   async function keep(key, value) { const d = await db(); return new Promise(resolve => { const t = d.transaction('files', 'readwrite'); t.objectStore('files').put(value, key); t.oncomplete = t.onerror = () => resolve(); }); }
   async function audioSource(info) {
     if (info.url) return info.url;
-    const key = deckId === 's300' ? 'sentences300' : 'deck:' + deckId;
+    const key = deckId === 's300' ? 'sentences300' : 'deck:' + deckId + (deck().perGroup ? ':' + $('group').value : '');
     try { const saved = await stored(key); if (saved && saved.version === info.version) return saved.blob; } catch (error) {}
     const chunks = [];
     for (let i = 0; i < info.parts.length; i++) {
@@ -163,9 +165,11 @@
     const days = Math.floor((Date.parse(todayKey()) - Date.parse(start)) / 86400000);
     return Math.min(Math.max(1, weekCount()), Math.max(1, Math.floor(days / 7) + 1));
   }
-  function activeWeek() { const value = $('week').value; return value === 'all' ? 0 : value === 'auto' ? autoWeek() : Number(value); }
+  function activeWeek() { if (deck().perGroup) return 0; const value = $('week').value; return value === 'all' ? 0 : value === 'auto' ? autoWeek() : Number(value); }
   function weekControls() {
     const value = $('week').value, auto = value === 'auto' ? autoWeek() : 0;
+    $('weekLabel').hidden = !!deck().perGroup;
+    if (deck().perGroup) { $('rangeLabel').hidden = $('startLabel').hidden = $('reviewLabel').hidden = true; return; }
     $('rangeLabel').hidden = value !== 'all'; $('startLabel').hidden = value !== 'auto'; $('reviewLabel').hidden = value === 'all';
     $('week').options[0].textContent = '이번 주 (자동' + (auto && weekCount() ? ' · ' + auto + '주차' : '') + ')';
   }
@@ -277,6 +281,11 @@
   }
   function summary() {
     const done = state.items.filter(item => item.state === '외움').length, total = state.items.length;
+    if (deck().perGroup) {
+      const own = state.items.filter(item => item.group === $('group').value), ownDone = own.filter(item => item.state === '외움').length;
+      $('summary').textContent = '외움 ' + done + ' / ' + total + '개 · ' + $('group').value + ' ' + ownDone + ' / ' + own.length + '개';
+      $('bar').style.width = own.length ? (ownDone / own.length * 100) + '%' : '0'; return;
+    }
     const week = activeWeek(), [a, b] = week ? weekRange(week) : [0, 0];
     const weekDone = week ? state.items.filter(item => weekOf(item.no) === week && item.state === '외움').length : 0;
     $('summary').textContent = '외움 ' + done + ' / ' + total + '개' + (week ? ' · ' + week + '주차(' + a + '–' + b + ') ' + weekDone + ' / ' + (b - a + 1) + '개' : ' · 남은 ' + (total - done) + '개');
@@ -317,6 +326,7 @@
   $('markNow').addEventListener('click', () => state.current && toggle(state.current));
   ['nowNo', 'nowMain'].forEach(id => $(id).addEventListener('click', () => scrollToCurrent(true)));
   $('nowSub').addEventListener('click', () => { if (state.current) { state.revealed.add(state.current.no); showNow(); } });
+  $('group').addEventListener('change', () => { if (deck().perGroup) { state.current = null; loadAudio(++loadToken, (groupAudio || {})[$('group').value]); } });
   ['filter', 'order', 'from', 'to', 'group', 'week', 'startDate', 'review'].forEach(id => $(id).addEventListener('change', () => { weekControls(); buildQueue(); state.index = state.queue.indexOf(state.current); render(); savePrefs(); }));
   $('mode').addEventListener('change', savePrefs);
   $('rate').addEventListener('change', () => { audio.playbackRate = audio.defaultPlaybackRate = Number($('rate').value) || 1; savePrefs(); });
@@ -355,16 +365,24 @@
       state.items = data.items.sort((a, b) => a.no - b.no);
       const groups = [...new Set(state.items.map(item => item.group).filter(Boolean))];
       $('groupLabel').hidden = !groups.length;
-      $('group').replaceChildren(new Option('전체', ''), ...groups.map(g => new Option(g, g)));
-      $('group').value = groups.includes(prefs.group) ? prefs.group : '';
+      $('group').replaceChildren(...(deck().perGroup ? [] : [new Option('전체', '')]), ...groups.map(g => new Option(g + (deck().perGroup && !(data.audio.groups || {})[g] ? ' (준비 중)' : ''), g)));
+      $('group').value = groups.includes(prefs.group) ? prefs.group : deck().perGroup ? (groups[0] || '') : '';
+      groupAudio = data.audio.groups || null;
       $('week').replaceChildren($('week').options[0], $('week').options[1], ...Array.from({ length: weekCount() }, (_, i) => { const [a, b] = weekRange(i + 1); return new Option((i + 1) + '주차 (' + a + '–' + b + ')', String(i + 1)); }));
       $('week').value = [...$('week').options].some(o => o.value === prefs.week) ? prefs.week : 'auto';
       weekControls();
-      if (!$('from').value) $('from').value = 1;
-      if (!$('to').value && state.items.length) $('to').value = state.items[state.items.length - 1].no;
+      if (deck().perGroup) { $('from').value = ''; $('to').value = ''; }
+      else { if (!$('from').value) $('from').value = 1; if (!$('to').value && state.items.length) $('to').value = state.items[state.items.length - 1].no; }
       render(); buildQueue();
-      if (!data.audio.url && !data.audio.parts.length) { notice('음성 파일이 아직 연결되지 않았습니다.', true); return; }
-      const src = await audioSource(data.audio);
+      await loadAudio(token, deck().perGroup ? (groupAudio || {})[$('group').value] : data.audio);
+    } catch (error) { if (token !== loadToken) return; if (error.auth) setup('연결 키가 맞지 않습니다. 다시 입력해 주세요.'); else notice(error.message, true); }
+  }
+  let groupAudio = null;
+  async function loadAudio(token, info) {
+    audio.pause(); audio.removeAttribute('src'); clips = null;
+    try {
+      if (!info || (!info.url && !(info.parts || []).length)) { notice(deck().perGroup ? '이 Day의 음성은 아직 준비 중입니다.' : '음성 파일이 아직 연결되지 않았습니다.', true); return; }
+      const src = await audioSource(info);
       if (token !== loadToken) return;
       if (typeof src === 'string') { clips = null; audio.src = src; }
       else if (await readBundle(src)) audio.removeAttribute('src'); else audio.src = URL.createObjectURL(src);

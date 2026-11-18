@@ -4,7 +4,8 @@
 // A deck with audioUrl instead plays a track published with the app.
 const SENTENCE_BOOK = '1QREAKTTImJvP90EmE8fLjAxF2Z-Tb8jcqU1cxe-Vs8Q';
 const SENTENCE_DECKS = {
-  s300: { sheet: '300문장' }
+  s300: { sheet: '300문장' },
+  toeic: { sheet: '토익 예문', groupAudio: true }
 };
 const SENTENCE_STATES = ['못외움', '외움'];
 
@@ -38,6 +39,7 @@ function sentenceDeckLoad(deck) {
     state: SENTENCE_STATES.includes(row[6]) ? row[6] : '못외움', memorized: mobileStudyDate_(row[7], timeZone), plays: Number(row[8]) || 0,
     example: String(row[9] || ''), exampleKo: String(row[10] || ''), group: String(row[11] || '')
   }));
+  if (config.groupAudio) return { items: items, audio: { groups: toeicBundleGroups_(), parts: [] } };
   if (config.audioUrl) return { items: items, audio: { url: config.audioUrl, parts: [], version: config.audioUrl } };
   const parts = sentenceAudioParts_();
   return { items: items, audio: { parts: parts.map(p => ({ name: p.name, size: p.size })), version: parts.map(p => p.id + ':' + p.size).join('|') } };
@@ -45,6 +47,7 @@ function sentenceDeckLoad(deck) {
 
 // One audio part (about 4 MB) as base64; the app joins the parts in order.
 function sentenceAudioPart(name) {
+  if (/^toeic-\d+-part-\d+$/.test(String(name))) return toeicBundlePart_(name);
   const part = sentenceAudioParts_().find(p => p.name === name);
   if (!part) throw new Error('음성 파일 조각을 찾을 수 없습니다: ' + name);
   return Utilities.base64Encode(DriveApp.getFileById(part.id).getBlob().getBytes());

@@ -16,7 +16,7 @@ function doPost(e) {
     mobileStudyPreferences, mobileStudySavePreferences, mobileStudyPronunciation, mobileStudyLoad,
     mobileStudyReview, mobileStudyUndo, mobileStudySetCount, mobileStudySetMemo, studyAudioTexts,
     sentenceDeckLoad, sentenceAudioPart, sentenceDeckMark, sentenceDeckPlays,
-    toeicFiles, toeicSourcePart, toeicRawDays, toeicSaveRaw
+    toeicFiles, toeicSourcePart, toeicRawDays, toeicSaveRaw, toeicItemDays, toeicSaveItems, toeicSaveBundlePart
   };
   const fn = Object.prototype.hasOwnProperty.call(api, request.fn) ? api[request.fn] : null;
   if (!fn) return studyJson_({ ok: false, error: '알 수 없는 요청입니다: ' + request.fn });
