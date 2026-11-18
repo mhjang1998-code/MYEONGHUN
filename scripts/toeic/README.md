@@ -5,3 +5,4 @@
 
 - `raw.py`: Day별 음성을 API로 받아 말소리 구간마다 받아쓰기 → `toeicSaveRaw`
 - 워크플로 `TOEIC transcript`: `DAYS`에 적은 Day만, 비우면 아직 안 된 Day 전부
+- `items.py`: Day별 음성에서 예문 항목(구간·단어·단어 뜻)을 만들어 시트 「토익 예문」에 저장하고, 예문별 음성 조각 묶음을 비공개 드라이브에 올림
