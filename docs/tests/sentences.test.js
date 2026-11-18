@@ -11,6 +11,12 @@ const API = 'https://api.test/exec';
 // Each sentence: Korean 0-1s, English 1-3s of its own 3-second block.
 const ITEMS = [1, 2, 3, 4].map(no => ({ no, ko: '한국어 ' + no, en: 'English ' + no, start: (no - 1) * 3, enStart: (no - 1) * 3 + 1, end: no * 3, state: no === 1 ? '외움' : '못외움', memorized: '', plays: 0, example: '', exampleKo: '', group: '' }));
 
+// Clip bundle like scripts/sentences/bundle.py makes: every part is 4 dummy bytes.
+function bundleBytes(items) {
+  const index = {}; items.forEach((item, i) => { index[item.no] = [i * 8, 4, i * 8 + 4, 4]; });
+  const head = Buffer.from(JSON.stringify(index)), size = Buffer.alloc(4); size.writeUInt32BE(head.length);
+  return Buffer.concat([Buffer.from('SCB1'), size, head, Buffer.alloc(items.length * 8)]);
+}
 let browser, server, base;
 before(async () => {
   server = http.createServer((req, res) => {
@@ -25,14 +31,14 @@ before(async () => {
 });
 after(async () => { await browser.close(); server.close(); });
 
-async function open(context, { prefs, query = '', items = ITEMS } = {}) {
+async function open(context, { prefs, query = '', items = ITEMS, bundle = false } = {}) {
   context = context || await browser.newContext();
   const page = await context.newPage(), calls = [];
   await page.route(API, async route => {
     const body = JSON.parse(route.request().postData());
     calls.push(body);
     const result = body.fn === 'sentenceDeckLoad' ? { items: JSON.parse(JSON.stringify(items)), audio: { parts: [{ name: 'part-00', size: 3 }, { name: 'part-01', size: 3 }], version: 'v1' } }
-      : body.fn === 'sentenceAudioPart' ? Buffer.from('abc').toString('base64')
+      : body.fn === 'sentenceAudioPart' ? (bundle ? (body.args[0] === 'part-00' ? bundleBytes(items).toString('base64') : '') : Buffer.from('abc').toString('base64'))
       : body.fn === 'sentenceDeckMark' ? { no: body.args[0], state: body.args[1], memorized: '2026-11-15' } : true;
     await route.fulfill({ status: 200, headers: { 'Access-Control-Allow-Origin': '*', 'Content-Type': 'application/json' }, body: JSON.stringify({ ok: true, result }) });
   });
@@ -44,8 +50,13 @@ async function open(context, { prefs, query = '', items = ITEMS } = {}) {
     Object.defineProperty(proto, 'currentTime', { get() { return this._t || 0; }, set(v) { this._t = v; log.seeks.push(v); } });
     Object.defineProperty(proto, 'readyState', { get() { return 4; } });
     Object.defineProperty(proto, 'paused', { get() { return !this._timer; } });
-    proto.play = function () { if (!this._timer) { this._timer = setInterval(() => { this._t = (this._t || 0) + 0.25; this.dispatchEvent(new Event('timeupdate')); if (this._t >= (window.mediaEnd || 12)) { this.pause(); this.dispatchEvent(new Event('ended')); } }, 20); this.dispatchEvent(new Event('play')); } return Promise.resolve(); };
-    proto.pause = function () { if (this._timer) { clearInterval(this._timer); this._timer = null; this.dispatchEvent(new Event('pause')); } };
+    proto.play = function () {
+      if (this.dataset.clip) { // clip mode: one short file per sentence part
+        (log.clips = log.clips || []).push(this.dataset.clip); clearTimeout(this._clipTimer); this._timer = -1;
+        this._clipTimer = setTimeout(() => { this._timer = null; this.dispatchEvent(new Event('ended')); }, 60);
+        this.dispatchEvent(new Event('play')); return Promise.resolve();
+      } if (!this._timer) { this._timer = setInterval(() => { this._t = (this._t || 0) + 0.25; this.dispatchEvent(new Event('timeupdate')); if (this._t >= (window.mediaEnd || 12)) { this.pause(); this.dispatchEvent(new Event('ended')); } }, 20); this.dispatchEvent(new Event('play')); } return Promise.resolve(); };
+    proto.pause = function () { clearTimeout(this._clipTimer); if (this._timer) { clearInterval(this._timer); this._timer = null; this.dispatchEvent(new Event('pause')); } };
   }, [API, prefs || null]);
   await page.goto(base + 'sentences.html' + query);
   await page.waitForFunction(() => /준비 완료/.test(document.getElementById('notice').textContent));
@@ -192,5 +203,36 @@ test('never plays the opening talk: a dropped seek is re-applied and gaps jump b
   await page.evaluate(() => { const a = document.getElementById('audio'); a._t = 0.5; a.dispatchEvent(new Event('timeupdate')); a.pause(); });
   const t = await page.evaluate(() => document.getElementById('audio').currentTime);
   assert.ok(t >= 90, 'playhead moved to the first sentence, got ' + t);
+  await context.close();
+});
+
+const clipLog = page => page.evaluate(() => window.mediaLog.clips || []);
+
+test('clip bundle: plays Korean then English of each unmemorized sentence without seeking, and loops', async () => {
+  const { page, context } = await open(null, { bundle: true });
+  await page.click('#play');
+  await page.waitForTimeout(500);
+  const clips = await clipLog(page);
+  assert.deepStrictEqual(clips.slice(0, 7), ['2a', '2b', '3a', '3b', '4a', '4b', '2a'], clips.join(','));
+  assert.deepStrictEqual(await page.evaluate(() => window.mediaLog.seeks), [], 'no seeking in clip mode');
+  await context.close();
+});
+
+test('clip bundle: next button and tapping a row switch the audio right away; "영어만" plays only English', async () => {
+  const { page, context } = await open(null, { bundle: true, items: MANY, prefs: { filter: 'all', mode: 'en', week: 'all' } });
+  await page.click('#play');
+  await page.waitForTimeout(30);
+  await page.click('#next');
+  await page.waitForTimeout(20);
+  let clips = await clipLog(page);
+  assert.deepStrictEqual(clips.slice(0, 2), ['1b', '2b'], clips.join(','));
+  await page.click('[data-no="20"] .text');
+  await page.waitForTimeout(20);
+  clips = await clipLog(page);
+  assert.strictEqual(clips.at(-1), '20b');
+  assert.strictEqual(await page.$eval('#nowNo', n => parseInt(n.textContent, 10)), 20);
+  await page.waitForTimeout(150);
+  assert.ok((await clipLog(page)).includes('21b'), 'continues with the next sentence');
+  await page.click('#prev');
   await context.close();
 });

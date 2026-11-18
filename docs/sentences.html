@@ -105,7 +105,7 @@
   async function audioSource(info) {
     if (info.url) return info.url;
     const key = deckId === 's300' ? 'sentences300' : 'deck:' + deckId;
-    try { const saved = await stored(key); if (saved && saved.version === info.version) return URL.createObjectURL(saved.blob); } catch (error) {}
+    try { const saved = await stored(key); if (saved && saved.version === info.version) return saved.blob; } catch (error) {}
     const chunks = [];
     for (let i = 0; i < info.parts.length; i++) {
       notice('음성 받는 중 ' + (i + 1) + '/' + info.parts.length + ' · 처음 한 번만 받습니다');
@@ -116,7 +116,28 @@
     }
     const blob = new Blob(chunks, { type: 'audio/mp4' });
     try { await keep(key, { version: info.version, blob }); } catch (error) {}
-    return URL.createObjectURL(blob);
+    return blob;
+  }
+  // Clip bundle (scripts/sentences/bundle.py): 'SCB1', index length, JSON index {no: [aOffset, aLength, bOffset, bLength]},
+  // then one small audio file per sentence part (a = Korean prompt, b = English). iOS cannot seek inside one long
+  // downloaded track, so each part is played as its own file and no seeking is needed.
+  let clips = null, clipBlob = null, clipUrl = '', clipPart = 'a';
+  async function readBundle(blob) {
+    clips = null; clipBlob = null;
+    const head = new Uint8Array(await blob.slice(0, 8).arrayBuffer());
+    if (String.fromCharCode(...head.slice(0, 4)) !== 'SCB1') return false;
+    const length = new DataView(head.buffer).getUint32(4);
+    clips = JSON.parse(await blob.slice(8, 8 + length).text()); clipBlob = blob.slice(8 + length);
+    return true;
+  }
+  function playClip(item, part) {
+    const entry = clips[item.no]; if (!entry) { next(1); return; }
+    const [offset, length] = part === 'a' ? entry.slice(0, 2) : entry.slice(2, 4);
+    if (clipUrl) URL.revokeObjectURL(clipUrl);
+    clipPart = part; clipUrl = URL.createObjectURL(clipBlob.slice(offset, offset + length, 'audio/mp4'));
+    audio.dataset.clip = item.no + part; audio.src = clipUrl;
+    audio.playbackRate = audio.defaultPlaybackRate = Number($('rate').value) || 1;
+    audio.play().catch(() => notice('재생 버튼을 눌러 주세요.'));
   }
 
   let deckId = new URLSearchParams(location.search).get('deck') || store('sentenceDeck') || 's300';
@@ -167,10 +188,13 @@
   }
   function play(item) {
     state.current = item; state.index = state.queue.indexOf(item);
-    const [start] = segment(item);
-    audio.playbackRate = audio.defaultPlaybackRate = Number($('rate').value) || 1;
-    if (Math.abs(audio.currentTime - start) > 0.3) seekTo(start);
-    audio.play().catch(() => notice('재생 버튼을 눌러 주세요.'));
+    if (clips) playClip(item, segment(item)[0] === item.enStart ? 'b' : 'a');
+    else {
+      const [start] = segment(item);
+      audio.playbackRate = audio.defaultPlaybackRate = Number($('rate').value) || 1;
+      if (Math.abs(audio.currentTime - start) > 0.3) seekTo(start);
+      audio.play().catch(() => notice('재생 버튼을 눌러 주세요.'));
+    }
     state.plays[item.no] = (state.plays[item.no] || 0) + 1;
     showNow(); savePrefs();
     if ('mediaSession' in navigator) navigator.mediaSession.metadata = new MediaMetadata({ title: item.no + '. ' + item[deck().main], artist: $('hide').checked ? deck().title : item[deck().sub], album: deck().title });
@@ -190,7 +214,7 @@
   // The item actually under the playhead; while the screen is off iOS may play on without our boundary checks.
   const itemAt = t => state.items.find(item => t >= item.start && t < item.end);
   function syncToAudio() {
-    if (audio.seeking || !state.items.length) return;
+    if (clips || audio.seeking || !state.items.length) return;
     const item = itemAt(audio.currentTime);
     if (item && item !== state.current) { state.current = item; state.index = state.queue.indexOf(item); showNow(); }
   }
@@ -204,7 +228,7 @@
   }
   ['loadedmetadata', 'canplay', 'playing', 'seeked'].forEach(type => audio.addEventListener(type, applyPendingSeek));
   audio.addEventListener('timeupdate', () => {
-    if (!state.current || audio.seeking) return;
+    if (clips || !state.current || audio.seeking) return;
     if (pendingSeek !== null) { applyPendingSeek(); if (pendingSeek !== null) return; }
     const [start, end] = [state.current.start, segment(state.current)[1]], t = audio.currentTime;
     if (t < start - 0.5 || t > end + 1) {
@@ -223,7 +247,11 @@
     row.scrollIntoView({ block: 'center', behavior: force ? 'auto' : 'smooth' });
   }
   document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible') { syncToAudio(); scrollToCurrent(true); } });
-  audio.addEventListener('ended', () => next(1));
+  audio.addEventListener('ended', () => {
+    // Clip mode: after the Korean prompt comes the English part, unless the mode plays only the first part.
+    if (clips && state.current && clipPart === 'a' && segment(state.current)[1] === state.current.end) { playClip(state.current, 'b'); return; }
+    buildQueueKeeping(); next(1);
+  });
   audio.addEventListener('play', () => { $('play').textContent = '⏸ 멈춤'; if ('mediaSession' in navigator) navigator.mediaSession.playbackState = 'playing'; });
   audio.addEventListener('pause', () => { $('play').textContent = '▶ 재생'; if ('mediaSession' in navigator) navigator.mediaSession.playbackState = 'paused'; });
   if ('mediaSession' in navigator) {
@@ -283,7 +311,7 @@
   setInterval(flushPlays, 60000);
   window.addEventListener('pagehide', () => { savePrefs(); flushPlays(); });
 
-  $('play').addEventListener('click', () => { if (!audio.paused) { audio.pause(); return; } if (state.current) audio.play(); else next(1); });
+  $('play').addEventListener('click', () => { if (!audio.paused) { audio.pause(); return; } if (state.current && (!clips || audio.getAttribute('src'))) audio.play(); else if (state.current) play(state.current); else next(1); });
   $('next').addEventListener('click', () => next(1));
   $('prev').addEventListener('click', () => next(-1));
   $('markNow').addEventListener('click', () => state.current && toggle(state.current));
@@ -338,10 +366,11 @@
       if (!data.audio.url && !data.audio.parts.length) { notice('음성 파일이 아직 연결되지 않았습니다.', true); return; }
       const src = await audioSource(data.audio);
       if (token !== loadToken) return;
-      audio.src = src;
+      if (typeof src === 'string') { clips = null; audio.src = src; }
+      else if (await readBundle(src)) audio.removeAttribute('src'); else audio.src = URL.createObjectURL(src);
       notice('준비 완료 · ▶를 누르면 ' + ($('filter').value === 'left' ? '못 외운 것만' : '전체를') + ' 반복합니다. 화면을 꺼도 계속 재생됩니다.');
       const last = state.items.find(item => item.no === prefs.last);
-      if (last && wanted(last)) { state.current = last; state.index = state.queue.indexOf(last); seekTo(segment(last)[0]); showNow(); }
+      if (last && wanted(last)) { state.current = last; state.index = state.queue.indexOf(last); if (!clips) seekTo(segment(last)[0]); showNow(); }
     } catch (error) { if (token !== loadToken) return; if (error.auth) setup('연결 키가 맞지 않습니다. 다시 입력해 주세요.'); else notice(error.message, true); }
   }
   loadDeck();
