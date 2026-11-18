@@ -80,7 +80,9 @@ def build_items(wav, audio, rate, small, sharp):
         runs, cur = [], []
         for w in words:
             cur.append(w)
-            if re.search(r'[.?!]["\']?$', w.word.strip()): runs.append(cur); cur = []
+            token = w.word.strip()
+            # "Ms." or "Dr." is a title, not the end of a sentence.
+            if re.search(r'[.?!]["\']?$', token) and not re.fullmatch(r'(?i)(mr|mrs|ms|dr|st|prof|jr)\.', token): runs.append(cur); cur = []
         if cur: runs.append(cur)
         runs = [(' '.join(w.word.strip() for w in r), a - 0.12 + r[0].start, a - 0.12 + r[-1].end) for r in runs if r]
         out = []
