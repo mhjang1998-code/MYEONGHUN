@@ -78,11 +78,11 @@ def build_items(wav, audio, rate, small, sharp):
         segs, _ = sharp.transcribe(clip, language='en', beam_size=5, vad_filter=False, word_timestamps=True, condition_on_previous_text=False)
         words = [w for seg in segs for w in (seg.words or [])]
         runs, cur = [], []
-        for w in words:
+        for i, w in enumerate(words):
             cur.append(w)
-            token = w.word.strip()
-            # "Ms." or "Dr." is a title, not the end of a sentence.
-            if re.search(r'[.?!]["\']?$', token) and not re.fullmatch(r'(?i)(mr|mrs|ms|dr|st|prof|jr)\.', token): runs.append(cur); cur = []
+            token, after = w.word.strip(), words[i + 1].word.strip() if i + 1 < len(words) else ''
+            # "Ms." or "Dr." is a title, and "5 p.m. and 7 p.m." goes on in lower case: neither ends a sentence.
+            if re.search(r'[.?!]["\']?$', token) and not re.fullmatch(r'(?i)(mr|mrs|ms|dr|st|prof|jr)\.', token) and not re.match(r'[a-z.]', after): runs.append(cur); cur = []
         if cur: runs.append(cur)
         runs = [(' '.join(w.word.strip() for w in r), a - 0.12 + r[0].start, a - 0.12 + r[-1].end) for r in runs if r]
         out = []
