@@ -51,17 +51,19 @@ def norm(text): return re.findall(r"[a-z0-9']+", text.lower())
 
 
 def halve(text):
-    """'X X' (both readings in one piece) -> 'X'."""
-    words = text.split(); half = len(words) // 2
-    if len(words) >= 6 and len(words) % 2 == 0 and norm(' '.join(words[:half])) == norm(' '.join(words[half:])): return ' '.join(words[:half])
-    return text
+    """'X X' (both readings in one stretch) -> 'X' (the second reading, usually the cleaner one)."""
+    words = text.split()
+    if len(words) < 6: return text
+    best, cut = 0.0, 0
+    for k in range(max(2, len(words) // 2 - 2), min(len(words) - 2, len(words) // 2 + 2) + 1):
+        ratio = difflib.SequenceMatcher(None, norm(' '.join(words[:k])), norm(' '.join(words[k:]))).ratio()
+        if ratio > best: best, cut = ratio, k
+    return ' '.join(words[cut:]) if best >= 0.75 else text
 
 
 def alike(a, b):
     a, b = norm(a), norm(b)
-    if not a or not b: return False
-    if a[-len(b):] == b or b[-len(a):] == a: return True
-    return difflib.SequenceMatcher(None, a, b).ratio() >= 0.6
+    return bool(a and b) and difflib.SequenceMatcher(None, a, b).ratio() >= 0.75
 
 
 def build_items(wav, audio, rate, small, sharp):
@@ -74,32 +76,37 @@ def build_items(wav, audio, rate, small, sharp):
     for a, b in pieces(wav):
         if entries and a - entries[-1][-1][1] < 0.6: entries[-1].append([a, b])
         else: entries.append([[a, b]])
-    items = []
+    items, head = [], ''
     for entry in entries:
         parts = []
         for a, b in entry:
             text = hear(small, a, b)
-            kind = 'ko' if HANGUL.search(text) else 'en'
-            if kind == 'en' and b - a >= 1.5:
-                text = halve(hear(sharp, a, b, 'en')); kind = 'sentence' if len(norm(text)) >= 4 else 'en'
-            parts.append({'a': a, 'b': b, 'kind': kind, 'text': text})
-        head = next((p['text'] for p in parts if p['kind'] == 'en'), '')
-        head_words = head.split()
-        if len(head_words) >= 2 and len(head_words) % 2 == 0 and norm(' '.join(head_words[:len(head_words) // 2])) == norm(' '.join(head_words[len(head_words) // 2:])):
-            head = ' '.join(head_words[:len(head_words) // 2])
-        cursor, i = entry[0][0], 0
-        while i < len(parts):
-            p = parts[i]
-            if p['kind'] != 'sentence': i += 1; continue
-            last = p
-            if i + 1 < len(parts) and parts[i + 1]['kind'] == 'sentence' and alike(p['text'], parts[i + 1]['text']):
-                last = parts[i + 1]; i += 1
-            text = last['text'] if len(norm(last['text'])) <= len(norm(p['text'])) or last is p else p['text']
-            meaning = ' '.join(q['text'] for q in parts if q['kind'] == 'ko' and cursor <= q['a'] < p['a'])
-            if not re.search(r'hackers|vocabulary', text, re.I):
-                items.append({'en': text, 'start': round(max(0, cursor - 0.15), 2), 'enStart': round(p['a'] - 0.12, 2), 'end': round(last['b'] + 0.35, 2),
-                              'head': head.strip(' .'), 'meaning': meaning})
-            cursor = last['b'] + 0.35; i += 1
+            parts.append({'a': a, 'b': b, 'ko': bool(HANGUL.search(text)), 'text': text})
+        # Korean pieces (a meaning) cut the entry into stretches; the sentence readings fill the rest of a stretch
+        # from its first long piece on. They are heard as one clip so a pause inside a sentence does not split it.
+        stretches, current = [], []
+        for p in parts:
+            if p['ko']: stretches.append(current); stretches.append([p]); current = []
+            else: current.append(p)
+        stretches.append(current)
+        first_short = next((p for p in parts if not p['ko'] and p['b'] - p['a'] < 1.5), None)
+        if first_short and parts.index(first_short) == 0:
+            words = first_short['text'].strip(' .!?').split()
+            head = ' '.join(words[:len(words) // 2]) if len(words) >= 2 and len(words) % 2 == 0 and norm(' '.join(words[:len(words) // 2])) == norm(' '.join(words[len(words) // 2:])) else ' '.join(words)
+        cursor, meaning = entry[0][0], ''
+        for stretch in stretches:
+            if not stretch: continue
+            if stretch[0]['ko']: meaning = (meaning + ' ' + stretch[0]['text']).strip(); continue
+            long = next((p for p in stretch if p['b'] - p['a'] >= 1.5), None)
+            if not long: continue
+            a, b = long['a'], stretch[-1]['b']
+            text = halve(hear(sharp, a, b, 'en'))
+            if len(norm(text)) < 4 or re.search(r'hackers|vocabulary', text, re.I): continue
+            if items and not meaning and abs(a - (items[-1]['end'] - 0.35)) < 2.5 and alike(text, items[-1]['en']):
+                items[-1]['end'] = round(b + 0.35, 2)  # the second reading came after a longer pause
+            else:
+                items.append({'en': text, 'start': round(max(0, cursor - 0.15), 2), 'enStart': round(a - 0.12, 2), 'end': round(b + 0.35, 2), 'head': head, 'meaning': meaning})
+            cursor, meaning = b + 0.35, ''
     return items
 
 
