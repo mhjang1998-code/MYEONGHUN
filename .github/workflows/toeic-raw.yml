@@ -1,4 +1,4 @@
-name: TOEIC transcript
+name: TOEIC sentences
 
 on:
   push:
@@ -24,4 +24,4 @@ jobs:
           STUDY_API_URL: ${{ secrets.STUDY_API_URL }}
           STUDY_API_KEY: ${{ secrets.STUDY_API_KEY }}
           DAYS: '1'
-        run: python scripts/toeic/raw.py
+        run: python scripts/toeic/items.py
