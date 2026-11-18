@@ -109,8 +109,10 @@ def bundle(mp3, items, folder):
         entry = []
         for a, b in ((it['start'], it['enStart']), (it['enStart'], it['end'])):
             clip = os.path.join(folder, 'c.m4a')
-            subprocess.run(['ffmpeg', '-loglevel', 'error', '-y', '-ss', f'{a:.2f}', '-t', f'{max(0.2, b - a):.2f}', '-i', mp3, '-ac', '1', '-ar', '44100',
-                            '-af', 'afade=t=in:d=0.03', '-c:a', 'aac', '-b:a', '56k', '-movflags', '+faststart', clip], check=True)
+            # -vn: the mp3 may carry cover art, which cannot go into an audio-only m4a.
+            run = subprocess.run(['ffmpeg', '-loglevel', 'error', '-y', '-ss', f'{a:.2f}', '-t', f'{max(0.2, b - a):.2f}', '-i', mp3, '-vn', '-map', '0:a:0', '-ac', '1', '-ar', '44100',
+                                  '-af', 'afade=t=in:d=0.03', '-c:a', 'aac', '-b:a', '56k', '-movflags', '+faststart', clip], capture_output=True, text=True)
+            if run.returncode: sys.exit('ffmpeg failed: ' + run.stderr.strip()[-400:])
             data = open(clip, 'rb').read(); entry += [len(body), len(data)]; body += data
         index[str(it['no'])] = entry
     head = json.dumps(index, separators=(',', ':')).encode()
