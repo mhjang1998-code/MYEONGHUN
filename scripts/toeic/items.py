@@ -85,6 +85,10 @@ def build_items(wav, audio, rate, small, sharp):
             if re.search(r'[.?!]["\']?$', token) and not re.fullmatch(r'(?i)(mr|mrs|ms|dr|st|prof|jr)\.', token) and not re.match(r'[a-z.]', after): runs.append(cur); cur = []
         if cur: runs.append(cur)
         runs = [(' '.join(w.word.strip() for w in r), a - 0.12 + r[0].start, a - 0.12 + r[-1].end) for r in runs if r]
+        # A two-sentence example read twice (A B A B) is one item, not four.
+        half = len(runs) // 2
+        if half >= 2 and len(runs) % 2 == 0 and all(alike(runs[i][0], runs[i + half][0]) for i in range(half)):
+            return [(' '.join(r[0] for r in runs[half:]), runs[0][1], runs[-1][2])]
         out = []
         for text, start, end in runs:
             if out and alike(text, out[-1][0]): out[-1] = (text, out[-1][1], end)

@@ -24,5 +24,5 @@ jobs:
           STUDY_API_URL: ${{ secrets.STUDY_API_URL }}
           STUDY_API_KEY: ${{ secrets.STUDY_API_KEY }}
           DAYS: ''
-          REDO: '25'
+          REDO: '25,26'
         run: python scripts/toeic/items.py
